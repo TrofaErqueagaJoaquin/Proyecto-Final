@@ -1,0 +1,21 @@
+version: 2
+updates:
+  # Las dependencias de Expo se actualizan con `npx expo install --fix` al cambiar de SDK,
+  # por eso se ignoran acá y Dependabot solo propone el resto.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: 'expo'
+      - dependency-name: 'expo-*'
+      - dependency-name: 'react'
+      - dependency-name: 'react-dom'
+      - dependency-name: 'react-native'
+      - dependency-name: 'react-native-*'
+      - dependency-name: '@types/react'
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

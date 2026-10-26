@@ -1,0 +1,9 @@
+pnpm exec lint-staged
+
+# Búsqueda de secretos en lo que se va a commitear. En CI corre siempre (ci.yml);
+# localmente, solo si gitleaks está instalado (winget install gitleaks).
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks git --staged --redact --no-banner
+else
+  echo "Aviso: gitleaks no está instalado; la búsqueda de secretos queda a cargo de CI."
+fi

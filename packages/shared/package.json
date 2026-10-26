@@ -1,0 +1,24 @@
+{
+  "name": "@crecer/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Esquemas zod, tipos de dominio y contratos compartidos entre la app y la API.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@crecer/config": "workspace:*",
+    "eslint": "^10.13.0",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.5"
+  }
+}

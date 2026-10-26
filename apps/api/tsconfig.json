@@ -1,0 +1,8 @@
+{
+  "extends": "@crecer/config/tsconfig.base.json",
+  "compilerOptions": {
+    "verbatimModuleSyntax": true,
+    "types": ["node"]
+  },
+  "include": ["src", "*.config.js"]
+}

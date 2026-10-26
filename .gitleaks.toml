@@ -1,0 +1,11 @@
+# Reglas por defecto de gitleaks + archivos que nunca contienen secretos reales.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Plantillas de variables sin valores y documentación"
+paths = [
+  '''(^|/)\.env\.example$''',
+  '''^docs/''',
+  '''pnpm-lock\.yaml$''',
+]

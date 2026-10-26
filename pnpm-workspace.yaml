@@ -1,0 +1,10 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# Scripts de instalación: pnpm los bloquea por defecto y cada paquete se decide explícitamente.
+# unrs-resolver (vía eslint-config-expo) recibe su binario por dependencias opcionales;
+# su postinstall solo es un respaldo, así que no se ejecuta.
+allowBuilds:
+  esbuild: true
+  unrs-resolver: false

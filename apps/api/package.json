@@ -1,0 +1,30 @@
+{
+  "name": "@crecer/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "API propia (Hono sobre Node): secretos, IA, puntuación y operaciones privilegiadas.",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=.env src/server.ts",
+    "build": "node build.mjs",
+    "start": "node --env-file-if-exists=.env dist/server.js",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@crecer/config": "workspace:*",
+    "@types/node": "^24.19.2",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.13.0",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.5"
+  },
+  "dependencies": {
+    "@crecer/shared": "workspace:*",
+    "@hono/node-server": "^2.1.5",
+    "hono": "^4.13.14",
+    "zod": "^4.6.7"
+  }
+}
