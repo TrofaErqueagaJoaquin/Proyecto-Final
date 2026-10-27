@@ -4,4 +4,5 @@ export type { Database, Json } from './db.types';
 export * from './env';
 export * from './errors';
 export * from './schemas/auth';
+export * from './schemas/content';
 export * from './schemas/family';

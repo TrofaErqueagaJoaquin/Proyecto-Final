@@ -6,7 +6,7 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 import { useEffect, useState, type ReactNode } from 'react';
-import { AccessibilityInfo, Animated, View, type ViewStyle } from 'react-native';
+import { AccessibilityInfo, Animated, Platform, View, type ViewStyle } from 'react-native';
 
 import { Button } from './Button';
 import { Text } from './Text';
@@ -139,6 +139,9 @@ export function ErrorState({
 
 // ── Skeleton ────────────────────────────────────────────────────────────
 
+// En web no existe el driver nativo de animaciones.
+const NATIVE_DRIVER = Platform.OS !== 'web';
+
 /** Bloque de carga con la forma del contenido. Respeta "reducir movimiento". */
 export function Skeleton({
   height = 16,
@@ -160,8 +163,12 @@ export function Skeleton({
         if (reduced || cancelled) return;
         loop = Animated.loop(
           Animated.sequence([
-            Animated.timing(opacity, { toValue: 1, duration: 700, useNativeDriver: true }),
-            Animated.timing(opacity, { toValue: 0.6, duration: 700, useNativeDriver: true }),
+            Animated.timing(opacity, { toValue: 1, duration: 700, useNativeDriver: NATIVE_DRIVER }),
+            Animated.timing(opacity, {
+              toValue: 0.6,
+              duration: 700,
+              useNativeDriver: NATIVE_DRIVER,
+            }),
           ]),
         );
         loop.start();

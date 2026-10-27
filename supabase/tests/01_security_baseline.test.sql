@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(7);
+select plan(8);
 
 select is(
   (select count(*)::int
@@ -23,16 +23,26 @@ select is(
   'Toda función SECURITY DEFINER fija su search_path'
 );
 
+-- anon (sin sesión) solo LEE el catálogo público. Cualquier tabla nueva expuesta hace fallar esto.
+select is(
+  (select coalesce(array_agg(c.relname::text order by c.relname), '{}')
+   from pg_class c join pg_namespace n on n.oid = c.relnamespace
+   where n.nspname = 'public' and c.relkind in ('r', 'p')
+     and has_table_privilege('anon', c.oid, 'select')),
+  array['activities', 'activity_categories', 'activity_category_links', 'activity_sources',
+        'activity_steps', 'content_items', 'content_sources', 'sources'],
+  'anon solo puede leer las tablas del catálogo público'
+);
+
 select is(
   (select count(*)::int
    from pg_class c join pg_namespace n on n.oid = c.relnamespace
    where n.nspname = 'public' and c.relkind in ('r', 'p')
-     and (has_table_privilege('anon', c.oid, 'select')
-          or has_table_privilege('anon', c.oid, 'insert')
+     and (has_table_privilege('anon', c.oid, 'insert')
           or has_table_privilege('anon', c.oid, 'update')
           or has_table_privilege('anon', c.oid, 'delete'))),
   0,
-  'anon no tiene privilegios sobre ninguna tabla de public'
+  'anon no puede escribir en ninguna tabla'
 );
 
 select is(

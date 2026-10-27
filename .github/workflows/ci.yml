@@ -28,6 +28,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
+      - name: El contenido de content/ es válido
+        run: pnpm content:check
       - run: pnpm turbo run lint typecheck test
       - run: pnpm turbo run build
         env:

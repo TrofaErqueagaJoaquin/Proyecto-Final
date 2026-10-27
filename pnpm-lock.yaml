@@ -172,9 +172,15 @@ importers:
       '@commitlint/config-conventional':
         specifier: ^21.2.4
         version: 21.2.4
+      '@crecer/shared':
+        specifier: workspace:*
+        version: link:packages/shared
       '@electric-sql/pglite':
         specifier: 0.5.10
         version: 0.5.10
+      '@supabase/supabase-js':
+        specifier: ^2.118.0
+        version: 2.118.0
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -187,12 +193,21 @@ importers:
       supabase:
         specifier: 2.122.0
         version: 2.122.0
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
       turbo:
         specifier: ^2.11.10
         version: 2.11.10
       typescript:
         specifier: ~6.0.3
         version: 6.0.3
+      yaml:
+        specifier: ^2.9.1
+        version: 2.9.1
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
 
   apps/api:
     dependencies:
@@ -12968,8 +12983,7 @@ snapshots:
 
   yallist@3.1.1: {}
 
-  yaml@2.9.1:
-    optional: true
+  yaml@2.9.1: {}
 
   yargs-parser@21.1.1: {}
 

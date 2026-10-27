@@ -247,6 +247,21 @@
 - **Sin probar de punta a punta contra Supabase** (requiere una sesión real): crear la familia, las invitaciones, aceptarlas y los consentimientos. Las reglas que los sostienen están probadas en pgTAP (65 verificaciones) y la API, con tests de integración.
 - **Estado.** Aceptada.
 
+### ADR-026 · Decisiones de implementación de la Fase 5
+
+- **Fecha.** 27/10/2026 (Fase 5).
+- **Decisiones:**
+  1. **El catálogo es público**: `anon` solo puede leer lo publicado, sobre una lista cerrada de 8 tablas (contenido, fuentes y actividades). El test de seguridad base exige exactamente esa lista, así que cualquier tabla nueva expuesta lo hace fallar.
+  2. **El contenido inicial vive en `content/`** (22 fuentes, 15 contenidos y 30 actividades) y se carga con `pnpm content:sync` (clave secreta, idempotente, archiva lo que se quita). CI corre `pnpm content:check`.
+  3. **Todo el contenido figura "en revisión profesional"** (`reviewed_at` nulo) y **todas las fuentes, como "cita pendiente de verificación"**. Esta noche no se verificaron contra las fuentes primarias. No se inventaron enlaces: solo se usan DOI o URL que figuran en la investigación.
+  4. **Las líneas de ayuda no se publicaron**, porque la investigación pide verificarlas antes. "Cuándo consultar" lo aclara.
+  5. **Markdown propio y mínimo** (títulos, párrafos, listas y negrita). Nunca se interpreta HTML; el esquema rechaza contenido con etiquetas.
+  6. **Las actividades se filtran en el dispositivo**: con 30 a 120 actividades, una sola consulta en caché da filtros instantáneos y la lógica queda en una función pura con tests. La búsqueda en la base (`tsvector` con `es_unaccent`) queda lista para el asistente (Fase 8).
+  7. **Los planes y objetivos van en su propia migración (Fase 7)**, no en la de actividades: se crean cuando se usan.
+  8. **Actividades realizadas sin texto libre** (solo fecha, participantes y valoración de 1 a 5): no se registra información sobre los chicos.
+- **Verificado contra `crecer-dev`:** lectura anónima de lo publicado, `permission denied` en familias, búsqueda sin tildes, sincronización idempotente y las pantallas públicas en el navegador. **No verificado de punta a punta:** guardar y registrar actividades, porque requiere una sesión real.
+- **Estado.** Aceptada.
+
 ---
 
 ## Decisiones pendientes de validación externa

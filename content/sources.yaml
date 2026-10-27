@@ -1,0 +1,148 @@
+# Bibliografía de la plataforma (docs/research/crecer_en_casa_investigacion.md §27).
+# verification_status: "unverified" hasta que alguien del equipo revise la fuente primaria
+# (enlace, DOI y cita). En producción solo se publica contenido con fuentes verificadas.
+
+- slug: oms-2019
+  citation: 'Organización Mundial de la Salud (2019). Guidelines on physical activity, sedentary behaviour and sleep for children under 5 years of age.'
+  study_type: guideline
+  year: 2019
+  confidence: high
+  notes: 'NCBI Bookshelf NBK541173 según la investigación (falta verificar el enlace). Los 180 minutos de actividad surgen de consenso de expertos.'
+
+- slug: oms-2020
+  citation: 'Bull FC, et al. (2020). World Health Organization 2020 guidelines on physical activity and sedentary behaviour. International Journal of Behavioral Nutrition and Physical Activity.'
+  study_type: guideline
+  year: 2020
+  doi: 10.1186/s12966-020-01037-z
+  confidence: high
+
+- slug: aap-2026
+  citation: 'Munzer T, Parga-Belinkie J, Matile Milkovich L, et al.; American Academy of Pediatrics (2026). Digital Ecosystems, Children, and Adolescents. Pediatrics 157(2):e2025075320.'
+  study_type: position_statement
+  year: 2026
+  confidence: moderate
+  notes: 'La investigación se basó en resúmenes: falta leer el texto completo antes de citarlo textualmente.'
+
+- slug: sap-2023
+  citation: 'Sociedad Argentina de Pediatría (2023). Guía de uso de pantallas para las familias.'
+  study_type: guideline
+  year: 2023
+  confidence: high
+
+- slug: canada-24h
+  citation: 'Canadian 24-Hour Movement Guidelines for Children and Youth (5–17 años): actividad física, conducta sedentaria y sueño.'
+  study_type: guideline
+  confidence: high
+
+- slug: madigan-2019
+  citation: "Madigan S, Browne D, Racine N, Mori C, Tough S (2019). Association between screen time and children's performance on a developmental screening test. JAMA Pediatrics 173(3):244–250."
+  study_type: cohort
+  year: 2019
+  doi: 10.1001/jamapediatrics.2018.5056
+  confidence: moderate
+
+- slug: madigan-2020
+  citation: 'Madigan S, McArthur BA, Anhorn C, Eirich R, Christakis DA (2020). Associations between screen use and child language skills: a systematic review and meta-analysis. JAMA Pediatrics 174(7):665–675.'
+  study_type: meta_analysis
+  year: 2020
+  doi: 10.1001/jamapediatrics.2020.0327
+  confidence: moderate
+
+- slug: mallawaarachchi-2024
+  citation: 'Mallawaarachchi S, et al. (2024). Early childhood screen use contexts and cognitive and psychosocial outcomes: a systematic review and meta-analysis. JAMA Pediatrics 178(10):1017–1026.'
+  study_type: meta_analysis
+  year: 2024
+  doi: 10.1001/jamapediatrics.2024.2620
+  confidence: moderate
+  notes: '100 estudios; los autores advierten que la mayoría son transversales y con alto riesgo de sesgo.'
+
+- slug: radesky-2022
+  citation: 'Radesky JS, Kaciroti N, Weeks HM, Schaller A, Miller AL (2022). Longitudinal associations between use of mobile devices for calming and emotional reactivity and executive functioning in children aged 3 to 5 years. JAMA Pediatrics.'
+  study_type: cohort
+  year: 2022
+  doi: 10.1001/jamapediatrics.2022.4793
+  confidence: low
+  notes: 'Muestra de conveniencia de 422 díadas en EE. UU.; asociación bidireccional.'
+
+- slug: danet-2022
+  citation: 'Danet M, et al. (2022). Uso de dispositivos para calmar y funciones ejecutivas en niños de 3 a 4 años.'
+  study_type: cohort
+  year: 2022
+  confidence: low
+  notes: 'Citado en la investigación como ejemplo de causalidad inversa; completar la referencia.'
+
+- slug: bakht-2025
+  citation: 'Bakht et al. (2025). Revisión sistemática sobre tiempo de pantalla y desarrollo motor en niños de 0 a 7 años. Pediatric Discovery.'
+  study_type: systematic_review
+  year: 2025
+  doi: 10.1002/pdi3.70002
+  confidence: low
+
+- slug: carter-2016
+  citation: 'Carter B, Rees P, Hale L, Bhattacharjee D, Paradkar MS (2016). Association between portable screen-based media device access or use and sleep outcomes: a systematic review and meta-analysis. JAMA Pediatrics 170(12):1202–1208.'
+  study_type: meta_analysis
+  year: 2016
+  confidence: moderate
+
+- slug: orben-2019
+  citation: 'Orben A, Przybylski AK (2019). The association between adolescent well-being and digital technology use. Nature Human Behaviour 3:173–182.'
+  study_type: cross_sectional
+  year: 2019
+  doi: 10.1038/s41562-018-0506-1
+  confidence: moderate
+
+- slug: riehm-2019
+  citation: 'Riehm KE, et al. (2019). Associations between time spent using social media and internalizing and externalizing problems among US youth. JAMA Psychiatry.'
+  study_type: cohort
+  year: 2019
+  confidence: moderate
+
+- slug: surgeon-general-2023
+  citation: "U.S. Surgeon General (2023). Social Media and Youth Mental Health: The U.S. Surgeon General's Advisory."
+  study_type: report
+  year: 2023
+  confidence: moderate
+  notes: 'Aviso de precaución basado en estudios observacionales.'
+
+- slug: menting-2013
+  citation: 'Menting ATA, de Castro BO, Matthys W (2013). Effectiveness of the Incredible Years parent training to modify disruptive and prosocial child behavior: a meta-analytic review. Clinical Psychology Review 33.'
+  study_type: meta_analysis
+  year: 2013
+  confidence: high
+
+- slug: leijten-2017
+  citation: 'Leijten P, Gardner F, et al. (2017). Metaanálisis con datos individuales de ensayos de Incredible Years en Europa (n = 1.799).'
+  study_type: meta_analysis
+  year: 2017
+  confidence: high
+
+- slug: wilson-2012
+  citation: "Wilson P, et al. (2012). How evidence-based is an 'evidence-based parenting program'? A PRISMA systematic review and meta-analysis of Triple P. BMC Medicine 10:130."
+  study_type: systematic_review
+  year: 2012
+  confidence: moderate
+
+- slug: unicef-kids-online-2025
+  citation: 'UNICEF Argentina y UNESCO (2025). Kids Online Argentina: encuesta nacional a 5.910 chicos de 9 a 17 años.'
+  study_type: report
+  year: 2025
+  confidence: moderate
+  notes: 'Parte de las cifras de la investigación proviene de prensa: verificar contra el informe.'
+
+- slug: aap-arg-2019
+  citation: 'Archivos Argentinos de Pediatría (2019) 117(5). Pantallas: discordancias entre las recomendaciones y el uso real.'
+  study_type: other
+  year: 2019
+  confidence: moderate
+
+- slug: ley-25326
+  citation: 'Ley 25.326 de Protección de los Datos Personales (Argentina, 2000).'
+  study_type: statute
+  year: 2000
+  confidence: high
+
+- slug: ley-26061
+  citation: 'Ley 26.061 de Protección Integral de los Derechos de Niñas, Niños y Adolescentes (Argentina, 2005).'
+  study_type: statute
+  year: 2005
+  confidence: high

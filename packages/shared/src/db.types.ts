@@ -14,6 +14,287 @@ export type Database = {
   }
   public: {
     Tables: {
+      activities: {
+        Row: {
+          accessibility_notes: string[]
+          age_max_months: number
+          age_min_months: number
+          cost_level: string
+          created_at: string
+          duration_min: number
+          evidence_label: string
+          id: string
+          materials: string[]
+          objective: string
+          participants_max: number | null
+          participants_min: number
+          published_at: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          safety_notes: string | null
+          search: unknown
+          slug: string
+          sort_order: number
+          space: string
+          status: string
+          summary: string
+          title: string
+          updated_at: string
+          variants: string[]
+        }
+        Insert: {
+          accessibility_notes?: string[]
+          age_max_months: number
+          age_min_months: number
+          cost_level: string
+          created_at?: string
+          duration_min: number
+          evidence_label: string
+          id?: string
+          materials?: string[]
+          objective: string
+          participants_max?: number | null
+          participants_min?: number
+          published_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          safety_notes?: string | null
+          search?: unknown
+          slug: string
+          sort_order?: number
+          space: string
+          status?: string
+          summary: string
+          title: string
+          updated_at?: string
+          variants?: string[]
+        }
+        Update: {
+          accessibility_notes?: string[]
+          age_max_months?: number
+          age_min_months?: number
+          cost_level?: string
+          created_at?: string
+          duration_min?: number
+          evidence_label?: string
+          id?: string
+          materials?: string[]
+          objective?: string
+          participants_max?: number | null
+          participants_min?: number
+          published_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          safety_notes?: string | null
+          search?: unknown
+          slug?: string
+          sort_order?: number
+          space?: string
+          status?: string
+          summary?: string
+          title?: string
+          updated_at?: string
+          variants?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activities_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      activity_categories: {
+        Row: {
+          code: string
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          code: string
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          code?: string
+          label?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      activity_category_links: {
+        Row: {
+          activity_id: string
+          category_code: string
+        }
+        Insert: {
+          activity_id: string
+          category_code: string
+        }
+        Update: {
+          activity_id?: string
+          category_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_category_links_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_category_links_category_code_fkey"
+            columns: ["category_code"]
+            isOneToOne: false
+            referencedRelation: "activity_categories"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      activity_log_participants: {
+        Row: {
+          log_id: string
+          member_id: string
+        }
+        Insert: {
+          log_id: string
+          member_id: string
+        }
+        Update: {
+          log_id?: string
+          member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_participants_log_id_fkey"
+            columns: ["log_id"]
+            isOneToOne: false
+            referencedRelation: "activity_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_log_participants_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      activity_logs: {
+        Row: {
+          activity_id: string
+          created_at: string
+          done_on: string
+          family_id: string
+          id: string
+          logged_by: string | null
+          rating: number | null
+        }
+        Insert: {
+          activity_id: string
+          created_at?: string
+          done_on?: string
+          family_id: string
+          id?: string
+          logged_by?: string | null
+          rating?: number | null
+        }
+        Update: {
+          activity_id?: string
+          created_at?: string
+          done_on?: string
+          family_id?: string
+          id?: string
+          logged_by?: string | null
+          rating?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_logs_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_logs_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_logs_logged_by_fkey"
+            columns: ["logged_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      activity_sources: {
+        Row: {
+          activity_id: string
+          locator: string | null
+          source_id: string
+        }
+        Insert: {
+          activity_id: string
+          locator?: string | null
+          source_id: string
+        }
+        Update: {
+          activity_id?: string
+          locator?: string | null
+          source_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_sources_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_sources_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      activity_steps: {
+        Row: {
+          activity_id: string
+          body: string
+          position: number
+        }
+        Insert: {
+          activity_id: string
+          body: string
+          position: number
+        }
+        Update: {
+          activity_id?: string
+          body?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_steps_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -108,6 +389,146 @@ export type Database = {
             columns: ["revoked_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_items: {
+        Row: {
+          age_max_months: number | null
+          age_min_months: number | null
+          body_md: string
+          created_at: string
+          evidence_label: string
+          id: string
+          published_at: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          search: unknown
+          slug: string
+          sort_order: number
+          status: string
+          summary: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          age_max_months?: number | null
+          age_min_months?: number | null
+          body_md: string
+          created_at?: string
+          evidence_label: string
+          id?: string
+          published_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          search?: unknown
+          slug: string
+          sort_order?: number
+          status?: string
+          summary: string
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          age_max_months?: number | null
+          age_min_months?: number | null
+          body_md?: string
+          created_at?: string
+          evidence_label?: string
+          id?: string
+          published_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          search?: unknown
+          slug?: string
+          sort_order?: number
+          status?: string
+          summary?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_items_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_revisions: {
+        Row: {
+          body_md: string
+          content_id: string
+          created_at: string
+          edited_by: string | null
+          revision: number
+        }
+        Insert: {
+          body_md: string
+          content_id: string
+          created_at?: string
+          edited_by?: string | null
+          revision: number
+        }
+        Update: {
+          body_md?: string
+          content_id?: string
+          created_at?: string
+          edited_by?: string | null
+          revision?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_revisions_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_revisions_edited_by_fkey"
+            columns: ["edited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_sources: {
+        Row: {
+          content_id: string
+          locator: string | null
+          source_id: string
+        }
+        Insert: {
+          content_id: string
+          locator?: string | null
+          source_id: string
+        }
+        Update: {
+          content_id?: string
+          locator?: string | null
+          source_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_sources_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_sources_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
             referencedColumns: ["id"]
           },
         ]
@@ -426,6 +847,97 @@ export type Database = {
           code?: string
           description?: string
           name?: string
+        }
+        Relationships: []
+      }
+      saved_activities: {
+        Row: {
+          activity_id: string
+          created_at: string
+          family_id: string
+          saved_by: string | null
+        }
+        Insert: {
+          activity_id: string
+          created_at?: string
+          family_id: string
+          saved_by?: string | null
+        }
+        Update: {
+          activity_id?: string
+          created_at?: string
+          family_id?: string
+          saved_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_activities_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_activities_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_activities_saved_by_fkey"
+            columns: ["saved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sources: {
+        Row: {
+          citation: string
+          confidence: string
+          created_at: string
+          doi: string | null
+          id: string
+          last_checked_at: string | null
+          notes: string | null
+          slug: string
+          study_type: string
+          updated_at: string
+          url: string | null
+          verification_status: string
+          year: number | null
+        }
+        Insert: {
+          citation: string
+          confidence: string
+          created_at?: string
+          doi?: string | null
+          id?: string
+          last_checked_at?: string | null
+          notes?: string | null
+          slug: string
+          study_type: string
+          updated_at?: string
+          url?: string | null
+          verification_status?: string
+          year?: number | null
+        }
+        Update: {
+          citation?: string
+          confidence?: string
+          created_at?: string
+          doi?: string | null
+          id?: string
+          last_checked_at?: string | null
+          notes?: string | null
+          slug?: string
+          study_type?: string
+          updated_at?: string
+          url?: string | null
+          verification_status?: string
+          year?: number | null
         }
         Relationships: []
       }

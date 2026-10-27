@@ -1,0 +1,567 @@
+# Banco inicial de actividades (docs/research §12 + propuestas nuevas del proyecto).
+# Edades en meses. Las marcadas como propuesta_proyecto requieren revisión profesional
+# (pediatra, terapista ocupacional o psicomotricista) antes de usarse con familias reales.
+
+- slug: panza-al-piso-con-espejo
+  title: Panza al piso con espejo
+  summary: Unos minutos boca abajo, despierto y acompañado, mirándose en un espejo.
+  objective: Fortalecer cuello, espalda y brazos (motricidad gruesa).
+  age_min_months: 0
+  age_max_months: 6
+  duration_min: 5
+  participants_max: 2
+  cost_level: free
+  space: small_indoor
+  categories: [movimiento, vinculo]
+  materials: [Manta, Espejo irrompible]
+  steps:
+    - Extendé una manta en el piso, en un lugar sin corrientes de aire.
+    - Poné al bebé boca abajo, despierto, con el espejo apoyado delante.
+    - Acostate a su altura y hablale o cantale mientras se mira.
+    - Repetí 3 a 5 minutos, varias veces al día. Si se cansa o llora, levantalo y probá más tarde.
+  variants: [Sin espejo, con un juguete de colores o tu cara frente a la suya.]
+  safety_notes: Siempre despierto y supervisado. Para dormir, boca arriba.
+  evidence_label: recomendacion_oficial
+  sources: [{ slug: oms-2019 }]
+
+- slug: canasta-de-tesoros
+  title: Canasta de tesoros
+  summary: Una canasta con objetos seguros de la casa para tocar, chupar y explorar.
+  objective: Exploración sensorial y concentración.
+  age_min_months: 6
+  age_max_months: 18
+  duration_min: 10
+  cost_level: free
+  space: small_indoor
+  categories: [exploracion]
+  materials:
+    [Canasta o caja, Objetos seguros de la cocina (cucharas de madera, recipientes, tapas grandes)]
+  steps:
+    - Juntá 5 a 8 objetos de distintas texturas, pesos y tamaños.
+    - Sentate con el bebé frente a la canasta y dejalo elegir.
+    - Nombrá cada objeto que toma ("esta cuchara es lisa").
+    - Cambiá algunos objetos cada semana.
+  safety_notes: Nada que pase por un tubo de papel higiénico (riesgo de atragantamiento). Siempre con un adulto.
+  evidence_label: propuesta_proyecto
+
+- slug: contar-lo-cotidiano
+  title: Contar lo cotidiano
+  summary: Narrar en voz alta lo que hacés mientras lo hacés.
+  objective: Estimular el lenguaje con conversación real.
+  age_min_months: 0
+  age_max_months: 36
+  duration_min: 5
+  cost_level: free
+  space: small_indoor
+  categories: [lenguaje, vinculo]
+  steps:
+    - Mientras cocinás, cambiás un pañal o ordenás, contá en voz alta lo que estás haciendo.
+    - Hacé pausas para que responda con sonidos, gestos o palabras.
+    - Repetí y ampliá lo que dice ("¡agua! Sí, el agua está fría").
+  variants: [Cantar lo que hacés con una melodía conocida.]
+  evidence_label: asociacion_no_causa
+  sources: [{ slug: madigan-2020 }, { slug: mallawaarachchi-2024 }]
+
+- slug: circuito-en-el-living
+  title: Circuito en el living
+  summary: Un recorrido con almohadones y cinta para saltar, gatear y hacer equilibrio.
+  objective: Equilibrio y coordinación.
+  age_min_months: 24
+  age_max_months: 72
+  duration_min: 15
+  cost_level: free
+  space: small_indoor
+  categories: [movimiento]
+  materials: [Almohadones, Cinta de papel]
+  steps:
+    - Despejá un espacio y marcá en el piso una línea con cinta.
+    - Armá estaciones con almohadones para saltar, rodear o pasar por debajo.
+    - Hacé el recorrido primero vos y después que lo intente.
+    - Cambien el orden de las estaciones entre todos.
+  variants:
+    [Con tiempo cronometrado para los más grandes., Caminar por la línea como equilibristas.]
+  accessibility_notes: [Las estaciones se pueden hacer sentado o con apoyo.]
+  safety_notes: Despejá las esquinas de los muebles y usá medias antideslizantes o pies descalzos.
+  evidence_label: recomendacion_oficial
+  sources: [{ slug: oms-2019 }]
+
+- slug: semaforo-de-la-calma
+  title: Semáforo de la calma
+  summary: Un semáforo de papel para ponerle color a las emociones y elegir qué hacer.
+  objective: Reconocer emociones y practicar formas de calmarse.
+  age_min_months: 36
+  age_max_months: 72
+  duration_min: 5
+  cost_level: free
+  space: small_indoor
+  categories: [calma]
+  materials: [Papel, Lápices de colores]
+  steps:
+    - Dibujen juntos un semáforo con rojo, amarillo y verde.
+    - Rojo es "paro y respiro", amarillo es "pienso qué me pasa", verde es "elijo qué hacer".
+    - Cuando esté tranquilo, practiquen el semáforo jugando.
+    - En un momento difícil, señalá el rojo y respiren juntos "soplando velitas".
+  evidence_label: propuesta_proyecto
+  sources: [{ slug: menting-2013 }]
+
+- slug: dado-y-turnos
+  title: Dado y turnos
+  summary: Juegos simples con un dado para practicar esperar.
+  objective: Esperar el turno y tolerar la frustración.
+  age_min_months: 36
+  age_max_months: 84
+  duration_min: 15
+  participants_min: 2
+  cost_level: free
+  space: small_indoor
+  categories: [juego_social]
+  materials: [Un dado]
+  steps:
+    - Inventen una regla para cada número (1 = aplaudir, 2 = saltar, 3 = hacer una cara graciosa…).
+    - Tiren el dado por turnos y cumplan la acción.
+    - Nombren de quién es el turno antes de cada tirada.
+  variants: [Avanzar casilleros en un camino dibujado en papel.]
+  evidence_label: propuesta_proyecto
+
+- slug: leer-con-preguntas
+  title: Leer con preguntas
+  summary: Leer un cuento haciendo preguntas abiertas e inventando finales.
+  objective: Lenguaje, comprensión y vínculo.
+  age_min_months: 24
+  age_max_months: 96
+  duration_min: 10
+  cost_level: free
+  space: small_indoor
+  categories: [lenguaje, vinculo]
+  materials: [Un libro (de la biblioteca del barrio o de la escuela)]
+  steps:
+    - Elijan juntos un libro.
+    - Mientras leen, preguntá "¿qué creés que va a pasar?" o "¿cómo se siente?".
+    - Dejá que cuente la historia mirando las ilustraciones.
+    - Al terminar, inventen otro final.
+  evidence_label: propuesta_proyecto
+  sources: [{ slug: madigan-2020 }]
+
+- slug: cocina-sin-fuego
+  title: Cocina sin fuego
+  summary: Preparar juntos algo simple sin hornalla ni horno.
+  objective: Autonomía, seguir pasos y colaborar.
+  age_min_months: 48
+  age_max_months: 120
+  duration_min: 20
+  cost_level: low
+  space: indoor
+  categories: [autonomia, vinculo]
+  materials: [Ingredientes simples (fruta, pan, queso untable, yogur)]
+  steps:
+    - Elijan una receta sin cocción (brochetas de fruta, sándwiches, yogur con frutas).
+    - Lean o dibujen los pasos.
+    - Que lave, mezcle, unte y arme; vos acompañás.
+    - Compartan lo que prepararon.
+  safety_notes: Sin cuchillos filosos. Atención a las alergias alimentarias.
+  evidence_label: propuesta_proyecto
+
+- slug: busqueda-del-tesoro-en-la-plaza
+  title: Búsqueda del tesoro en la plaza
+  summary: Una lista dibujada de cosas para encontrar al aire libre.
+  objective: Exploración, observación y movimiento.
+  age_min_months: 48
+  age_max_months: 132
+  duration_min: 30
+  cost_level: free
+  space: outdoor
+  categories: [exploracion, movimiento]
+  materials: [Papel y lápiz]
+  steps:
+    - Antes de salir, dibujen una lista (una hoja, una piedra redonda, algo amarillo, un pájaro).
+    - En la plaza, busquen y marquen lo que encuentran.
+    - Al volver, conversen qué fue lo más difícil de encontrar.
+  safety_notes: Siempre con un adulto. Acordar los límites de la zona de búsqueda.
+  evidence_label: propuesta_proyecto
+
+- slug: flota-o-se-hunde
+  title: ¿Flota o se hunde?
+  summary: Experimentar con objetos de la casa en un recipiente con agua.
+  objective: Pensamiento científico, predecir y comprobar.
+  age_min_months: 48
+  age_max_months: 108
+  duration_min: 15
+  cost_level: free
+  space: indoor
+  categories: [exploracion]
+  materials: [Recipiente con agua, Objetos de la casa (corcho, cuchara, tapita, hoja)]
+  steps:
+    - Antes de tirar cada objeto, que adivine si va a flotar o hundirse.
+    - Pruébenlo y comparen con lo que pensaba.
+    - 'Hagan dos grupos: los que flotan y los que se hunden.'
+  safety_notes: Supervisión permanente con agua, aunque sea poca.
+  evidence_label: propuesta_proyecto
+
+- slug: naipes-y-memotest
+  title: Naipes y memotest
+  summary: Juegos de cartas para recordar, contar y aprender a perder.
+  objective: Memoria, atención y aprender a perder.
+  age_min_months: 72
+  age_max_months: 144
+  duration_min: 20
+  participants_min: 2
+  cost_level: low
+  space: small_indoor
+  categories: [juego_social]
+  materials: [Un mazo de cartas]
+  steps:
+    - Para el memotest, usen pares de cartas boca abajo y den vuelta dos por turno.
+    - Para los más grandes, prueben un juego de cartas simple como la escoba.
+    - Al terminar, saluden al que ganó y conversen qué se siente perder.
+  evidence_label: propuesta_proyecto
+
+- slug: desafio-de-equilibrio
+  title: Desafío de equilibrio
+  summary: Retos con una pelota y el cuerpo para probar el equilibrio.
+  objective: Coordinación y equilibrio.
+  age_min_months: 72
+  age_max_months: 132
+  duration_min: 10
+  cost_level: free
+  space: small_indoor
+  categories: [movimiento]
+  materials: [Una pelota]
+  steps:
+    - Pararse en un pie mientras se cuenta hasta 10.
+    - Pasarse la pelota sin apoyar el otro pie.
+    - Inventen nuevos desafíos por turnos.
+  safety_notes: Superficie segura y espacio despejado.
+  evidence_label: propuesta_proyecto
+  sources: [{ slug: oms-2020 }]
+
+- slug: video-familiar
+  title: Video familiar
+  summary: Crear un video corto en familia en lugar de solo mirar.
+  objective: Crear en vez de consumir; planificar y colaborar.
+  age_min_months: 108
+  age_max_months: 215
+  duration_min: 60
+  participants_min: 2
+  cost_level: free
+  space: indoor
+  categories: [creatividad, vinculo]
+  materials: [Un celular]
+  steps:
+    - Elijan un tema (una receta, una historia, un tutorial).
+    - Escriban un guion corto con escenas.
+    - Graben, editen y miren el resultado juntos.
+  safety_notes: No publicar la cara de terceros sin permiso. Conversen antes si se publica o no.
+  evidence_label: propuesta_proyecto
+
+- slug: caminata-o-bici-con-charla
+  title: Caminata o bici con charla
+  summary: Salir a caminar o andar en bici, con tiempo para conversar.
+  objective: Actividad física y vínculo.
+  age_min_months: 144
+  age_max_months: 215
+  duration_min: 30
+  participants_min: 2
+  cost_level: free
+  space: outdoor
+  categories: [movimiento, vinculo]
+  steps:
+    - Acuerden un recorrido corto (la costa, una plaza, el barrio).
+    - Que el adolescente elija la música o el camino.
+    - Conversen de lo que surja, sin interrogar.
+  safety_notes: Casco para la bici.
+  evidence_label: recomendacion_oficial
+  sources: [{ slug: oms-2020 }]
+
+- slug: estacion-de-piso
+  title: Estación de piso
+  summary: Un rincón fijo con una manta para que el bebé juegue en el piso varias veces al día.
+  objective: Reemplazar momentos de video por movimiento libre.
+  age_min_months: 3
+  age_max_months: 18
+  duration_min: 10
+  cost_level: free
+  space: small_indoor
+  categories: [movimiento]
+  materials: [Manta, 2 o 3 juguetes u objetos seguros]
+  steps:
+    - Elegí un rincón visible desde donde estás la mayor parte del día.
+    - Dejá la manta extendida con pocos objetos al alcance.
+    - Cuando tengas que hacer algo, ofrecé el piso antes que un video.
+  safety_notes: Lejos de escaleras, enchufes y objetos chicos.
+  evidence_label: propuesta_proyecto
+  sources: [{ slug: oms-2019 }]
+
+- slug: caja-de-calma
+  title: Caja de calma
+  summary: Armar juntos una caja con objetos que ayudan a tranquilizarse, sin pantallas.
+  objective: Tener otras estrategias para calmarse.
+  age_min_months: 30
+  age_max_months: 96
+  duration_min: 15
+  cost_level: free
+  space: small_indoor
+  categories: [calma]
+  materials: [Una caja, Objetos que elija (algo blando para apretar, un cuento, una foto)]
+  steps:
+    - Cuando esté tranquilo, armen juntos la caja y decórenla.
+    - Elijan 4 o 5 objetos que lo ayuden a sentirse mejor.
+    - Pongan la caja en un lugar al alcance.
+    - En un momento difícil, ofrecé la caja y acompañá en silencio.
+  evidence_label: propuesta_proyecto
+  sources: [{ slug: radesky-2022 }]
+
+- slug: respirar-soplando-velitas
+  title: Respirar soplando velitas
+  summary: Una respiración lenta usando los dedos como velitas de torta.
+  objective: Bajar la intensidad en momentos de enojo o nervios.
+  age_min_months: 30
+  age_max_months: 108
+  duration_min: 2
+  cost_level: free
+  space: small_indoor
+  categories: [calma]
+  steps:
+    - Levantá los cinco dedos como si fueran velitas.
+    - Inspiren por la nariz y soplen despacio una velita por vez.
+    - Practíquenlo cuando están tranquilos para que salga en los momentos difíciles.
+  evidence_label: propuesta_proyecto
+
+- slug: final-con-aviso
+  title: Final con aviso y actividad puente
+  summary: Un ritual para terminar la pantalla sin pelea.
+  objective: Hacer más llevadera la transición al apagar.
+  age_min_months: 30
+  age_max_months: 132
+  duration_min: 5
+  cost_level: free
+  space: small_indoor
+  categories: [calma, autonomia]
+  materials: [Temporizador o reloj visible]
+  steps:
+    - Antes de empezar, acuerden cuánto va a durar o cuántos episodios.
+    - Avisá cuando falten 5 minutos y cuando empiece el último.
+    - Que sea el chico quien apague, si puede.
+    - Tengan lista una actividad puente atractiva (merienda, juego, salir).
+  evidence_label: propuesta_proyecto
+  sources: [{ slug: aap-2026 }]
+
+- slug: mesa-sin-pantallas
+  title: Comidas sin pantallas
+  summary: Un juego de conversación para la mesa, con los celulares lejos.
+  objective: Conversación en familia y comidas tranquilas.
+  age_min_months: 36
+  age_max_months: 215
+  duration_min: 20
+  participants_min: 2
+  cost_level: free
+  space: indoor
+  categories: [vinculo, lenguaje]
+  materials: [Una caja o canasta para dejar los celulares]
+  steps:
+    - Antes de comer, todos dejan el celular en la canasta, adultos incluidos.
+    - Cada uno cuenta "lo mejor y lo más difícil del día".
+    - Turnarse para elegir una pregunta divertida (¿qué superpoder te gustaría tener?).
+  evidence_label: recomendacion_oficial
+  sources: [{ slug: sap-2023 }]
+
+- slug: rutina-para-dormir
+  title: Rutina para ir a dormir
+  summary: Los mismos pasos cada noche, con la última hora sin pantallas.
+  objective: Mejorar el sueño.
+  age_min_months: 12
+  age_max_months: 144
+  duration_min: 30
+  cost_level: free
+  space: indoor
+  categories: [calma, autonomia]
+  materials: [Un dibujo o cartel con los pasos]
+  steps:
+    - Una hora antes de dormir, se apagan las pantallas.
+    - Sigan siempre el mismo orden (baño, pijama, dientes, cuento, luz baja).
+    - Dibujen juntos un cartel con los pasos para que pueda seguirlos.
+    - Los dispositivos duermen fuera del dormitorio.
+  evidence_label: recomendacion_oficial
+  sources: [{ slug: sap-2023 }, { slug: carter-2016 }]
+
+- slug: teatro-de-sombras
+  title: Teatro de sombras
+  summary: Inventar una historia con las manos y una linterna.
+  objective: Imaginación, lenguaje y juego compartido.
+  age_min_months: 36
+  age_max_months: 120
+  duration_min: 20
+  participants_min: 2
+  cost_level: free
+  space: small_indoor
+  categories: [creatividad, lenguaje]
+  materials: [Linterna o lámpara, Una pared clara]
+  steps:
+    - Apaguen las luces y apunten la linterna a la pared.
+    - Hagan figuras con las manos (un perro, un pájaro).
+    - Inventen una historia con los personajes.
+  evidence_label: propuesta_proyecto
+
+- slug: disfraces-con-lo-que-hay
+  title: Disfraces con lo que hay
+  summary: Armar personajes con ropa y objetos de la casa.
+  objective: Juego simbólico y creatividad.
+  age_min_months: 30
+  age_max_months: 96
+  duration_min: 30
+  cost_level: free
+  space: indoor
+  categories: [creatividad, juego_social]
+  materials: [Ropa vieja, Pañuelos, Cajas de cartón]
+  steps:
+    - Junten ropa y objetos que ya no usen.
+    - Que cada uno arme un personaje y le invente un nombre.
+    - Representen una escena corta para el resto de la familia.
+  evidence_label: propuesta_proyecto
+
+- slug: dibujo-a-ciegas
+  title: Dibujo a ciegas
+  summary: Uno describe una imagen y el otro la dibuja sin verla.
+  objective: Lenguaje, escucha y risa compartida.
+  age_min_months: 60
+  age_max_months: 168
+  duration_min: 15
+  participants_min: 2
+  cost_level: free
+  space: small_indoor
+  categories: [creatividad, lenguaje, juego_social]
+  materials: [Papel, Lápices]
+  steps:
+    - Uno elige un dibujo simple y lo describe sin decir qué es.
+    - El otro dibuja siguiendo las instrucciones.
+    - Comparen los dibujos y cambien de rol.
+  evidence_label: propuesta_proyecto
+
+- slug: avioncito-en-casa
+  title: Avioncito (rayuela) en casa
+  summary: Una rayuela con cinta en el pasillo para saltar y contar.
+  objective: Movimiento, equilibrio y números.
+  age_min_months: 48
+  age_max_months: 120
+  duration_min: 15
+  cost_level: free
+  space: small_indoor
+  categories: [movimiento]
+  materials: [Cinta de papel, Una tapita o piedra]
+  steps:
+    - Marquen la rayuela con cinta y numeren los casilleros.
+    - Tiren la tapita y salten en un pie esquivando ese casillero.
+    - Turnarse y llevar la cuenta de los puntos.
+  safety_notes: Piso no resbaladizo.
+  evidence_label: propuesta_proyecto
+
+- slug: huerta-en-macetas
+  title: Huerta en macetas
+  summary: Sembrar algo simple y cuidarlo juntos durante semanas.
+  objective: Responsabilidad, paciencia y observación.
+  age_min_months: 48
+  age_max_months: 168
+  duration_min: 20
+  cost_level: low
+  space: outdoor
+  categories: [exploracion, autonomia]
+  materials: [Macetas o envases reciclados, Tierra, Semillas (lenteja, poroto, aromáticas)]
+  steps:
+    - Llenen las macetas con tierra y siembren las semillas.
+    - 'Asignen tareas: regar, medir, sacar fotos o dibujar el avance.'
+    - Cada semana, comparen cuánto creció.
+  evidence_label: propuesta_proyecto
+
+- slug: acuerdo-familiar-de-pantallas
+  title: Acuerdo familiar de pantallas
+  summary: Escribir juntos pocas reglas que valgan para todos, adultos incluidos.
+  objective: Reducir conflictos con reglas claras y compartidas.
+  age_min_months: 72
+  age_max_months: 215
+  duration_min: 30
+  participants_min: 2
+  cost_level: free
+  space: indoor
+  categories: [vinculo, autonomia]
+  materials: [Papel y marcadores]
+  steps:
+    - Reúnanse un rato tranquilo, sin apuro.
+    - Cada uno propone una regla sobre cuándo, dónde y qué.
+    - Elijan entre 3 y 5 reglas que valgan para todos.
+    - Escríbanlas, fírmenlas y péguenlas a la vista. Revísenlas en un mes.
+  evidence_label: propuesta_proyecto
+  sources: [{ slug: aap-2026 }]
+
+- slug: biblioteca-del-barrio
+  title: Visita a la biblioteca del barrio
+  summary: Una salida semanal para elegir libros y participar de actividades gratuitas.
+  objective: Lectura y terceros espacios fuera de casa.
+  age_min_months: 24
+  age_max_months: 215
+  duration_min: 60
+  cost_level: free
+  space: outdoor
+  categories: [lenguaje, exploracion]
+  steps:
+    - Busquen la biblioteca popular o municipal más cercana.
+    - Asocien a la familia (suele ser gratuito o de bajo costo).
+    - Que cada uno elija un libro para la semana.
+    - Pregunten por talleres o lecturas para chicos.
+  evidence_label: propuesta_proyecto
+  sources: [{ slug: aap-2026 }]
+
+- slug: musica-y-movimiento
+  title: Música y movimiento
+  summary: Bailar, frenar cuando para la música y moverse como animales.
+  objective: Movimiento, ritmo y autocontrol.
+  age_min_months: 18
+  age_max_months: 96
+  duration_min: 10
+  cost_level: free
+  space: small_indoor
+  categories: [movimiento, calma]
+  materials: [Música (radio, celular sin pantalla a la vista)]
+  steps:
+    - Pongan música y bailen libremente.
+    - Cuando la música para, todos quedan quietos como estatuas.
+    - Prueben moverse como distintos animales según la canción.
+  evidence_label: propuesta_proyecto
+  sources: [{ slug: oms-2019 }]
+
+- slug: preguntas-de-la-semana
+  title: Preguntas de la semana
+  summary: Una conversación breve con un adolescente sobre cómo le fue con las redes.
+  objective: Conversación y bienestar digital sin vigilancia.
+  age_min_months: 132
+  age_max_months: 215
+  duration_min: 10
+  participants_min: 2
+  cost_level: free
+  space: indoor
+  categories: [vinculo]
+  steps:
+    - Elijan un momento fijo de la semana (por ejemplo, el domingo a la tarde).
+    - Pregunten qué aplicación lo hizo sentir bien y cuál no tanto.
+    - Que proponga una meta para la semana siguiente, si quiere.
+    - Escuchen sin juzgar ni revisar el teléfono.
+  evidence_label: propuesta_proyecto
+  sources: [{ slug: surgeon-general-2023 }]
+
+- slug: juegos-de-patio-de-siempre
+  title: Juegos de patio de siempre
+  summary: La mancha, las escondidas o el elástico, en el patio o la plaza.
+  objective: Actividad vigorosa y juego con otros.
+  age_min_months: 48
+  age_max_months: 144
+  duration_min: 30
+  participants_min: 3
+  cost_level: free
+  space: outdoor
+  categories: [movimiento, juego_social]
+  materials: [Elástico o soga (opcional)]
+  steps:
+    - Elijan un juego que conozcan los adultos y enséñenlo.
+    - Acuerden los límites del espacio y las reglas.
+    - Cambien de juego cuando baje el interés.
+  safety_notes: Espacio despejado y supervisión.
+  evidence_label: recomendacion_oficial
+  sources: [{ slug: oms-2020 }]
