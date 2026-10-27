@@ -8,5 +8,7 @@ packages:
 allowBuilds:
   esbuild: true
   unrs-resolver: false
+  # @parcel/watcher (vía jest) también trae binarios precompilados; su script compila desde fuente.
+  '@parcel/watcher': false
   # CLI de Supabase: su postinstall descarga el binario oficial desde GitHub Releases.
   supabase: true

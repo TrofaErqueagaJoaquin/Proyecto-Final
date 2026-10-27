@@ -30,9 +30,15 @@ jobs:
       - run: pnpm format:check
       - run: pnpm turbo run lint typecheck test
       - run: pnpm turbo run build
+        env:
+          # Valores públicos ficticios: el export web los exige, pero CI no se conecta a nada.
+          EXPO_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+          EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci
       - name: El bundle web no contiene secretos del servidor
         run: |
-          if grep -rIl -e 'service_role' -e 'sb_secret_' -e 'sk-ant-' -e 'SUPABASE_SECRET_KEY' apps/app/dist; then
+          # Se buscan claves reales (prefijo + valor), no el prefijo solo: supabase-js incluye
+          # "sb_secret_" en su propio chequeo de formato de claves.
+          if grep -rIlE -e 'sb_secret_[A-Za-z0-9_-]{16,}' -e 'sk-ant-[A-Za-z0-9_-]{16,}' -e 'SUPABASE_SECRET_KEY' apps/app/dist; then
             echo "::error::Se encontró un posible secreto en el bundle web"; exit 1
           fi
 

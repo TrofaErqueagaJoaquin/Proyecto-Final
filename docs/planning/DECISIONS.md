@@ -218,6 +218,20 @@
   8. **Mientras no haya tipos generados** (`pnpm db:types`, después de `supabase link`), todo resultado de Supabase se valida con zod antes de usarse.
 - **Estado.** Aceptada.
 
+### ADR-024 · Decisiones de implementación de la Fase 3
+
+- **Fecha.** 27/10/2026 (Fase 3).
+- **Decisiones:**
+  1. **Sistema de diseño propio** (`apps/app/src/ui`: tokens, `makeStyles` por esquema claro/oscuro y componentes base) **en lugar de NativeWind**. NativeWind 4 depende de Tailwind 3 y de una capa de compatibilidad sin soporte claro para React Native 0.88. Un `StyleSheet` con tokens funciona igual en web y en nativo, sin pasos de build. Reemplaza la elección de `TECH_STACK.md` §2.2.
+  2. **El contraste se verifica con tests** (`tokens.test.ts`): todo par texto/fondo usado cumple WCAG AA (4,5:1) y los bordes e íconos cumplen 3:1, en ambos temas.
+  3. **Sin rutas tipadas de Expo Router.** Los tipos se generan solo al correr `expo start` y quedaban desactualizados o ausentes en CI. Las rutas son texto y las redirecciones de usuario pasan por `safeNextPath` (solo rutas internas).
+  4. **Sesión nativa en SecureStore en fragmentos** (la sesión de Supabase supera el límite por valor); en web, `localStorage` (ADR-019).
+  5. **Términos y privacidad:** la casilla del registro guarda la versión en los metadatos del usuario y se convierte en un consentimiento real en el primer ingreso. Quien entra con Google o GitHub, o cuando cambia la versión, pasa por `/bienvenida`.
+  6. **Tests de la app con jest-expo y Testing Library 14** (`render` y `fireEvent` son asíncronos). `lucide-react-native` se resuelve a su build CJS en Jest.
+  7. **El chequeo de secretos del bundle web** busca claves reales (prefijo y valor), porque `supabase-js` contiene el prefijo `sb_secret_` en su propio código.
+- **Pendiente de verificar con una cuenta real:** registro, confirmación por correo, ingreso, recuperación de contraseña, OAuth y la aceptación de términos. Quedan programados y con tests de unidad, pero sin probar de punta a punta contra Supabase. Esta noche no se crearon cuentas ni se ingresaron contraseñas.
+- **Estado.** Aceptada.
+
 ---
 
 ## Decisiones pendientes de validación externa
