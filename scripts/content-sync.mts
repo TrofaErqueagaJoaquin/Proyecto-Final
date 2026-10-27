@@ -4,10 +4,13 @@
 //   pnpm content:sync    → valida y carga en el proyecto de apps/api/.env (clave secreta)
 //
 // Lo que ya no está en content/ se archiva (no se borra: puede tener favoritos o registros).
+// Los cuestionarios publicados no se editan: un cambio exige una versión nueva (ADR-027).
 
+import { createHash } from 'node:crypto';
 import { readdir, readFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 
+import { findClinicalTerms, QuestionnaireFileSchema, type QuestionnaireFile } from '@crecer/domain';
 import {
   ActivityFileSchema,
   ContentFrontmatterSchema,
@@ -109,7 +112,58 @@ async function loadContent() {
     }
   }
 
-  return { sources, library, activities };
+  const questionnaires: QuestionnaireFile[] = [];
+  for (const file of (await readdir(join(ROOT, 'questionnaires')))
+    .filter((f) => f.endsWith('.yaml'))
+    .sort()) {
+    const where = `questionnaires/${file}`;
+    const questionnaire = parseWith(
+      QuestionnaireFileSchema,
+      parseYaml(await readFile(join(ROOT, 'questionnaires', file), 'utf8')),
+      where,
+    );
+    if (!questionnaire) continue;
+    const expected = `${questionnaire.slug}-v${String(questionnaire.version)}.yaml`;
+    if (file !== expected) fail(where, `el archivo debe llamarse ${expected}`);
+
+    // Los textos del resultado nunca usan vocabulario clínico (IMPLEMENTATION_PLAN.md F6).
+    const resultTexts = [
+      ...questionnaire.scoring.dimensions.flatMap((d) => Object.values(d.texts)),
+      ...questionnaire.scoring.recommendations.map((r) => r.reason),
+    ];
+    for (const text of resultTexts) {
+      const terms = findClinicalTerms(text);
+      if (terms.length > 0) fail(where, `vocabulario clínico (${terms.join(', ')}) en "${text}"`);
+    }
+
+    // Cada recomendación apunta a algo que existe y que corresponde a la edad de la regla.
+    for (const rule of questionnaire.scoring.recommendations) {
+      const { target } = rule;
+      const found =
+        'contentSlug' in target
+          ? library.find((c) => c.meta.slug === target.contentSlug)?.meta
+          : activities.find((a) => a.slug === target.activitySlug);
+      if (!found) {
+        fail(where, `${rule.code}: destino inexistente ${JSON.stringify(target)}`);
+        continue;
+      }
+      const ruleMin = rule.when.minAgeMonths ?? questionnaire.minAgeMonths;
+      const ruleMax = rule.when.maxAgeMonths ?? questionnaire.maxAgeMonths;
+      const targetMin = found.age_min_months ?? 0;
+      const targetMax = found.age_max_months ?? 216;
+      if (ruleMin < targetMin || ruleMax > targetMax) {
+        fail(
+          where,
+          `${rule.code}: la regla va de ${String(ruleMin)} a ${String(ruleMax)} meses y el destino de ${String(targetMin)} a ${String(targetMax)}`,
+        );
+      }
+    }
+    questionnaires.push(questionnaire);
+  }
+  const versions = questionnaires.map((q) => `${q.slug}@${String(q.version)}`);
+  if (new Set(versions).size !== versions.length) fail('questionnaires', 'versiones repetidas');
+
+  return { sources, library, activities, questionnaires };
 }
 
 function must<T>(result: { data: T | null; error: { message: string } | null }, what: string): T {
@@ -331,7 +385,133 @@ async function sync(content: Awaited<ReturnType<typeof loadContent>>) {
     );
   }
 
-  return { archived: toArchive.length + activitiesToArchive.length };
+  // Cuestionarios: cada versión se carga una vez y queda publicada (inmutable).
+  let questionnairesPublished = 0;
+  for (const file of content.questionnaires) {
+    const hash = createHash('sha256').update(JSON.stringify(file)).digest('hex');
+    const label = `${file.slug} v${String(file.version)}`;
+    const questionnaire = must(
+      await db
+        .from('questionnaires')
+        .upsert(
+          { slug: file.slug, title: file.title, description: file.description },
+          { onConflict: 'slug' },
+        )
+        .select('id')
+        .single(),
+      `questionnaires ${file.slug}`,
+    );
+    const existing = must(
+      await db
+        .from('questionnaire_versions')
+        .select('id, status, source_hash')
+        .eq('questionnaire_id', questionnaire.id)
+        .eq('version', file.version),
+      `questionnaire_versions ${label} (lectura)`,
+    )[0];
+    if (existing && existing.status !== 'draft') {
+      if (existing.source_hash === hash) continue;
+      throw new Error(
+        `${label} ya está publicada y el archivo cambió. Copialo como versión ${String(file.version + 1)}.`,
+      );
+    }
+    if (existing) {
+      // Un borrador que quedó de una carga interrumpida: se rehace entero.
+      must(
+        await db.from('questionnaire_versions').delete().eq('id', existing.id).select('id'),
+        `questionnaire_versions ${label} (borrado del borrador)`,
+      );
+    }
+
+    const version = must(
+      await db
+        .from('questionnaire_versions')
+        .insert({
+          questionnaire_id: questionnaire.id,
+          version: file.version,
+          evidence_label: file.evidenceLabel,
+          estimated_minutes: file.estimatedMinutes,
+          min_age_months: file.minAgeMonths,
+          max_age_months: file.maxAgeMonths,
+          scoring_spec: file.scoring,
+          source_hash: hash,
+        })
+        .select('id')
+        .single(),
+      `questionnaire_versions ${label}`,
+    );
+    for (const [sectionIndex, section] of file.sections.entries()) {
+      const sectionRow = must(
+        await db
+          .from('questionnaire_sections')
+          .insert({
+            version_id: version.id,
+            code: section.code,
+            title: section.title,
+            description: section.description ?? null,
+            min_age_months: section.minAgeMonths ?? null,
+            max_age_months: section.maxAgeMonths ?? null,
+            position: sectionIndex + 1,
+          })
+          .select('id')
+          .single(),
+        `questionnaire_sections ${section.code}`,
+      );
+      for (const [questionIndex, question] of section.questions.entries()) {
+        const questionRow = must(
+          await db
+            .from('questions')
+            .insert({
+              section_id: sectionRow.id,
+              code: question.code,
+              prompt: question.prompt,
+              help_text: question.help ?? null,
+              type: question.type,
+              required: question.required,
+              min_age_months: question.minAgeMonths ?? null,
+              max_age_months: question.maxAgeMonths ?? null,
+              show_if: question.showIf ?? null,
+              number_min: question.number?.min ?? null,
+              number_max: question.number?.max ?? null,
+              number_step: question.number?.step ?? null,
+              unit: question.number?.unit ?? null,
+              position: questionIndex + 1,
+            })
+            .select('id')
+            .single(),
+          `questions ${question.code}`,
+        );
+        if (question.options.length > 0) {
+          must(
+            await db
+              .from('question_options')
+              .insert(
+                question.options.map((option, optionIndex) => ({
+                  question_id: questionRow.id,
+                  code: option.code,
+                  label: option.label,
+                  value: option.value,
+                  position: optionIndex + 1,
+                })),
+              )
+              .select('id'),
+            `question_options ${question.code}`,
+          );
+        }
+      }
+    }
+    must(
+      await db
+        .from('questionnaire_versions')
+        .update({ status: 'published', published_at: now })
+        .eq('id', version.id)
+        .select('id'),
+      `questionnaire_versions ${label} (publicación)`,
+    );
+    questionnairesPublished += 1;
+  }
+
+  return { archived: toArchive.length + activitiesToArchive.length, questionnairesPublished };
 }
 
 const content = await loadContent();
@@ -341,10 +521,12 @@ if (errors.length > 0) {
   process.exit(1);
 }
 console.log(
-  `✔ content/ válido: ${String(content.sources.length)} fuentes, ${String(content.library.length)} contenidos, ${String(content.activities.length)} actividades`,
+  `✔ content/ válido: ${String(content.sources.length)} fuentes, ${String(content.library.length)} contenidos, ${String(content.activities.length)} actividades, ${String(content.questionnaires.length)} cuestionario(s)`,
 );
 
 if (!process.argv.includes('--check')) {
   const result = await sync(content);
-  console.log(`✔ Sincronizado con la base (${String(result.archived)} elemento(s) archivado(s)).`);
+  console.log(
+    `✔ Sincronizado con la base (${String(result.archived)} elemento(s) archivado(s), ${String(result.questionnairesPublished)} versión(es) de cuestionario publicada(s)).`,
+  );
 }

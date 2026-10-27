@@ -12,10 +12,14 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
+  "dependencies": {
+    "zod": "^4.6.7"
+  },
   "devDependencies": {
     "@crecer/config": "workspace:*",
     "eslint": "^10.13.0",
     "typescript": "~6.0.3",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "yaml": "^2.9.1"
   }
 }

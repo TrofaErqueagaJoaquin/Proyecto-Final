@@ -172,6 +172,9 @@ importers:
       '@commitlint/config-conventional':
         specifier: ^21.2.4
         version: 21.2.4
+      '@crecer/domain':
+        specifier: workspace:*
+        version: link:packages/domain
       '@crecer/shared':
         specifier: workspace:*
         version: link:packages/shared
@@ -211,6 +214,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@crecer/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@crecer/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -399,6 +405,10 @@ importers:
         version: 10.13.0(jiti@2.7.0)(supports-color@8.1.1)
 
   packages/domain:
+    dependencies:
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       '@crecer/config':
         specifier: workspace:*
@@ -412,6 +422,9 @@ importers:
       vitest:
         specifier: ^5.0.5
         version: 5.0.5(@types/node@26.6.5)(jsdom@26.1.0(supports-color@8.1.1))(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+      yaml:
+        specifier: ^2.9.1
+        version: 2.9.1
 
   packages/shared:
     dependencies:

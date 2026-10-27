@@ -62,6 +62,13 @@ export function fakeDeps(overrides: Partial<AppDeps> = {}): AppDeps {
           familyName: `Familia ${invitation.familyId.slice(0, 4)}`,
         }),
     },
+    assessments: {
+      loadAttempt: () => Promise.resolve(null),
+      loadVersion: () => Promise.reject(new Error('sin cuestionario')),
+      loadAnswers: () => Promise.resolve([]),
+      resolveTargets: () => Promise.resolve({ content: new Map(), activities: new Map() }),
+      finalize: () => Promise.resolve('ok'),
+    },
     mailer: { sendInvitation: () => Promise.resolve(false) },
     now: () => new Date('2026-10-27T12:00:00.000Z'),
     generateToken: () => 'token-de-prueba',

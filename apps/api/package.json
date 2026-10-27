@@ -22,6 +22,7 @@
     "vitest": "^5.0.5"
   },
   "dependencies": {
+    "@crecer/domain": "workspace:*",
     "@crecer/shared": "workspace:*",
     "@hono/node-server": "^2.1.5",
     "@supabase/supabase-js": "^2.118.0",

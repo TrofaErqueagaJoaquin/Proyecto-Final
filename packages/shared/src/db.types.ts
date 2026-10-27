@@ -295,6 +295,161 @@ export type Database = {
           },
         ]
       }
+      assessment_answers: {
+        Row: {
+          attempt_id: string
+          created_at: string
+          id: string
+          option_id: string | null
+          question_id: string
+          value_number: number | null
+        }
+        Insert: {
+          attempt_id: string
+          created_at?: string
+          id?: string
+          option_id?: string | null
+          question_id: string
+          value_number?: number | null
+        }
+        Update: {
+          attempt_id?: string
+          created_at?: string
+          id?: string
+          option_id?: string | null
+          question_id?: string
+          value_number?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_answers_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_attempts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_answers_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "question_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessment_attempts: {
+        Row: {
+          engine_version: string | null
+          family_id: string
+          id: string
+          member_age_months: number
+          member_id: string
+          respondent_id: string | null
+          started_at: string
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          version_id: string
+        }
+        Insert: {
+          engine_version?: string | null
+          family_id: string
+          id?: string
+          member_age_months: number
+          member_id: string
+          respondent_id?: string | null
+          started_at?: string
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          version_id: string
+        }
+        Update: {
+          engine_version?: string | null
+          family_id?: string
+          id?: string
+          member_age_months?: number
+          member_id?: string
+          respondent_id?: string | null
+          started_at?: string
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_attempts_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_attempts_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_attempts_respondent_id_fkey"
+            columns: ["respondent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_attempts_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "questionnaire_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessment_dimension_scores: {
+        Row: {
+          attempt_id: string
+          band: string
+          dimension_code: string
+          explanation: Json
+          normalized: number
+          raw_score: number
+        }
+        Insert: {
+          attempt_id: string
+          band: string
+          dimension_code: string
+          explanation?: Json
+          normalized: number
+          raw_score: number
+        }
+        Update: {
+          attempt_id?: string
+          band?: string
+          dimension_code?: string
+          explanation?: Json
+          normalized?: number
+          raw_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_dimension_scores_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_attempts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -802,6 +957,315 @@ export type Database = {
         }
         Relationships: []
       }
+      question_options: {
+        Row: {
+          code: string
+          id: string
+          label: string
+          position: number
+          question_id: string
+          value: number
+        }
+        Insert: {
+          code: string
+          id?: string
+          label: string
+          position: number
+          question_id: string
+          value: number
+        }
+        Update: {
+          code?: string
+          id?: string
+          label?: string
+          position?: number
+          question_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_options_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      questionnaire_sections: {
+        Row: {
+          code: string
+          description: string | null
+          id: string
+          max_age_months: number | null
+          min_age_months: number | null
+          position: number
+          title: string
+          version_id: string
+        }
+        Insert: {
+          code: string
+          description?: string | null
+          id?: string
+          max_age_months?: number | null
+          min_age_months?: number | null
+          position: number
+          title: string
+          version_id: string
+        }
+        Update: {
+          code?: string
+          description?: string | null
+          id?: string
+          max_age_months?: number | null
+          min_age_months?: number | null
+          position?: number
+          title?: string
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questionnaire_sections_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "questionnaire_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      questionnaire_versions: {
+        Row: {
+          created_at: string
+          estimated_minutes: number
+          evidence_label: string
+          id: string
+          max_age_months: number
+          min_age_months: number
+          published_at: string | null
+          questionnaire_id: string
+          scoring_spec: Json
+          source_hash: string | null
+          status: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          estimated_minutes: number
+          evidence_label: string
+          id?: string
+          max_age_months: number
+          min_age_months: number
+          published_at?: string | null
+          questionnaire_id: string
+          scoring_spec: Json
+          source_hash?: string | null
+          status?: string
+          version: number
+        }
+        Update: {
+          created_at?: string
+          estimated_minutes?: number
+          evidence_label?: string
+          id?: string
+          max_age_months?: number
+          min_age_months?: number
+          published_at?: string | null
+          questionnaire_id?: string
+          scoring_spec?: Json
+          source_hash?: string | null
+          status?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questionnaire_versions_questionnaire_id_fkey"
+            columns: ["questionnaire_id"]
+            isOneToOne: false
+            referencedRelation: "questionnaires"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      questionnaires: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      questions: {
+        Row: {
+          code: string
+          help_text: string | null
+          id: string
+          max_age_months: number | null
+          min_age_months: number | null
+          number_max: number | null
+          number_min: number | null
+          number_step: number | null
+          position: number
+          prompt: string
+          required: boolean
+          section_id: string
+          show_if: Json | null
+          type: string
+          unit: string | null
+        }
+        Insert: {
+          code: string
+          help_text?: string | null
+          id?: string
+          max_age_months?: number | null
+          min_age_months?: number | null
+          number_max?: number | null
+          number_min?: number | null
+          number_step?: number | null
+          position: number
+          prompt: string
+          required?: boolean
+          section_id: string
+          show_if?: Json | null
+          type: string
+          unit?: string | null
+        }
+        Update: {
+          code?: string
+          help_text?: string | null
+          id?: string
+          max_age_months?: number | null
+          min_age_months?: number | null
+          number_max?: number | null
+          number_min?: number | null
+          number_step?: number | null
+          position?: number
+          prompt?: string
+          required?: boolean
+          section_id?: string
+          show_if?: Json | null
+          type?: string
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "questionnaire_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recommendations: {
+        Row: {
+          activity_id: string | null
+          attempt_id: string
+          content_item_id: string | null
+          created_at: string
+          family_id: string
+          id: string
+          member_id: string
+          priority: number
+          reason: string
+          rule_code: string
+          status: string
+          status_changed_at: string | null
+          status_changed_by: string | null
+        }
+        Insert: {
+          activity_id?: string | null
+          attempt_id: string
+          content_item_id?: string | null
+          created_at?: string
+          family_id: string
+          id?: string
+          member_id: string
+          priority: number
+          reason: string
+          rule_code: string
+          status?: string
+          status_changed_at?: string | null
+          status_changed_by?: string | null
+        }
+        Update: {
+          activity_id?: string | null
+          attempt_id?: string
+          content_item_id?: string | null
+          created_at?: string
+          family_id?: string
+          id?: string
+          member_id?: string
+          priority?: number
+          reason?: string
+          rule_code?: string
+          status?: string
+          status_changed_at?: string | null
+          status_changed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recommendations_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendations_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_attempts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendations_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendations_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendations_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendations_status_changed_by_fkey"
+            columns: ["status_changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_permissions: {
         Row: {
           permission_code: string
@@ -1004,9 +1468,24 @@ export type Database = {
         }
         Returns: string
       }
+      age_in_months: {
+        Args: { p_birth_month: string; p_on: string }
+        Returns: number
+      }
+      can_manage_attempt: { Args: { p_attempt_id: string }; Returns: boolean }
       create_family: {
         Args: { p_name: string; p_relationship: string }
         Returns: string
+      }
+      finalize_assessment: {
+        Args: {
+          p_attempt_id: string
+          p_engine_version: string
+          p_recommendations: Json
+          p_scores: Json
+          p_submitted_by: string
+        }
+        Returns: undefined
       }
       has_permission: { Args: { p_code: string }; Returns: boolean }
       is_family_adult: {
@@ -1023,11 +1502,28 @@ export type Database = {
         }
         Returns: undefined
       }
+      questionnaire_definition: {
+        Args: { p_version_id: string }
+        Returns: Json
+      }
       raise_domain_error: {
         Args: { p_code: string; p_detail?: string }
         Returns: undefined
       }
+      save_answer: {
+        Args: {
+          p_attempt_id: string
+          p_option_ids: string[]
+          p_question_id: string
+          p_value: number
+        }
+        Returns: undefined
+      }
       shares_family_with: { Args: { p_user_id: string }; Returns: boolean }
+      start_assessment: {
+        Args: { p_member_id: string; p_version_id: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

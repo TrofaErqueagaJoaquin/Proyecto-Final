@@ -28,6 +28,7 @@
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",
     "@commitlint/config-conventional": "^21.2.4",
+    "@crecer/domain": "workspace:*",
     "@crecer/shared": "workspace:*",
     "@electric-sql/pglite": "0.5.10",
     "@supabase/supabase-js": "^2.118.0",

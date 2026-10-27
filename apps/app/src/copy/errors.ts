@@ -48,6 +48,10 @@ const DOMAIN_MESSAGES: Record<DomainErrorCode, string> = {
     'La familia necesita al menos un responsable principal. Asigná ese rol a otra persona primero.',
   LAST_PLATFORM_ADMIN: 'Tiene que quedar al menos una cuenta administradora.',
   AUDIT_LOG_IMMUTABLE: 'La auditoría no se puede modificar.',
+  QUESTIONNAIRE_LOCKED: 'Esta versión del cuestionario ya está publicada y no se puede cambiar.',
+  QUESTIONNAIRE_UNAVAILABLE: 'Este cuestionario no está disponible para esta edad.',
+  ASSESSMENT_CLOSED: 'Esta evaluación ya está cerrada: no se pueden cambiar las respuestas.',
+  ASSESSMENT_ALREADY_SUBMITTED: 'Esta evaluación ya se envió.',
 };
 
 // Códigos SQLSTATE que pueden llegar por PostgREST.

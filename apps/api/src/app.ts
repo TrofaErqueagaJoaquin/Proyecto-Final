@@ -12,6 +12,11 @@ import { log } from './lib/logger';
 import { createResendMailer, disabledMailer, type Mailer } from './lib/mailer';
 import { requireAuth } from './middleware/auth';
 import {
+  assessmentsRoute,
+  createSupabaseAssessments,
+  type AssessmentsPort,
+} from './modules/assessments/submit';
+import {
   createSupabaseInvitations,
   generateInvitationToken,
   invitationsRoute,
@@ -27,6 +32,7 @@ export interface AppDeps {
   authorization: AuthorizationPort;
   loadMe: LoadMe;
   invitations: InvitationsPort;
+  assessments: AssessmentsPort;
   mailer: Mailer;
   now: () => Date;
   generateToken: () => string;
@@ -38,6 +44,7 @@ export function createDefaultDeps(env: Env): AppDeps {
     authorization: createSupabaseAuthorization(env),
     loadMe: createSupabaseMeRepository(env),
     invitations: createSupabaseInvitations(env),
+    assessments: createSupabaseAssessments(env),
     mailer: env.RESEND_API_KEY
       ? createResendMailer(env.RESEND_API_KEY, env.MAIL_FROM)
       : disabledMailer,
@@ -91,6 +98,9 @@ export function createApp(env: Env, deps: AppDeps) {
       appPublicUrl: env.APP_PUBLIC_URL,
     }),
   );
+
+  app.use('/v1/assessments/*', authenticated);
+  app.route('/', assessmentsRoute({ assessments: deps.assessments }));
 
   app.notFound((c) => errorResponse(c, 404, 'NOT_FOUND', 'El recurso no existe.'));
 

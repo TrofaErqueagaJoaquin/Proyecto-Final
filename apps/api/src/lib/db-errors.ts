@@ -60,6 +60,22 @@ const DOMAIN_ERRORS: Record<
     code: 'CONFLICT',
     text: 'La auditoría no se puede modificar.',
   },
+  QUESTIONNAIRE_LOCKED: {
+    status: 409,
+    code: 'CONFLICT',
+    text: 'Esa versión del cuestionario ya está publicada.',
+  },
+  QUESTIONNAIRE_UNAVAILABLE: {
+    status: 409,
+    code: 'CONFLICT',
+    text: 'Este cuestionario no está disponible para esta edad.',
+  },
+  ASSESSMENT_CLOSED: { status: 409, code: 'CONFLICT', text: 'Esta evaluación ya está cerrada.' },
+  ASSESSMENT_ALREADY_SUBMITTED: {
+    status: 409,
+    code: 'CONFLICT',
+    text: 'Esta evaluación ya se envió.',
+  },
 };
 
 /**

@@ -43,5 +43,9 @@ export const DomainErrorCodeSchema = z.enum([
   'LAST_FAMILY_OWNER',
   'LAST_PLATFORM_ADMIN',
   'AUDIT_LOG_IMMUTABLE',
+  'QUESTIONNAIRE_LOCKED',
+  'QUESTIONNAIRE_UNAVAILABLE',
+  'ASSESSMENT_CLOSED',
+  'ASSESSMENT_ALREADY_SUBMITTED',
 ]);
 export type DomainErrorCode = z.infer<typeof DomainErrorCodeSchema>;

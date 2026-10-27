@@ -262,6 +262,24 @@
 - **Verificado contra `crecer-dev`:** lectura anónima de lo publicado, `permission denied` en familias, búsqueda sin tildes, sincronización idempotente y las pantallas públicas en el navegador. **No verificado de punta a punta:** guardar y registrar actividades, porque requiere una sesión real.
 - **Estado.** Aceptada.
 
+### ADR-027 · Decisiones de implementación de la Fase 6
+
+- **Fecha.** 27/10/2026 (Fase 6).
+- **Decisiones:**
+  1. **Motor puro en `packages/domain/src/scoring`**: `scoreAttempt` y `recommend` son funciones de (definición, especificación, edad, respuestas). El resultado no depende del orden de las respuestas: un test de propiedad lo comprueba con 300 casos con semilla. `recommend` vive en `engine.ts` junto a `scoreAttempt` porque comparte el cálculo de las respuestas que cuentan.
+  2. **Cada sección del cuestionario es una dimensión.** La puntuación es el promedio de las preguntas que puntúan (0 a 100), y la banda es el primer corte que lo alcanza: 39 para `priority`, 69 para `watch` y 100 para `strength`, como propuesta del proyecto. Una pregunta sin pauta para la edad es solo descriptiva, por ejemplo las horas de pantalla desde los 5 años. Una dimensión sin preguntas que puntúen no tiene resultado.
+  3. **Tres tipos de regla por pregunta**: `option_value`, `multi_sum` con tope y `age_range` (rango ideal por edad con tolerancia). El tiempo de pantalla se responde con opciones cuyo valor está en horas y se compara con la pauta de cada edad.
+  4. **La definición sale de la base con `questionnaire_definition()`** en el formato exacto de `QuestionnaireDefinitionSchema`, con los ids. La API y la app la validan con el mismo esquema y traducen las respuestas por id con `answersFromRows`.
+  5. **Inmutabilidad**: un trigger bloquea editar o borrar una versión publicada o retirada, y también sus secciones, preguntas y opciones. Solo se permite pasar de publicada a retirada. `content:sync` guarda un hash del archivo: si cambia una versión ya publicada, falla y pide crear la versión siguiente.
+  6. **Flujo de escritura**: `start_assessment()` (DEFINER) congela la edad en meses y retoma el intento abierto. `save_answer()` (INVOKER) reemplaza la respuesta y la valida un trigger: intento abierto, pregunta de su versión, opción de su pregunta y tipo correcto. El cliente solo puede **descartar** un intento (la política exige `status = 'discarded'`). `finalize_assessment()` solo lo ejecuta `service_role`: bloquea la fila, verifica que quien envía sea owner o guardian y deja una entrada de auditoría sin respuestas ni puntajes.
+  7. **`POST /v1/assessments/:id/submit` es idempotente**: si el intento ya se envió, o si otro pedido lo envió primero, responde 200 con `alreadySubmitted: true` sin volver a puntuar. Un intento descartado da 409, uno ajeno da 404 y uno con obligatorias sin responder da 400. Una recomendación cuyo destino se archivó se omite y queda en el log.
+  8. **El resultado guarda "qué pesó"** (`assessment_dimension_scores.explanation`). Es parte del resultado congelado, así que no se recalcula al mostrarlo.
+  9. **Sin vocabulario clínico**: `findClinicalTerms` revisa los textos de bandas y recomendaciones en `content:check` y en los tests de la app. Las bandas nunca usan el color de peligro. El aviso fijo "Es una orientación, no un diagnóstico" lleva a "Cuándo consultar".
+  10. **Interfaz**: una sección por pantalla, también en el teléfono, porque las secciones tienen de 2 a 5 preguntas. Hay autoguardado optimista y el progreso se ve en la "línea de crecimiento". La caregiver no ve "Evaluaciones" en la navegación.
+- **Pendiente para una v2 del cuestionario:** de los 13 años en adelante no hay ninguna regla de prioridad 1. El sueño y los dispositivos en el dormitorio llevan a la guía de la etapa 12–17, que los trata, pero sin una ficha propia. La v1 ya está publicada y no se edita.
+- **Verificado:** las 35 verificaciones pgTAP nuevas en PGlite, la migración y el cuestionario publicados en `crecer-dev`, la sincronización idempotente y un recorrido completo del cuestionario real en cinco edades en los tests del dominio. **No verificado de punta a punta:** responder y enviar desde la app contra `crecer-dev`, porque requiere una sesión real.
+- **Estado.** Aceptada.
+
 ---
 
 ## Decisiones pendientes de validación externa
