@@ -9,7 +9,14 @@ import { createSupabaseTokenVerifier, type TokenVerifier } from './auth/verify-t
 import type { Env } from './env';
 import { errorResponse, HttpError } from './lib/http';
 import { log } from './lib/logger';
+import { createResendMailer, disabledMailer, type Mailer } from './lib/mailer';
 import { requireAuth } from './middleware/auth';
+import {
+  createSupabaseInvitations,
+  generateInvitationToken,
+  invitationsRoute,
+  type InvitationsPort,
+} from './modules/families/invitations';
 import { createSupabaseMeRepository, type LoadMe } from './modules/me/repository';
 import type { AppBindings } from './types';
 import { API_VERSION } from './version';
@@ -19,6 +26,10 @@ export interface AppDeps {
   verifyToken: TokenVerifier;
   authorization: AuthorizationPort;
   loadMe: LoadMe;
+  invitations: InvitationsPort;
+  mailer: Mailer;
+  now: () => Date;
+  generateToken: () => string;
 }
 
 export function createDefaultDeps(env: Env): AppDeps {
@@ -26,6 +37,12 @@ export function createDefaultDeps(env: Env): AppDeps {
     verifyToken: createSupabaseTokenVerifier(env.SUPABASE_URL),
     authorization: createSupabaseAuthorization(env),
     loadMe: createSupabaseMeRepository(env),
+    invitations: createSupabaseInvitations(env),
+    mailer: env.RESEND_API_KEY
+      ? createResendMailer(env.RESEND_API_KEY, env.MAIL_FROM)
+      : disabledMailer,
+    now: () => new Date(),
+    generateToken: generateInvitationToken,
   };
 }
 
@@ -61,6 +78,19 @@ export function createApp(env: Env, deps: AppDeps) {
   });
 
   app.get('/v1/me', authenticated, async (c) => c.json(await deps.loadMe(c.get('auth'))));
+
+  app.use('/v1/families/*', authenticated);
+  app.route(
+    '/',
+    invitationsRoute({
+      authorization: deps.authorization,
+      invitations: deps.invitations,
+      mailer: deps.mailer,
+      now: deps.now,
+      generateToken: deps.generateToken,
+      appPublicUrl: env.APP_PUBLIC_URL,
+    }),
+  );
 
   app.notFound((c) => errorResponse(c, 404, 'NOT_FOUND', 'El recurso no existe.'));
 

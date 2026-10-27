@@ -1,11 +1,23 @@
 import { CURRENT_POLICY_VERSION } from '@crecer/shared';
-import { Redirect, usePathname } from 'expo-router';
+import { Redirect, useGlobalSearchParams, usePathname } from 'expo-router';
 import { useEffect, type ReactNode } from 'react';
 
 import { ErrorState, Screen, Skeleton } from '@/ui';
 
 import { useAuth } from './AuthProvider';
 import { useAcceptTerms, useTermsConsent } from './queries';
+
+/** Ruta actual con sus parámetros (por ejemplo, el token de una invitación). */
+function useCurrentUrl(): string {
+  const pathname = usePathname();
+  const params = useGlobalSearchParams();
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (typeof value === 'string') query.set(key, value);
+  }
+  const search = query.toString();
+  return search ? `${pathname}?${search}` : pathname;
+}
 
 function Loading() {
   return (
@@ -23,7 +35,7 @@ function Loading() {
  */
 export function RequireSession({ children }: { children: ReactNode }) {
   const auth = useAuth();
-  const pathname = usePathname();
+  const currentUrl = useCurrentUrl();
   const terms = useTermsConsent();
   const accept = useAcceptTerms();
 
@@ -38,7 +50,7 @@ export function RequireSession({ children }: { children: ReactNode }) {
 
   if (auth.status === 'loading') return <Loading />;
   if (auth.status === 'signedOut') {
-    return <Redirect href={`/ingresar?next=${encodeURIComponent(pathname)}`} />;
+    return <Redirect href={`/ingresar?next=${encodeURIComponent(currentUrl)}`} />;
   }
   if (terms.isPending || shouldAutoAccept || accept.isPending) return <Loading />;
   if (terms.isError) return <ErrorState onRetry={() => void terms.refetch()} />;
@@ -52,7 +64,7 @@ export function RequireSession({ children }: { children: ReactNode }) {
         />
       );
     }
-    return <Redirect href="/bienvenida" />;
+    return <Redirect href={`/bienvenida?next=${encodeURIComponent(currentUrl)}`} />;
   }
   return children;
 }

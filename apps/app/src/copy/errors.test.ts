@@ -28,4 +28,16 @@ describe('friendlyError', () => {
   it('nunca muestra mensajes técnicos desconocidos', () => {
     expect(friendlyError(new Error('relation "profiles" does not exist'))).not.toMatch(/relation/);
   });
+
+  it('traduce errores de dominio de la base (P0001)', () => {
+    expect(friendlyError({ code: 'P0001', message: 'LAST_FAMILY_OWNER' })).toMatch(
+      /al menos un responsable principal/,
+    );
+  });
+
+  it('traduce violaciones de permisos de RLS', () => {
+    expect(friendlyError({ code: '42501', message: 'new row violates row-level security' })).toBe(
+      'No tenés permiso para hacer esto.',
+    );
+  });
 });

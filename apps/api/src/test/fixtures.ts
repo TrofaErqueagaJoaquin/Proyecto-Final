@@ -55,6 +55,16 @@ export function fakeDeps(overrides: Partial<AppDeps> = {}): AppDeps {
     verifyToken: fakeVerifier({ [ANA.token]: ANA }),
     authorization: fakeAuthorization({}),
     loadMe: () => Promise.resolve(me),
+    invitations: {
+      create: (_auth, invitation) =>
+        Promise.resolve({
+          id: '44444444-4444-4444-8444-444444444444',
+          familyName: `Familia ${invitation.familyId.slice(0, 4)}`,
+        }),
+    },
+    mailer: { sendInvitation: () => Promise.resolve(false) },
+    now: () => new Date('2026-10-27T12:00:00.000Z'),
+    generateToken: () => 'token-de-prueba',
     ...overrides,
   };
 }

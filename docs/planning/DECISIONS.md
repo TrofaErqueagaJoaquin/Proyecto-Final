@@ -232,6 +232,21 @@
 - **Pendiente de verificar con una cuenta real:** registro, confirmación por correo, ingreso, recuperación de contraseña, OAuth y la aceptación de términos. Quedan programados y con tests de unidad, pero sin probar de punta a punta contra Supabase. Esta noche no se crearon cuentas ni se ingresaron contraseñas.
 - **Estado.** Aceptada.
 
+### ADR-025 · Decisiones de implementación de la Fase 4
+
+- **Fecha.** 27/10/2026 (Fase 4).
+- **Decisiones:**
+  1. **Las invitaciones devuelven un enlace para compartir** (por ejemplo, por WhatsApp), además del correo opcional (Resend). Sin un proveedor de correo configurado, el flujo funciona igual. El token solo existe en el enlace: la base guarda su hash.
+  2. **El enlace funciona solo con el correo invitado** (`INVITATION_EMAIL_MISMATCH`), vence en 7 días y es de un solo uso.
+  3. **Las guardas de sesión y de términos conservan los parámetros de la URL**, para no perder el token si hay que ingresar o aceptar términos antes.
+  4. **Integrantes:** apodo, mes y año (`MM/AAAA`) e intereses de un catálogo cerrado. Nunca hay texto libre sobre un menor.
+  5. **Revocar el consentimiento `child_data` archiva al integrante.** Reactivarlo exige darlo de alta de nuevo con un consentimiento nuevo (no se "des-revoca").
+  6. **Las acciones destructivas se confirman en línea** (`ConfirmAction`), porque `Alert.alert` no funciona en react-native-web.
+  7. **Una familia activa por persona en la interfaz** (la primera de `/v1/me`). El modelo admite varias; el selector queda pendiente.
+- **Pendiente para el despliegue web:** la ruta dinámica `familia/integrante/[id]` necesita una regla de reescritura en Vercel hacia `familia/integrante/[id].html`.
+- **Sin probar de punta a punta contra Supabase** (requiere una sesión real): crear la familia, las invitaciones, aceptarlas y los consentimientos. Las reglas que los sostienen están probadas en pgTAP (65 verificaciones) y la API, con tests de integración.
+- **Estado.** Aceptada.
+
 ---
 
 ## Decisiones pendientes de validación externa

@@ -1,16 +1,18 @@
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 
 import { friendlyError } from '@/copy/errors';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { AuthScreen, TextLink } from '@/features/auth/components';
 import { useAcceptTerms, useTermsConsent } from '@/features/auth/queries';
+import { safeNextPath } from '@/features/auth/redirect';
 import { Banner, Button, Checkbox, Skeleton, Text } from '@/ui';
 
 /** Aceptación de términos para quien ingresó con Google/GitHub o cuando cambia la política. */
 export default function WelcomeScreen() {
   const auth = useAuth();
   const router = useRouter();
+  const { next } = useLocalSearchParams<{ next?: string }>();
   const terms = useTermsConsent();
   const accept = useAcceptTerms();
   const [checked, setChecked] = useState(false);
@@ -18,7 +20,7 @@ export default function WelcomeScreen() {
 
   if (auth.status === 'loading' || terms.isPending) return <Skeleton height={240} />;
   if (auth.status === 'signedOut') return <Redirect href="/ingresar" />;
-  if (terms.data?.accepted) return <Redirect href="/hoy" />;
+  if (terms.data?.accepted) return <Redirect href={safeNextPath(next)} />;
 
   const hadPrevious = terms.data?.hasAny === true;
 
@@ -57,7 +59,7 @@ export default function WelcomeScreen() {
           }
           accept.mutate(undefined, {
             onSuccess: () => {
-              router.replace('/hoy');
+              router.replace(safeNextPath(next));
             },
           });
         }}

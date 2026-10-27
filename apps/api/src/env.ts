@@ -13,6 +13,11 @@ const EnvSchema = z.object({
         .map((origin) => origin.trim())
         .filter((origin) => origin.length > 0),
     ),
+  // Origen público de la app (enlaces de invitación y redirecciones).
+  APP_PUBLIC_URL: z
+    .url()
+    .default('http://localhost:8081')
+    .transform((url) => url.replace(/\/+$/, '')),
   SUPABASE_URL: z.url().transform((url) => url.replace(/\/+$/, '')),
   // Clave publicable (sb_publishable_…): pública por diseño; la API la usa con el JWT del usuario.
   SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
@@ -22,6 +27,12 @@ const EnvSchema = z.object({
     (value) => (value === '' ? undefined : value),
     z.string().min(1).optional(),
   ),
+  // Correo transaccional (Resend). Sin clave, las invitaciones se comparten por enlace.
+  RESEND_API_KEY: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().min(1).optional(),
+  ),
+  MAIL_FROM: z.string().default('Crecer en Casa <no-responder@crecerencasa.invalid>'),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

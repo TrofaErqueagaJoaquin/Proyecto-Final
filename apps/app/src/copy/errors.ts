@@ -1,4 +1,4 @@
-import type { ErrorCode } from '@crecer/shared';
+import { DomainErrorCodeSchema, type DomainErrorCode, type ErrorCode } from '@crecer/shared';
 
 import { ApiError } from '@/lib/api';
 
@@ -32,12 +32,44 @@ const API_MESSAGES: Partial<Record<ErrorCode, string>> = {
   RATE_LIMITED: 'Hiciste muchos intentos seguidos. Esperá unos minutos.',
 };
 
-/** Mensaje en lenguaje claro para cualquier error (Auth, API o desconocido). */
+// Errores de dominio que lanza la base (raise_domain_error) y llegan por PostgREST como P0001.
+const DOMAIN_MESSAGES: Record<DomainErrorCode, string> = {
+  NOT_AUTHENTICATED: 'Tu sesión venció. Volvé a ingresar.',
+  FORBIDDEN: 'No tenés permiso para hacer esto.',
+  CONSENT_REQUIRED: 'Falta el consentimiento requerido.',
+  CONSENT_ALREADY_REVOKED: 'Ese consentimiento ya estaba revocado.',
+  BIRTH_MONTH_IN_FUTURE: 'El mes de nacimiento no puede ser futuro.',
+  INVITATION_INVALID: 'La invitación no existe o ya se usó. Pedí una nueva.',
+  INVITATION_EXPIRED: 'La invitación venció. Pedí una nueva.',
+  INVITATION_EMAIL_MISMATCH:
+    'Esta invitación es para otro correo. Ingresá con la cuenta del correo invitado.',
+  ALREADY_MEMBER: 'Ya sos parte de esta familia.',
+  LAST_FAMILY_OWNER:
+    'La familia necesita al menos un responsable principal. Asigná ese rol a otra persona primero.',
+  LAST_PLATFORM_ADMIN: 'Tiene que quedar al menos una cuenta administradora.',
+  AUDIT_LOG_IMMUTABLE: 'La auditoría no se puede modificar.',
+};
+
+// Códigos SQLSTATE que pueden llegar por PostgREST.
+const POSTGRES_MESSAGES: Record<string, string> = {
+  '42501': 'No tenés permiso para hacer esto.',
+  '23505': 'Eso ya existe.',
+  '23514': 'Hay datos inválidos. Revisá el formulario.',
+};
+
+/** Mensaje en lenguaje claro para cualquier error (Auth, API, base o desconocido). */
 export function friendlyError(error: unknown): string {
   if (error instanceof ApiError) return API_MESSAGES[error.code] ?? error.message;
   if (typeof error === 'object' && error !== null && 'code' in error) {
-    const code = (error as { code?: unknown }).code;
-    if (typeof code === 'string' && code in AUTH_MESSAGES) return AUTH_MESSAGES[code] ?? '';
+    const { code, message } = error as { code?: unknown; message?: unknown };
+    if (code === 'P0001') {
+      const domain = DomainErrorCodeSchema.safeParse(message);
+      if (domain.success) return DOMAIN_MESSAGES[domain.data];
+    }
+    if (typeof code === 'string') {
+      const known = AUTH_MESSAGES[code] ?? POSTGRES_MESSAGES[code];
+      if (known) return known;
+    }
   }
   return 'Ocurrió un error inesperado. Probá de nuevo en un rato.';
 }
