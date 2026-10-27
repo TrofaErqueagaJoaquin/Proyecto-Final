@@ -1,6 +1,6 @@
 # Base de datos y modelo de dominio
 
-> Motor: PostgreSQL (Supabase), extensiones `pgcrypto`, `citext`, `vector`, `unaccent` y `pg_cron`.
+> Motor: PostgreSQL (Supabase), extensiones `pgcrypto`, `vector`, `unaccent` y `pg_cron`.
 > Convenciones: tablas y columnas en `snake_case` (inglés técnico; la interfaz está en español) · PK `id uuid default gen_random_uuid()` salvo en las tablas puente · `created_at timestamptz not null default now()` · todas las FK con índice · **RLS habilitado en todas las tablas** (`alter table … enable row level security`), sin excepciones.
 
 ## 1. Decisiones de modelado
@@ -175,7 +175,7 @@ erDiagram
   FAMILY_INVITATIONS {
     uuid id PK
     uuid family_id FK
-    citext email
+    text email "en minúsculas"
     text role
     bytea token_hash
     timestamptz expires_at
@@ -625,7 +625,7 @@ Qué se deduce de esas filas:
 
 | Orden | Migración                    | Contenido                                                                                                                                                                                                                                                        |
 | ----- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0001  | `extensions_and_helpers`     | `pgcrypto`, `citext`, `vector`, `unaccent`, `pg_cron`, configuración `es_unaccent`, `set_updated_at()`, `log_audit()` y la tabla `audit_log`                                                                                                                     |
+| 0001  | `extensions_and_helpers`     | `pgcrypto`, `vector`, `unaccent`, `pg_cron`, configuración `es_unaccent`, `set_updated_at()`, `log_audit()` y la tabla `audit_log`                                                                                                                               |
 | 0002  | `identity_access`            | `profiles` (+ trigger sobre `auth.users`), `roles`, `permissions`, `role_permissions`, `user_roles`, `has_permission()`                                                                                                                                          |
 | 0003  | `families_consents`          | Tablas 6–11, `is_family_adult()`, `create_family()`, `accept_family_invitation()`                                                                                                                                                                                |
 | 0004  | `content_sources`            | `sources`, `content_items`, `content_revisions`, `content_sources`                                                                                                                                                                                               |

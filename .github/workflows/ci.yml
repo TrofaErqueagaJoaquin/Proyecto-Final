@@ -32,9 +32,29 @@ jobs:
       - run: pnpm turbo run build
       - name: El bundle web no contiene secretos del servidor
         run: |
-          if grep -rIl -e 'service_role' -e 'sk-ant-' -e 'SUPABASE_SERVICE_ROLE_KEY' apps/app/dist; then
+          if grep -rIl -e 'service_role' -e 'sb_secret_' -e 'sk-ant-' -e 'SUPABASE_SECRET_KEY' apps/app/dist; then
             echo "::error::Se encontró un posible secreto en el bundle web"; exit 1
           fi
+
+  database:
+    name: Base de datos (migraciones y pruebas pgTAP)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Aproximación rápida en PGlite
+        run: pnpm db:test:local
+      - name: Iniciar Supabase local (solo los servicios necesarios)
+        run: pnpm exec supabase start -x studio,imgproxy,realtime,edge-runtime,logflare,vector,supavisor,storage-api
+      - name: Pruebas pgTAP contra Supabase real
+        run: pnpm exec supabase test db
+      - name: Lint de funciones PL/pgSQL
+        run: pnpm exec supabase db lint --level error --fail-on error
 
   secrets:
     name: Búsqueda de secretos (gitleaks)

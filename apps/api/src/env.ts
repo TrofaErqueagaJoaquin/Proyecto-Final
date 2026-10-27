@@ -13,6 +13,15 @@ const EnvSchema = z.object({
         .map((origin) => origin.trim())
         .filter((origin) => origin.length > 0),
     ),
+  SUPABASE_URL: z.url().transform((url) => url.replace(/\/+$/, '')),
+  // Clave publicable (sb_publishable_…): pública por diseño; la API la usa con el JWT del usuario.
+  SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
+  // Clave secreta (sb_secret_…): saltea RLS. Solo para RPC privilegiadas; opcional en desarrollo.
+  // Vacía (como en .env.example) cuenta como ausente.
+  SUPABASE_SECRET_KEY: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().min(1).optional(),
+  ),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

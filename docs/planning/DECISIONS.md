@@ -204,6 +204,20 @@
   8. **Variables de entorno por app** (`apps/app/.env`, `apps/api/.env`): Expo lee `.env` desde la carpeta de la app.
 - **Estado.** Aceptada.
 
+### ADR-023 · Decisiones de implementación de la Fase 2
+
+- **Fecha.** 27/10/2026 (Fase 2).
+- **Decisiones:**
+  1. **Banco de pruebas local con PGlite** (`pnpm db:test:local`). Corre las migraciones y las pruebas pgTAP sin Docker, con un simulador mínimo de Supabase y un subconjunto de pgTAP. Es una aproximación: CI corre además `supabase test db` contra el Supabase real. En su primera ejecución detectó un bug real (`RAISE … detail = NULL`).
+  2. **Las altas pasan por RPC.** El cliente no tiene `INSERT` sobre familias, membresías ni integrantes: `create_family`, `add_family_member` (exige el consentimiento `child_data`) y `accept_family_invitation`. Las ediciones usan privilegios por columna (`GRANT UPDATE (col, …)`), así nadie puede mover filas entre familias aunque RLS lo permitiera.
+  3. **La auditoría se escribe en un solo lugar: triggers.** Las RPC no auditan por su cuenta, para no duplicar eventos.
+  4. **Correo de invitación como `text` en minúsculas**, no `citext`. Con `search_path` vacío, los operadores de `citext` no se resuelven y la comparación terminaría distinguiendo mayúsculas.
+  5. **Los roles administrativos no se escriben desde el cliente.** `user_roles` no tiene políticas de escritura: solo la API (con clave secreta, después de verificar `users.manage_roles` y MFA) o un SQL manual para el primer administrador.
+  6. **La API verifica los JWT con JWKS y solo algoritmos asimétricos** (ES256 o RS256). Nunca necesita el secreto de firma. El proyecto `crecer-dev` firma con ES256 (verificado en su `jwks.json`).
+  7. **Claves nuevas de Supabase:** `sb_publishable_…` (pública) y `sb_secret_…` (servidor), en lugar de `anon` y `service_role`.
+  8. **Mientras no haya tipos generados** (`pnpm db:types`, después de `supabase link`), todo resultado de Supabase se valida con zod antes de usarse.
+- **Estado.** Aceptada.
+
 ---
 
 ## Decisiones pendientes de validación externa

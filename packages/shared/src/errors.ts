@@ -8,9 +8,11 @@ export const ErrorCodeSchema = z.enum([
   'VALIDATION_ERROR',
   'UNAUTHORIZED',
   'FORBIDDEN',
+  'MFA_REQUIRED',
   'NOT_FOUND',
   'CONFLICT',
   'RATE_LIMITED',
+  'SERVICE_UNAVAILABLE',
   'INTERNAL_ERROR',
 ]);
 export type ErrorCode = z.infer<typeof ErrorCodeSchema>;
@@ -23,3 +25,23 @@ export const ErrorResponseSchema = z.object({
   }),
 });
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
+
+/**
+ * Errores de dominio que lanza la base de datos (`raise_domain_error` en las migraciones).
+ * Llegan como mensaje de un error SQLSTATE P0001; la app los muestra con textos propios.
+ */
+export const DomainErrorCodeSchema = z.enum([
+  'NOT_AUTHENTICATED',
+  'FORBIDDEN',
+  'CONSENT_REQUIRED',
+  'CONSENT_ALREADY_REVOKED',
+  'BIRTH_MONTH_IN_FUTURE',
+  'INVITATION_INVALID',
+  'INVITATION_EXPIRED',
+  'INVITATION_EMAIL_MISMATCH',
+  'ALREADY_MEMBER',
+  'LAST_FAMILY_OWNER',
+  'LAST_PLATFORM_ADMIN',
+  'AUDIT_LOG_IMMUTABLE',
+]);
+export type DomainErrorCode = z.infer<typeof DomainErrorCodeSchema>;
