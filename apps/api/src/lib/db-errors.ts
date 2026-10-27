@@ -76,6 +76,25 @@ const DOMAIN_ERRORS: Record<
     code: 'CONFLICT',
     text: 'Esta evaluación ya se envió.',
   },
+  NOT_FOUND: { status: 404, code: 'NOT_FOUND', text: 'No encontramos lo que buscabas.' },
+  PROFESSIONAL_UNAVAILABLE: {
+    status: 409,
+    code: 'CONFLICT',
+    text: 'Ese profesional no está disponible.',
+  },
+  CARE_SCOPE_REQUIRED: { status: 400, code: 'VALIDATION_ERROR', text: 'Elegí qué compartir.' },
+  CARE_SCOPE_INVALID: {
+    status: 400,
+    code: 'VALIDATION_ERROR',
+    text: 'Lo elegido para compartir no es válido.',
+  },
+  CARE_ALREADY_OPEN: {
+    status: 409,
+    code: 'CONFLICT',
+    text: 'Ya hay un acompañamiento abierto con ese profesional.',
+  },
+  CARE_NOT_PENDING: { status: 409, code: 'CONFLICT', text: 'Esa solicitud ya fue respondida.' },
+  CARE_NOT_OPEN: { status: 409, code: 'CONFLICT', text: 'Ese acompañamiento ya terminó.' },
 };
 
 /**

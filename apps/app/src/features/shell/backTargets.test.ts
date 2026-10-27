@@ -27,6 +27,7 @@ describe('publicFallback', () => {
   it.each([
     ['/actividades/caminata', '/actividades'],
     ['/situaciones/enojo-al-apagar', '/situaciones'],
+    ['/directorio/abc', '/directorio'],
     ['/etapas/0-2', '/'],
     ['/legal/terminos', '/'],
     ['/actividades', '/'],

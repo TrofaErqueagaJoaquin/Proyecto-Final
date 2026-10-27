@@ -47,5 +47,12 @@ export const DomainErrorCodeSchema = z.enum([
   'QUESTIONNAIRE_UNAVAILABLE',
   'ASSESSMENT_CLOSED',
   'ASSESSMENT_ALREADY_SUBMITTED',
+  'NOT_FOUND',
+  'PROFESSIONAL_UNAVAILABLE',
+  'CARE_SCOPE_REQUIRED',
+  'CARE_SCOPE_INVALID',
+  'CARE_ALREADY_OPEN',
+  'CARE_NOT_PENDING',
+  'CARE_NOT_OPEN',
 ]);
 export type DomainErrorCode = z.infer<typeof DomainErrorCodeSchema>;

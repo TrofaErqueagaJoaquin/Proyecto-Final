@@ -1,7 +1,7 @@
 import { Link, usePathname } from 'expo-router';
 import type { LucideIcon } from 'lucide-react-native';
 import type { ReactNode } from 'react';
-import { Pressable, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Logo, makeStyles, Text, useTheme } from '@/ui';
@@ -14,6 +14,10 @@ export interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
+  /** Activo solo en esa ruta exacta (la raíz de un espacio no marca a sus hermanas). */
+  exact?: boolean;
+  /** Solo en la barra lateral: en el teléfono no entra una sexta pestaña. */
+  wideOnly?: boolean;
 }
 
 const useStyles = makeStyles((t) => ({
@@ -60,8 +64,11 @@ const useStyles = makeStyles((t) => ({
   },
 }));
 
-function isActive(pathname: string, href: string): boolean {
-  return pathname === href || pathname.startsWith(`${href}/`);
+function isActive(pathname: string, { href, exact }: NavItem, items: NavItem[]): boolean {
+  if (pathname === href) return true;
+  if (exact === true || !pathname.startsWith(`${href}/`)) return false;
+  // Si otra sección más específica coincide, esa es la activa.
+  return !items.some((other) => other.href.length > href.length && pathname.startsWith(other.href));
 }
 
 /**
@@ -75,9 +82,11 @@ export function AppShell({ items, children }: { items: NavItem[]; children: Reac
   const { width } = useWindowDimensions();
   const wide = width >= theme.breakpoints.desktop;
   // Las pantallas internas (un integrante, un resultado...) tienen "Volver"; las secciones no.
+  // Lo que no está en la navegación visible (en el teléfono, las secciones solo de escritorio)
+  // es una pantalla interna y lleva "Volver".
   const back = familyFallback(
     pathname,
-    items.map((item) => item.href),
+    items.filter((item) => wide || item.wideOnly !== true).map((item) => item.href),
   );
   const content = (
     <View style={styles.content}>
@@ -98,15 +107,17 @@ export function AppShell({ items, children }: { items: NavItem[]; children: Reac
             <Logo />
           </Link>
           <View style={styles.sideNav}>
-            {items.map(({ href, label, icon: Icon }) => {
-              const active = isActive(pathname, href);
+            {items.map((item) => {
+              const { href, label, icon: Icon } = item;
+              const active = isActive(pathname, item, items);
               return (
                 <Link key={href} href={href} asChild>
                   <Pressable
                     accessibilityRole="link"
                     accessibilityState={{ selected: active }}
                     aria-current={active ? 'page' : undefined}
-                    style={[styles.sideItem, active && styles.sideItemActive]}
+                    // Link asChild (Slot) no acepta arreglos de estilos.
+                    style={StyleSheet.flatten([styles.sideItem, active && styles.sideItemActive])}
                   >
                     <Icon
                       color={active ? theme.colors.primary : theme.colors.inkMuted}
@@ -135,28 +146,31 @@ export function AppShell({ items, children }: { items: NavItem[]; children: Reac
       {content}
       <SafeAreaView edges={['bottom']} style={{ backgroundColor: theme.colors.surface }}>
         <View style={styles.tabBar} role="navigation" accessibilityLabel="Navegación principal">
-          {items.map(({ href, label, icon: Icon }) => {
-            const active = isActive(pathname, href);
-            return (
-              <Link key={href} href={href} asChild>
-                <Pressable
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected: active }}
-                  accessibilityLabel={label}
-                  style={styles.tab}
-                >
-                  <Icon
-                    color={active ? theme.colors.primary : theme.colors.inkMuted}
-                    size={24}
-                    aria-hidden
-                  />
-                  <Text variant="caption" tone={active ? 'primary' : 'muted'}>
-                    {label}
-                  </Text>
-                </Pressable>
-              </Link>
-            );
-          })}
+          {items
+            .filter((item) => item.wideOnly !== true)
+            .map((item) => {
+              const { href, label, icon: Icon } = item;
+              const active = isActive(pathname, item, items);
+              return (
+                <Link key={href} href={href} asChild>
+                  <Pressable
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected: active }}
+                    accessibilityLabel={label}
+                    style={styles.tab}
+                  >
+                    <Icon
+                      color={active ? theme.colors.primary : theme.colors.inkMuted}
+                      size={24}
+                      aria-hidden
+                    />
+                    <Text variant="caption" tone={active ? 'primary' : 'muted'}>
+                      {label}
+                    </Text>
+                  </Pressable>
+                </Link>
+              );
+            })}
         </View>
       </SafeAreaView>
     </View>

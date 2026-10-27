@@ -1,12 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'expo-router';
-import { LogOut, Monitor, Moon, Sun, type LucideIcon } from 'lucide-react-native';
+import { BriefcaseMedical, LogOut, Monitor, Moon, Sun, type LucideIcon } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { friendlyError } from '@/copy/errors';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { authKeys, useMe } from '@/features/auth/queries';
+import { useMyProfessionalProfile } from '@/features/professionals/queries';
 import { supabase } from '@/lib/supabase';
 import {
   Banner,
@@ -60,6 +61,29 @@ function useSaveProfile() {
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: authKeys.me }),
   });
+}
+
+/** Selector de espacio: solo navegación, no otorga permisos (ROLES_AND_PERMISSIONS.md §1). */
+function ProfessionalSpaceCard() {
+  const profile = useMyProfessionalProfile();
+  if (profile.isPending || profile.isError) return null;
+  return (
+    <Card>
+      <Text variant="subheading">Espacio profesional</Text>
+      <Text tone="muted">
+        {profile.data
+          ? 'Tus casos, las solicitudes de las familias y tu perfil en el directorio.'
+          : '¿Sos psicóloga, psicopedagogo, pediatra o terapeuta? Creá tu perfil para que las familias te encuentren.'}
+      </Text>
+      <Link href={profile.data ? '/profesional' : '/profesional/perfil'} asChild>
+        <Button
+          label={profile.data ? 'Ir al espacio profesional' : 'Crear mi perfil profesional'}
+          variant="secondary"
+          icon={BriefcaseMedical}
+        />
+      </Link>
+    </Card>
+  );
 }
 
 /** Arranca con el nombre ya cargado: no hace falta sincronizarlo con un efecto. */
@@ -162,6 +186,8 @@ export default function ProfileScreen() {
           })}
         </View>
       </Card>
+
+      <ProfessionalSpaceCard />
 
       <Card>
         <Text variant="subheading">Seguridad</Text>

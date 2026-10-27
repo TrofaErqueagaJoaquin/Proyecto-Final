@@ -29,9 +29,11 @@ select is(
    from pg_class c join pg_namespace n on n.oid = c.relnamespace
    where n.nspname = 'public' and c.relkind in ('r', 'p')
      and has_table_privilege('anon', c.oid, 'select')),
+  -- Más el directorio de profesionales (solo verificados y listados, por RLS).
   array['activities', 'activity_categories', 'activity_category_links', 'activity_sources',
-        'activity_steps', 'content_items', 'content_sources', 'sources'],
-  'anon solo puede leer las tablas del catálogo público'
+        'activity_steps', 'content_items', 'content_sources', 'professional_profiles',
+        'professional_specialties', 'sources', 'specialties'],
+  'anon solo puede leer las tablas del catálogo público y del directorio'
 );
 
 select is(

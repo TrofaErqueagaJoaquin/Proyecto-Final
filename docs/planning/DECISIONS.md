@@ -291,6 +291,30 @@
   5. **En desarrollo, la web se sirve sin SSR** (`web.output: 'single'`), y el export sigue siendo `static`. El render en servidor de cada página tardaba unos 17 s y en Windows tiraba Metro con `EMFILE`.
 - **Estado.** Aceptada.
 
+### ADR-029 · Decisiones de implementación de la Fase 9
+
+- **Decisiones:**
+  1. **Migración 0006.** Agrega especialidades, perfil profesional, credenciales, verificaciones (solo inserción), acompañamientos, permisos por alcance, observaciones, objetivos y avances. Los objetivos (`follow_up_goals`) se crean acá porque el profesional los propone, y la Fase 7 los amplía. La 0007 suma `family_id` a `pro_cases()`.
+  2. **Todo el ciclo de vida va por RPC con auditoría:** `request_care` (crea un consentimiento `professional_access` por permiso), `respond_care_request`, `end_care` (la familia cancela una solicitud y cualquiera de las partes finaliza; revoca todo en la misma transacción) y `revoke_access_grant` (revocar el perfil de un integrante revoca todo lo de ese integrante). Revocar el consentimiento de un permiso también lo revoca, con un trigger.
+  3. **El profesional no lee las tablas de la familia.** Las evaluaciones, actividades y observaciones de un integrante llegan solo por `pro_member_overview()`, que deja `pro.read.member_overview` en la auditoría, y la familia lo ve en "Actividad de acceso". Los casos llegan por `pro_cases()`, con el nombre de la familia, el de quien pidió y el apodo y la edad de los integrantes autorizados. Los objetivos sí tienen una política directa, porque el profesional los crea y los actualiza.
+  4. **Los permisos se activan al aceptar** (`access_grants.activated_at`). Antes de que acepte, el profesional ve la solicitud pero ningún dato.
+  5. **Directorio:** `anon` lee `professional_profiles` y `professional_specialties`, pero la RLS deja ver solo los perfiles `verified` y listados. La familia también ve a los profesionales con los que tiene o tuvo un acompañamiento. **Invitar directo a un profesional sin verificar** (ROLES §4 regla 5) queda pendiente: hoy su perfil no lo ve nadie fuera de su relación con una familia.
+  6. **Verificación provisoria por script** (`pnpm pro:verify <correo>`) hasta la administración de la Fase 10. Usa `verify_credential()`, que solo ejecuta `service_role`. El profesional solo puede pasar sus credenciales de "declarada" a "enviada"; si edita una ya revisada, vuelve a "declarada".
+  7. **Archivos de credenciales** en el bucket privado `credentials`, siempre bajo la carpeta `{auth.uid()}/`. La migración lo crea solo si existe el esquema `storage`, porque el arnés local no lo tiene.
+  8. **Interfaz:**
+     - La familia llega a Profesionales desde Familia en el teléfono (no entra una sexta pestaña) y desde la barra lateral en el escritorio (`NavItem.wideOnly`).
+     - El directorio público está en `/directorio`, para no chocar con `/profesionales` de la familia.
+     - El espacio profesional está en `/profesional/*` y se entra desde Perfil.
+     - "Compartir" es el asistente de 3 pasos; el perfil del integrante se suma solo al elegir otro alcance.
+     - En la ficha de un integrante, lo no autorizado no aparece.
+  9. **La barra lateral rompía en el escritorio:** expo-router no acepta arreglos de estilos en un hijo de `Link asChild`. Se aplanan con `StyleSheet.flatten`.
+- **Verificado:**
+  - Las 47 verificaciones pgTAP nuevas en PGlite, con el escenario de DATABASE.md §8: la psicopedagoga ve solo a Sofi, el pediatra solo a Tomi, revocar corta el acceso al instante, cada lectura queda auditada y un profesional sin verificar no aparece.
+  - Las migraciones 0006 y 0007 aplicadas en `crecer-dev`.
+  - En el navegador, sin crear datos: el directorio, Profesionales de la familia, el asistente sin profesional, la ficha inexistente, el perfil profesional nuevo y la barra lateral.
+- **No verificado de punta a punta:** el recorrido solicitar → aceptar → observar → revocar con dos cuentas reales, y la subida de archivos a Storage.
+- **Estado.** Aceptada.
+
 ---
 
 ## Decisiones pendientes de validación externa

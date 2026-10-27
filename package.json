@@ -23,6 +23,7 @@
     "db:types": "supabase gen types typescript --linked --schema public > packages/shared/src/db.types.ts",
     "content:check": "tsx scripts/content-sync.mts --check",
     "content:sync": "tsx --env-file=apps/api/.env scripts/content-sync.mts",
+    "pro:verify": "tsx --env-file=apps/api/.env scripts/pro-verify.mts",
     "prepare": "husky"
   },
   "devDependencies": {

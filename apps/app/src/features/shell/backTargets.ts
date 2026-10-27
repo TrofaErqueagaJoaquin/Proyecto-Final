@@ -1,7 +1,7 @@
 // A dónde lleva "Volver" cuando no hay historial. Sin dependencias: se prueba sola.
 
 /** Rutas de primer nivel del espacio público: el resto tiene "Volver". */
-const PUBLIC_INDEXES = ['/actividades', '/situaciones'];
+const PUBLIC_INDEXES = ['/actividades', '/directorio', '/situaciones'];
 
 /** A dónde vuelve una ruta pública sin historial: su índice, o la portada. */
 export function publicFallback(pathname: string): string {

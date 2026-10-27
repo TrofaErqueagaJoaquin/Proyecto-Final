@@ -52,6 +52,14 @@ const DOMAIN_MESSAGES: Record<DomainErrorCode, string> = {
   QUESTIONNAIRE_UNAVAILABLE: 'Este cuestionario no está disponible para esta edad.',
   ASSESSMENT_CLOSED: 'Esta evaluación ya está cerrada: no se pueden cambiar las respuestas.',
   ASSESSMENT_ALREADY_SUBMITTED: 'Esta evaluación ya se envió.',
+  NOT_FOUND: 'No encontramos lo que buscabas, o ya no tenés acceso.',
+  PROFESSIONAL_UNAVAILABLE: 'Ese profesional no está disponible.',
+  CARE_SCOPE_REQUIRED: 'Elegí al menos una cosa para compartir.',
+  CARE_SCOPE_INVALID: 'Para compartir algo de un integrante, primero compartí su perfil.',
+  CARE_ALREADY_OPEN:
+    'Ya tienen un acompañamiento abierto (o una solicitud pendiente) con este profesional.',
+  CARE_NOT_PENDING: 'Esa solicitud ya fue respondida o cancelada.',
+  CARE_NOT_OPEN: 'Ese acompañamiento ya terminó.',
 };
 
 // Códigos SQLSTATE que pueden llegar por PostgREST.

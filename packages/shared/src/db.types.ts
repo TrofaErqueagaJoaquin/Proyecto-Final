@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_grants: {
+        Row: {
+          activated_at: string | null
+          assignment_id: string
+          consent_id: string
+          created_at: string
+          id: string
+          member_id: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+          scope: string
+        }
+        Insert: {
+          activated_at?: string | null
+          assignment_id: string
+          consent_id: string
+          created_at?: string
+          id?: string
+          member_id?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          scope: string
+        }
+        Update: {
+          activated_at?: string | null
+          assignment_id?: string
+          consent_id?: string
+          created_at?: string
+          id?: string
+          member_id?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          scope?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_grants_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "care_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_grants_consent_id_fkey"
+            columns: ["consent_id"]
+            isOneToOne: false
+            referencedRelation: "consents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_grants_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_grants_revoked_by_fkey"
+            columns: ["revoked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activities: {
         Row: {
           accessibility_notes: string[]
@@ -483,6 +548,77 @@ export type Database = {
         }
         Relationships: []
       }
+      care_assignments: {
+        Row: {
+          created_at: string
+          end_reason: string | null
+          ended_at: string | null
+          ended_by: string | null
+          family_id: string
+          id: string
+          professional_id: string
+          request_message: string | null
+          requested_by: string | null
+          responded_at: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          end_reason?: string | null
+          ended_at?: string | null
+          ended_by?: string | null
+          family_id: string
+          id?: string
+          professional_id: string
+          request_message?: string | null
+          requested_by?: string | null
+          responded_at?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          end_reason?: string | null
+          ended_at?: string | null
+          ended_by?: string | null
+          family_id?: string
+          id?: string
+          professional_id?: string
+          request_message?: string | null
+          requested_by?: string | null
+          responded_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_assignments_ended_by_fkey"
+            columns: ["ended_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_assignments_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_assignments_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professional_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "care_assignments_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consents: {
         Row: {
           family_id: string | null
@@ -684,6 +820,54 @@ export type Database = {
             columns: ["source_id"]
             isOneToOne: false
             referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credential_verifications: {
+        Row: {
+          checked_at: string
+          credential_id: string
+          evidence_note: string | null
+          id: string
+          method: string
+          result: string
+          valid_until: string | null
+          verifier_id: string | null
+        }
+        Insert: {
+          checked_at?: string
+          credential_id: string
+          evidence_note?: string | null
+          id?: string
+          method: string
+          result: string
+          valid_until?: string | null
+          verifier_id?: string | null
+        }
+        Update: {
+          checked_at?: string
+          credential_id?: string
+          evidence_note?: string | null
+          id?: string
+          method?: string
+          result?: string
+          valid_until?: string | null
+          verifier_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credential_verifications_credential_id_fkey"
+            columns: ["credential_id"]
+            isOneToOne: false
+            referencedRelation: "professional_credentials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credential_verifications_verifier_id_fkey"
+            columns: ["verifier_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -915,6 +1099,122 @@ export type Database = {
           },
         ]
       }
+      follow_up_goals: {
+        Row: {
+          assignment_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          family_id: string
+          id: string
+          member_id: string | null
+          source: string
+          status: string
+          target_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignment_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          family_id: string
+          id?: string
+          member_id?: string | null
+          source: string
+          status?: string
+          target_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignment_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          family_id?: string
+          id?: string
+          member_id?: string | null
+          source?: string
+          status?: string
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follow_up_goals_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "care_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follow_up_goals_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follow_up_goals_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follow_up_goals_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goal_progress_entries: {
+        Row: {
+          author_id: string | null
+          goal_id: string
+          id: string
+          note: string
+          progress: number | null
+          recorded_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          goal_id: string
+          id?: string
+          note: string
+          progress?: number | null
+          recorded_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          goal_id?: string
+          id?: string
+          note?: string
+          progress?: number | null
+          recorded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_progress_entries_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goal_progress_entries_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "follow_up_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       permissions: {
         Row: {
           code: string
@@ -929,6 +1229,197 @@ export type Database = {
           description?: string
         }
         Relationships: []
+      }
+      professional_credentials: {
+        Row: {
+          created_at: string
+          document_path: string | null
+          id: string
+          issuer: string | null
+          jurisdiction: string | null
+          kind: string
+          license_number: string | null
+          profession: string
+          professional_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          document_path?: string | null
+          id?: string
+          issuer?: string | null
+          jurisdiction?: string | null
+          kind: string
+          license_number?: string | null
+          profession: string
+          professional_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          document_path?: string | null
+          id?: string
+          issuer?: string | null
+          jurisdiction?: string | null
+          kind?: string
+          license_number?: string | null
+          profession?: string
+          professional_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professional_credentials_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professional_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      professional_observations: {
+        Row: {
+          assignment_id: string
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          member_id: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          assignment_id: string
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          member_id: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          assignment_id?: string
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          member_id?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professional_observations_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "care_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professional_observations_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "professional_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "professional_observations_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      professional_profiles: {
+        Row: {
+          bio: string
+          city: string | null
+          created_at: string
+          display_name: string
+          is_listed: boolean
+          modalities: string[]
+          province: string | null
+          public_contact: string | null
+          updated_at: string
+          user_id: string
+          verification_status: string
+          verified_at: string | null
+          years_experience: number | null
+        }
+        Insert: {
+          bio?: string
+          city?: string | null
+          created_at?: string
+          display_name: string
+          is_listed?: boolean
+          modalities?: string[]
+          province?: string | null
+          public_contact?: string | null
+          updated_at?: string
+          user_id: string
+          verification_status?: string
+          verified_at?: string | null
+          years_experience?: number | null
+        }
+        Update: {
+          bio?: string
+          city?: string | null
+          created_at?: string
+          display_name?: string
+          is_listed?: boolean
+          modalities?: string[]
+          province?: string | null
+          public_contact?: string | null
+          updated_at?: string
+          user_id?: string
+          verification_status?: string
+          verified_at?: string | null
+          years_experience?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professional_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      professional_specialties: {
+        Row: {
+          professional_id: string
+          specialty_code: string
+        }
+        Insert: {
+          professional_id: string
+          specialty_code: string
+        }
+        Update: {
+          professional_id?: string
+          specialty_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professional_specialties_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professional_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "professional_specialties_specialty_code_fkey"
+            columns: ["specialty_code"]
+            isOneToOne: false
+            referencedRelation: "specialties"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -1405,6 +1896,24 @@ export type Database = {
         }
         Relationships: []
       }
+      specialties: {
+        Row: {
+          code: string
+          label: string
+          position: number
+        }
+        Insert: {
+          code: string
+          label: string
+          position?: number
+        }
+        Update: {
+          code?: string
+          label?: string
+          position?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           granted_at: string
@@ -1473,9 +1982,21 @@ export type Database = {
         Returns: number
       }
       can_manage_attempt: { Args: { p_attempt_id: string }; Returns: boolean }
+      can_read_goal: {
+        Args: { p_family: string; p_member: string }
+        Returns: boolean
+      }
+      can_write_goal: {
+        Args: { p_family: string; p_member: string }
+        Returns: boolean
+      }
       create_family: {
         Args: { p_name: string; p_relationship: string }
         Returns: string
+      }
+      end_care: {
+        Args: { p_assignment: string; p_reason?: string }
+        Returns: undefined
       }
       finalize_assessment: {
         Args: {
@@ -1488,8 +2009,13 @@ export type Database = {
         Returns: undefined
       }
       has_permission: { Args: { p_code: string }; Returns: boolean }
+      is_assignment_party: { Args: { p_assignment: string }; Returns: boolean }
       is_family_adult: {
         Args: { p_family_id: string; p_roles?: string[] }
+        Returns: boolean
+      }
+      is_professional_of_my_family: {
+        Args: { p_professional: string }
         Returns: boolean
       }
       log_audit: {
@@ -1502,12 +2028,40 @@ export type Database = {
         }
         Returns: undefined
       }
+      pro_cases: { Args: never; Returns: Json }
+      pro_has_scope: {
+        Args: { p_family: string; p_member: string; p_scope: string }
+        Returns: boolean
+      }
+      pro_member_overview: {
+        Args: { p_assignment: string; p_member: string }
+        Returns: Json
+      }
       questionnaire_definition: {
         Args: { p_version_id: string }
         Returns: Json
       }
       raise_domain_error: {
         Args: { p_code: string; p_detail?: string }
+        Returns: undefined
+      }
+      request_care: {
+        Args: {
+          p_family_id: string
+          p_grants: Json
+          p_message: string
+          p_policy_version: string
+          p_professional_id: string
+        }
+        Returns: string
+      }
+      respond_care_request: {
+        Args: { p_accept: boolean; p_assignment: string }
+        Returns: undefined
+      }
+      revoke_access_grant: { Args: { p_grant: string }; Returns: undefined }
+      revoke_assignment_grants: {
+        Args: { p_assignment: string; p_by: string }
         Returns: undefined
       }
       save_answer: {
@@ -1523,6 +2077,17 @@ export type Database = {
       start_assessment: {
         Args: { p_member_id: string; p_version_id: string }
         Returns: string
+      }
+      verify_credential: {
+        Args: {
+          p_credential: string
+          p_method: string
+          p_note?: string
+          p_result: string
+          p_valid_until?: string
+          p_verifier: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
