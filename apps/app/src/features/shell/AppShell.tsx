@@ -7,6 +7,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Logo, makeStyles, Text, useTheme } from '@/ui';
 import { minTouchTarget } from '@/ui/tokens';
 
+import { BackButton } from './BackButton';
+import { familyFallback } from './backTargets';
+
 export interface NavItem {
   href: string;
   label: string;
@@ -36,6 +39,11 @@ const useStyles = makeStyles((t) => ({
   },
   sideItemActive: { backgroundColor: t.colors.primarySoft },
   content: { flex: 1 },
+  backBar: {
+    paddingHorizontal: t.space.sm,
+    paddingTop: t.space.xs,
+    alignItems: 'flex-start',
+  },
   tabBar: {
     flexDirection: 'row',
     backgroundColor: t.colors.surface,
@@ -66,12 +74,29 @@ export function AppShell({ items, children }: { items: NavItem[]; children: Reac
   const pathname = usePathname();
   const { width } = useWindowDimensions();
   const wide = width >= theme.breakpoints.desktop;
+  // Las pantallas internas (un integrante, un resultado...) tienen "Volver"; las secciones no.
+  const back = familyFallback(
+    pathname,
+    items.map((item) => item.href),
+  );
+  const content = (
+    <View style={styles.content}>
+      {back === null ? null : (
+        <View style={styles.backBar}>
+          <BackButton fallback={back} />
+        </View>
+      )}
+      {children}
+    </View>
+  );
 
   if (wide) {
     return (
       <View style={[styles.root, styles.wide]}>
         <View style={styles.sidebar} role="navigation" accessibilityLabel="Navegación principal">
-          <Logo />
+          <Link href="/hoy" accessibilityLabel="Ir a Hoy">
+            <Logo />
+          </Link>
           <View style={styles.sideNav}>
             {items.map(({ href, label, icon: Icon }) => {
               const active = isActive(pathname, href);
@@ -100,14 +125,14 @@ export function AppShell({ items, children }: { items: NavItem[]; children: Reac
             })}
           </View>
         </View>
-        <View style={styles.content}>{children}</View>
+        {content}
       </View>
     );
   }
 
   return (
     <View style={styles.root}>
-      <View style={styles.content}>{children}</View>
+      {content}
       <SafeAreaView edges={['bottom']} style={{ backgroundColor: theme.colors.surface }}>
         <View style={styles.tabBar} role="navigation" accessibilityLabel="Navegación principal">
           {items.map(({ href, label, icon: Icon }) => {

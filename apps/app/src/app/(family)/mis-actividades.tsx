@@ -1,8 +1,9 @@
 import { Link } from 'expo-router';
-import { Bookmark, CircleCheck, Puzzle } from 'lucide-react-native';
+import { Bookmark, CircleCheck, Clock, Puzzle } from 'lucide-react-native';
 import { View } from 'react-native';
 
 import { useActiveFamily } from '@/features/families/queries';
+import { ActivityIcon } from '@/features/library/activityVisuals';
 import { LinkCard } from '@/features/library/LinkCard';
 import { useActivityLogs, useSavedActivities } from '@/features/library/queries';
 import { Badge, Button, Card, EmptyState, ErrorState, Screen, Skeleton, Text } from '@/ui';
@@ -56,7 +57,12 @@ export default function MyActivitiesScreen() {
                   href={`/actividades/${s.activities.slug}`}
                   title={s.activities.title}
                   description={s.activities.summary}
-                  footer={<Badge>{`${String(s.activities.duration_min)} min`}</Badge>}
+                  leading={
+                    <ActivityIcon
+                      categories={s.activities.activity_category_links.map((l) => l.category_code)}
+                    />
+                  }
+                  footer={<Badge icon={Clock}>{`${String(s.activities.duration_min)} min`}</Badge>}
                 />
               ) : null,
             )

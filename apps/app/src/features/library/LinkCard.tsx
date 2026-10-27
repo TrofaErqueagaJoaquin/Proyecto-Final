@@ -9,7 +9,7 @@ const useStyles = makeStyles((t) => ({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: t.space.md,
+    gap: t.space.lg,
     padding: t.space.lg,
     borderRadius: t.radius.lg,
     borderWidth: 1,
@@ -25,17 +25,21 @@ export function LinkCard({
   title,
   description,
   footer,
+  leading,
 }: {
   href: string;
   title: string;
   description?: string;
   footer?: ReactNode;
+  /** Ícono o imagen a la izquierda (decorativo). */
+  leading?: ReactNode;
 }) {
   const styles = useStyles();
   const { colors } = useTheme();
   return (
     <Link href={href} asChild>
       <Pressable accessibilityRole="link" accessibilityLabel={title} style={styles.card}>
+        {leading}
         <View style={styles.body}>
           <Text variant="subheading">{title}</Text>
           {description ? <Text tone="muted">{description}</Text> : null}

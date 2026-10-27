@@ -1,5 +1,5 @@
 import { AGE_STAGES, COST_LABELS, SPACE_LABELS } from '@crecer/shared';
-import { Puzzle } from 'lucide-react-native';
+import { Clock, PackageOpen, Puzzle, Wallet } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 
@@ -9,6 +9,7 @@ import {
   matchesFilters,
   type ActivityFilters,
 } from '@/features/library/filters';
+import { ActivityIcon, SPACE_ICONS } from '@/features/library/activityVisuals';
 import { LinkCard } from '@/features/library/LinkCard';
 import { useActivities, useCategories } from '@/features/library/queries';
 import {
@@ -173,13 +174,20 @@ export default function ActivitiesScreen() {
               href={`/actividades/${activity.slug}`}
               title={activity.title}
               description={activity.summary}
+              leading={<ActivityIcon categories={activity.categories} />}
               footer={
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                  <Badge>{`${String(activity.duration_min)} min`}</Badge>
-                  <Badge>{SPACE_LABELS[activity.space as keyof typeof SPACE_LABELS]}</Badge>
-                  <Badge>{COST_LABELS[activity.cost_level as keyof typeof COST_LABELS]}</Badge>
+                  <Badge icon={Clock}>{`${String(activity.duration_min)} min`}</Badge>
+                  <Badge icon={SPACE_ICONS[activity.space]}>
+                    {SPACE_LABELS[activity.space as keyof typeof SPACE_LABELS]}
+                  </Badge>
+                  <Badge icon={Wallet}>
+                    {COST_LABELS[activity.cost_level as keyof typeof COST_LABELS]}
+                  </Badge>
                   {activity.materials.length === 0 ? (
-                    <Badge tone="primary">Sin materiales</Badge>
+                    <Badge tone="primary" icon={PackageOpen}>
+                      Sin materiales
+                    </Badge>
                   ) : null}
                 </View>
               }

@@ -27,7 +27,10 @@ const config: ExpoConfig = {
   },
   web: {
     // Web estática: la biblioteca pública se indexa en buscadores (TECH_STACK.md §2).
-    output: 'static',
+    // Solo en el export: en desarrollo el render en servidor de cada página es lento y en
+    // Windows termina tirando Metro (EMFILE), así que `expo start` sirve la app sin SSR.
+    // Expo fija NODE_ENV (development en start, production en export) antes de leer esto.
+    output: process.env.NODE_ENV === 'production' ? 'static' : 'single',
     favicon: './assets/images/favicon.png',
   },
   plugins: [

@@ -1,4 +1,4 @@
-import { Check } from 'lucide-react-native';
+import { Check, type LucideIcon } from 'lucide-react-native';
 import { useState, type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 
@@ -23,6 +23,9 @@ const useStyles = makeStyles((t) => ({
   },
   chipActive: { borderColor: t.colors.primary, backgroundColor: t.colors.primarySoft },
   badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     alignSelf: 'flex-start',
     paddingHorizontal: t.space.sm,
     paddingVertical: 2,
@@ -113,11 +116,14 @@ export function ChipGroup<V extends string>({
 export function Badge({
   children,
   tone = 'neutral',
+  icon: Icon,
 }: {
   children: string;
   tone?: 'neutral' | 'caution' | 'primary';
+  icon?: LucideIcon | undefined;
 }) {
   const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <View
       style={[
@@ -126,6 +132,9 @@ export function Badge({
         tone === 'primary' && styles.badgePrimary,
       ]}
     >
+      {Icon ? (
+        <Icon color={tone === 'primary' ? colors.primary : colors.inkMuted} size={14} aria-hidden />
+      ) : null}
       <Text variant="caption">{children}</Text>
     </View>
   );

@@ -43,11 +43,11 @@ export default function TodayScreen() {
           <EmptyState
             icon={Sprout}
             title="Tu sugerencia del día llega pronto"
-            description="Cuando completes la primera evaluación de hábitos, acá vas a ver una idea concreta para hoy."
+            description="Cuando completes la primera evaluación de hábitos (lleva unos 6 minutos), acá vas a ver una idea concreta para hoy."
             action={
               canManage(me.data.families[0]?.role) ? (
                 <Link href="/evaluaciones" asChild>
-                  <Button label="Hacer la evaluación (6 minutos)" />
+                  <Button label="Hacer la evaluación" />
                 </Link>
               ) : undefined
             }

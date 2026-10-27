@@ -18,7 +18,10 @@ export interface ButtonProps extends Omit<PressableProps, 'children' | 'style'> 
 const useStyles = makeStyles((t) => ({
   base: {
     minHeight: minTouchTarget + 4,
+    // Nunca más ancho que su contenedor: un texto largo pasa a dos líneas en vez de salirse.
+    maxWidth: '100%',
     paddingHorizontal: t.space.xl,
+    paddingVertical: t.space.xs,
     borderRadius: t.radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
@@ -40,7 +43,8 @@ const useStyles = makeStyles((t) => ({
   },
   disabled: { opacity: 0.5 },
   fullWidth: { alignSelf: 'stretch' },
-  content: { flexDirection: 'row', alignItems: 'center', gap: t.space.sm },
+  content: { flexDirection: 'row', alignItems: 'center', gap: t.space.sm, flexShrink: 1 },
+  label: { flexShrink: 1, textAlign: 'center' },
 }));
 
 export function Button({
@@ -96,7 +100,7 @@ export function Button({
         ) : Icon ? (
           <Icon color={foreground} size={20} aria-hidden />
         ) : null}
-        <Text variant="bodyStrong" style={{ color: foreground }}>
+        <Text variant="bodyStrong" style={[styles.label, { color: foreground }]}>
           {label}
         </Text>
       </View>

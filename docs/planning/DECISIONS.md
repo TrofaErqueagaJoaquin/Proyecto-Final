@@ -280,6 +280,17 @@
 - **Verificado:** las 35 verificaciones pgTAP nuevas en PGlite, la migración y el cuestionario publicados en `crecer-dev`, la sincronización idempotente y un recorrido completo del cuestionario real en cinco edades en los tests del dominio. **No verificado de punta a punta:** responder y enviar desde la app contra `crecer-dev`, porque requiere una sesión real.
 - **Estado.** Aceptada.
 
+### ADR-028 · Orden y alcance después de la primera prueba con la app (Fase 6)
+
+- **Contexto.** El equipo probó la app después de la Fase 6. Lo más pedido es encontrar profesionales y tener el asistente. También aparecieron detalles de navegación: el logo vuelve a la portada pública aunque haya sesión, no hay botón para volver y hay textos que no entran en la pantalla.
+- **Decisiones:**
+  1. **Orden:** primero los arreglos de navegación y visuales, después la Fase 9 (profesionales) y después la Fase 8 (asistente). La Fase 7 se hace antes de la 9 o dentro de ella, porque los objetivos que propone el profesional usan sus tablas.
+  2. **Profesionales:** la Fase 9 completa, como está en este plan.
+  3. **Modelo del asistente:** `claude-sonnet-5-5`, en lugar de Opus (cambia lo inicial de ADR-009). El tope de gasto global es de **US$10 por mes**. Al llegar al 100%, `assistant.enabled = false` con aviso en la interfaz. Los límites por persona quedan como en `AI_ARCHITECTURE.md` §9. El modelo sigue siendo configurable y se puede cambiar por el banco de evaluación.
+  4. **Búsqueda:** la híbrida con Voyage, como dice ADR-010. Hacen falta las claves de Anthropic y de Voyage. El equipo las crea y las carga en `apps/api/.env`, y nunca pasan por el chat.
+  5. **En desarrollo, la web se sirve sin SSR** (`web.output: 'single'`), y el export sigue siendo `static`. El render en servidor de cada página tardaba unos 17 s y en Windows tiraba Metro con `EMFILE`.
+- **Estado.** Aceptada.
+
 ---
 
 ## Decisiones pendientes de validación externa

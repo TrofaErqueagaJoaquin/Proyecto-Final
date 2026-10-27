@@ -138,7 +138,9 @@ export function useSavedActivities(familyId: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('saved_activities')
-        .select('activity_id, created_at, activities (slug, title, summary, duration_min)')
+        .select(
+          'activity_id, created_at, activities (slug, title, summary, duration_min, activity_category_links (category_code))',
+        )
         .eq('family_id', familyId ?? '')
         .order('created_at', { ascending: false });
       if (error) throw error;

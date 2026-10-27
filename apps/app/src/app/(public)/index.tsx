@@ -3,6 +3,7 @@ import { Link } from 'expo-router';
 import { BookOpen, Puzzle, Shield, type LucideIcon } from 'lucide-react-native';
 import { Pressable, View } from 'react-native';
 
+import { useAuth } from '@/features/auth/AuthProvider';
 import { LinkCard } from '@/features/library/LinkCard';
 import { Button, Card, GrowthLine, makeStyles, Screen, Text, useTheme } from '@/ui';
 import { minTouchTarget } from '@/ui/tokens';
@@ -47,6 +48,7 @@ const useStyles = makeStyles((t) => ({
 export default function HomeScreen() {
   const styles = useStyles();
   const { colors } = useTheme();
+  const signedIn = useAuth().status === 'signedIn';
   return (
     <Screen maxWidth={960} edges={['bottom']}>
       <View style={styles.hero}>
@@ -58,12 +60,20 @@ export default function HomeScreen() {
           fuentes.
         </Text>
         <View style={styles.actions}>
-          <Link href={'/registrarse'} asChild>
-            <Button label="Crear una cuenta gratis" />
-          </Link>
-          <Link href={'/ingresar'} asChild>
-            <Button label="Ya tengo cuenta" variant="secondary" />
-          </Link>
+          {signedIn ? (
+            <Link href={'/hoy'} asChild>
+              <Button label="Ir a mi espacio" />
+            </Link>
+          ) : (
+            <>
+              <Link href={'/registrarse'} asChild>
+                <Button label="Crear una cuenta gratis" />
+              </Link>
+              <Link href={'/ingresar'} asChild>
+                <Button label="Ya tengo cuenta" variant="secondary" />
+              </Link>
+            </>
+          )}
         </View>
       </View>
       <GrowthLine />
