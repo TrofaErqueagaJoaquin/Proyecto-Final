@@ -3,7 +3,15 @@ import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 
 export const ignores = {
-  ignores: ['**/dist/**', '**/coverage/**', '**/.turbo/**', '**/.expo/**', '**/node_modules/**'],
+  ignores: [
+    '**/dist/**',
+    '**/coverage/**',
+    '**/.turbo/**',
+    '**/.expo/**',
+    '**/node_modules/**',
+    // Generado por `pnpm db:types` a partir del esquema real.
+    '**/db.types.ts',
+  ],
 };
 
 /**

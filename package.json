@@ -19,7 +19,7 @@
     "format:check": "prettier --check .",
     "db:test:local": "node scripts/db-test-local.mjs",
     "db:test": "supabase test db",
-    "db:push": "supabase db push",
+    "db:push": "supabase db push --linked",
     "db:types": "supabase gen types typescript --linked --schema public > packages/shared/src/db.types.ts",
     "prepare": "husky"
   },

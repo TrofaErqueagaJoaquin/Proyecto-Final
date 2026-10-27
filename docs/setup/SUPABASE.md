@@ -40,8 +40,14 @@ pnpm db:types
 `db:push` aplica `supabase/migrations/` al proyecto vinculado. `db:types` regenera
 `packages/shared/src/db.types.ts` a partir del esquema real.
 
-El seed de catálogos (`supabase/seed.sql`) se aplica solo en local y en CI. Para cargarlo en el
-proyecto remoto, pegá el contenido en **SQL Editor → New query** y ejecutalo (es idempotente).
+El seed de catálogos (`supabase/seed.sql`, idempotente) no se aplica con `db:push`. Para cargarlo
+o actualizarlo en el proyecto remoto:
+
+```bash
+pnpm exec supabase db push --linked --include-seed
+```
+
+> `crecer-dev` quedó vinculado, con las migraciones y el seed aplicados, el 27/10/2026.
 
 ## 3. Autenticación (panel → Authentication)
 

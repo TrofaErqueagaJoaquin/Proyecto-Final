@@ -5,3 +5,5 @@ coverage
 .expo
 apps/app/assets
 docs/research
+# Generado por `pnpm db:types`
+packages/shared/src/db.types.ts

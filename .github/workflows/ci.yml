@@ -53,6 +53,16 @@ jobs:
         run: pnpm exec supabase start -x studio,imgproxy,realtime,edge-runtime,logflare,vector,supavisor,storage-api
       - name: Pruebas pgTAP contra Supabase real
         run: pnpm exec supabase test db
+      - name: Los tipos generados coinciden con las migraciones
+        run: |
+          pnpm exec supabase gen types typescript --local --schema public > /tmp/db.types.ts
+          # La versión de PostgREST puede diferir entre el Supabase local y el remoto: se ignora.
+          grep -v PostgrestVersion packages/shared/src/db.types.ts > /tmp/committed.ts
+          grep -v PostgrestVersion /tmp/db.types.ts > /tmp/generated.ts
+          if ! diff -q /tmp/committed.ts /tmp/generated.ts; then
+            echo "::error::packages/shared/src/db.types.ts está desactualizado: corré pnpm db:types"
+            diff /tmp/committed.ts /tmp/generated.ts | head -40; exit 1
+          fi
       - name: Lint de funciones PL/pgSQL
         run: pnpm exec supabase db lint --level error --fail-on error
 

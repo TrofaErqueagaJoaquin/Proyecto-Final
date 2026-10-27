@@ -19,15 +19,16 @@ export function createSupabaseAuthorization(env: Env): AuthorizationPort {
         p_code: permission,
       });
       if (result.error) throw toHttpError(result.error);
-      return result.data === true;
+      return result.data;
     },
     async isFamilyAdult(auth, familyId, roles) {
       const result = await createUserClient(env, auth.token).rpc('is_family_adult', {
         p_family_id: familyId,
-        p_roles: roles ?? null,
+        // Sin roles = cualquier rol (el parámetro tiene default null en la base).
+        p_roles: roles ? [...roles] : undefined,
       });
       if (result.error) throw toHttpError(result.error);
-      return result.data === true;
+      return result.data;
     },
   };
 }
