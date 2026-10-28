@@ -15,6 +15,7 @@ import { errorResponse, HttpError } from './lib/http';
 import { log } from './lib/logger';
 import { createResendMailer, disabledMailer, type Mailer } from './lib/mailer';
 import { requireAuth } from './middleware/auth';
+import { adminRoute, createSupabaseAdmin, type AdminPort } from './modules/admin/routes';
 import {
   assessmentsRoute,
   createSupabaseAssessments,
@@ -42,6 +43,7 @@ export interface AppDeps {
   assessments: AssessmentsPort;
   assistant: AssistantPort;
   plans: PlansPort;
+  admin: AdminPort;
   /** null = sin clave: el asistente responde "no configurado" (salvo riesgo alto). */
   llm: LlmProvider | null;
   /** null = búsqueda solo por texto completo. */
@@ -60,6 +62,7 @@ export function createDefaultDeps(env: Env): AppDeps {
     assessments: createSupabaseAssessments(env),
     assistant: createSupabaseAssistant(env),
     plans: createSupabasePlans(env),
+    admin: createSupabaseAdmin(env),
     llm:
       env.AI_LLM_PROVIDER === 'fake'
         ? createFakeLlm()
@@ -125,6 +128,9 @@ export function createApp(env: Env, deps: AppDeps) {
 
   app.use('/v1/assessments/*', authenticated);
   app.route('/', assessmentsRoute({ assessments: deps.assessments }));
+
+  app.use('/v1/admin/*', authenticated);
+  app.route('/', adminRoute({ admin: deps.admin, authorization: deps.authorization }));
 
   app.use('/v1/plans/*', authenticated);
   app.route(

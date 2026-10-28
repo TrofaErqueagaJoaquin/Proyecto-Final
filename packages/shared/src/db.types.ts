@@ -2368,6 +2368,46 @@ export type Database = {
         }
         Returns: string
       }
+      admin_list_users: {
+        Args: { p_search?: string }
+        Returns: {
+          created_at: string
+          display_name: string
+          email: string
+          id: string
+          is_professional: boolean
+          roles: string[]
+        }[]
+      }
+      admin_overview: { Args: never; Returns: Json }
+      admin_publish_questionnaire: {
+        Args: { p_version: string }
+        Returns: undefined
+      }
+      admin_set_content_status: {
+        Args: { p_id: string; p_kind: string; p_status: string }
+        Returns: undefined
+      }
+      admin_set_kb_status: {
+        Args: { p_document: string; p_status: string }
+        Returns: undefined
+      }
+      admin_update_setting: {
+        Args: { p_key: string; p_value: Json }
+        Returns: undefined
+      }
+      admin_usage_summary: {
+        Args: { p_month?: string }
+        Returns: {
+          active_users: number
+          cache_read_tokens: number
+          cost_usd: number
+          day: string
+          input_tokens: number
+          messages: number
+          output_tokens: number
+        }[]
+      }
       age_in_months: {
         Args: { p_birth_month: string; p_on: string }
         Returns: number
@@ -2408,6 +2448,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      has_admin_permission: { Args: { p_code: string }; Returns: boolean }
       has_permission: { Args: { p_code: string }; Returns: boolean }
       is_assignment_party: { Args: { p_assignment: string }; Returns: boolean }
       is_family_adult: {
@@ -2480,6 +2521,7 @@ export type Database = {
         }
         Returns: string
       }
+      require_admin_permission: { Args: { p_code: string }; Returns: undefined }
       respond_care_request: {
         Args: { p_accept: boolean; p_assignment: string }
         Returns: undefined

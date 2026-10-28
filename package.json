@@ -25,6 +25,7 @@
     "content:sync": "tsx --env-file=apps/api/.env scripts/content-sync.mts",
     "pro:verify": "tsx --env-file=apps/api/.env scripts/pro-verify.mts",
     "kb:ingest": "tsx --env-file=apps/api/.env scripts/kb-ingest.mts",
+    "admin:grant": "tsx --env-file=apps/api/.env scripts/admin-grant.mts",
     "prepare": "husky"
   },
   "devDependencies": {

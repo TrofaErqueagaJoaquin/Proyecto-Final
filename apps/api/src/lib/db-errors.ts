@@ -105,6 +105,12 @@ const DOMAIN_ERRORS: Record<
     code: 'VALIDATION_ERROR',
     text: 'La fecha no corresponde a esa semana.',
   },
+  VALIDATION_ERROR: { status: 400, code: 'VALIDATION_ERROR', text: 'Hay datos inválidos.' },
+  MFA_REQUIRED: {
+    status: 403,
+    code: 'MFA_REQUIRED',
+    text: 'Esta acción requiere verificación en dos pasos.',
+  },
 };
 
 /**

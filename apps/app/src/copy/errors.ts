@@ -63,6 +63,8 @@ const DOMAIN_MESSAGES: Record<DomainErrorCode, string> = {
   PLAN_EMPTY:
     'No encontramos actividades que entren en su tiempo, espacio y presupuesto. Probá cambiar las preferencias.',
   PLAN_OUTSIDE_WEEK: 'Esa fecha no corresponde a la semana del plan.',
+  VALIDATION_ERROR: 'Hay datos inválidos. Revisá el formulario.',
+  MFA_REQUIRED: 'Esta acción requiere verificación en dos pasos.',
 };
 
 // Códigos SQLSTATE que pueden llegar por PostgREST.

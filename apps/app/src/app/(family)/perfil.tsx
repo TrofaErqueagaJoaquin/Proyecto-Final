@@ -7,6 +7,7 @@ import { Pressable, View } from 'react-native';
 import { friendlyError } from '@/copy/errors';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { authKeys, useMe } from '@/features/auth/queries';
+import { MfaSettingsCard } from '@/features/auth/mfa';
 import { useMyProfessionalProfile } from '@/features/professionals/queries';
 import { supabase } from '@/lib/supabase';
 import {
@@ -188,6 +189,20 @@ export default function ProfileScreen() {
       </Card>
 
       <ProfessionalSpaceCard />
+
+      <MfaSettingsCard />
+
+      {me.data.permissions.length > 0 ? (
+        <Card>
+          <Text variant="subheading">Administración</Text>
+          <Text tone="muted">
+            Tenés un rol administrativo. Se usa con verificación en dos pasos.
+          </Text>
+          <Link href="/admin" asChild>
+            <Button label="Ir a la administración" variant="secondary" />
+          </Link>
+        </Card>
+      ) : null}
 
       <Card>
         <Text variant="subheading">Seguridad</Text>

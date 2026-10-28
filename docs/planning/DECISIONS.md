@@ -396,6 +396,50 @@
 - **No verificado de punta a punta:** armar el plan y marcar "Hecho" con la cuenta real (no se crearon datos en la cuenta del equipo).
 - **Estado.** Aceptada.
 
+### ADR-032 · El asistente usa Claude Haiku 5.5 por defecto
+
+- **Contexto.** El equipo pidió un modelo más barato con una eficiencia parecida, de Anthropic o de otra empresa.
+- **Decisión.** `AI_CHAT_MODEL` pasa a `claude-haiku-5-5` por defecto, y `claude-sonnet-5-5` queda como opción con la misma variable.
+  - Haiku 5.5 cuesta US$0,10 / 0,50 por millón de tokens de entrada y salida (para prompts de hasta 100.000 tokens), contra US$2 / 10 de Sonnet 5.5: unas 20 veces menos.
+  - Una respuesta típica (unos 3.000 tokens de entrada y 300 de salida) cuesta unos US$0,0005, contra US$0,009 con Sonnet.
+  - Con el tope de US$10 por mes alcanza para unas 20.000 respuestas.
+  - Mantiene el pensamiento adaptativo con esfuerzo `low` y el contexto de 1M.
+  - No tiene fallback del servidor: el proveedor solo lo pide a los modelos que lo aceptan (`supportsServerFallback`), y ante una negativa la familia recibe la respuesta segura.
+- **Por qué no otra empresa por ahora.**
+  - La capa `LlmProvider` permite agregar otro proveedor sin tocar la recuperación, los prompts ni la seguridad.
+  - Pero haría falta otra clave, revisar sus términos de uso de datos (V7; ADR-009 descartó Gemini por el uso de datos en su nivel gratuito) y escribir y probar la implementación.
+  - Haiku 5.5 ya está en el rango de precio de los modelos chicos de otras empresas y no exige nada de eso.
+- **Calidad.** Como en ADR-009, el modelo definitivo se confirma con el banco de evaluación (umbrales de AI_ARCHITECTURE.md §10). Si Haiku no los alcanza, se vuelve a Sonnet cambiando la variable.
+- **Estado.** Aceptada.
+
+### ADR-033 · Decisiones de implementación de la Fase 10
+
+- **Decisiones:**
+  1. **Permiso y segundo factor, en la base.** `has_admin_permission(code)` exige el permiso y `aal = 'aal2'` en el JWT. Lo usan todas las políticas y funciones administrativas, incluida ahora la lectura de la auditoría. La API usa además `requirePermission(..., { mfa: true })`.
+  2. **Sin datos sensibles:**
+     - Ningún permiso administrativo abre familias, integrantes, evaluaciones, conversaciones, mensajes ni observaciones; las pruebas pgTAP lo verifican para tres roles.
+     - Los usuarios se listan solo con correo, alta y roles (`admin_list_users`).
+     - El uso de la IA se ve solo agregado por día (`admin_usage_summary`).
+     - El panel muestra solo los números de lo que el rol puede ver (`admin_overview`).
+  3. **Funciones de estado con auditoría:**
+     - `admin_set_content_status`: publicar o archivar exige `content.publish`, y pasar entre borrador y revisión, `content.edit` (un editor no publica).
+     - `admin_publish_questionnaire`: publica el borrador y retira la versión anterior.
+     - `admin_set_kb_status` y `admin_update_setting`, que valida claves y rangos.
+  4. **La API con clave secreta solo para lo que la necesita:**
+     - la URL firmada de 60 s del archivo de la credencial;
+     - `verify_credential`, que guarda quién verificó;
+     - asignar y quitar roles (`user_roles` sigue sin escritura desde el cliente).
+  5. **Verificación en dos pasos (TOTP de Supabase):** se activa en Perfil con un QR y la clave manual. El panel `/admin` pide el código si la sesión no está en `aal2`.
+  6. **`pnpm admin:grant <correo> <rol>`** crea la primera cuenta de administración (con la clave secreta, bloqueado en `prod`). Después, los roles se asignan desde `/admin/usuarios`.
+  7. **Interfaz `/admin`:** Resumen, Verificaciones (checklist REFEPS/SISA o colegio, aprobar, pedir información, rechazar), Usuarios, Contenidos (contenidos, actividades y cuestionarios), Base de conocimiento, Auditoría (filtros por acción y período), Uso de la IA y Configuración. Lo que un rol no puede usar no aparece.
+  8. **Queda para P1:** editar contenidos desde la administración, subir PDF a la base de conocimiento y suspender cuentas. En desarrollo, `content/` sigue siendo la fuente de verdad (ADR-014).
+- **Verificado:**
+  - Las 22 verificaciones pgTAP nuevas en PGlite y la migración aplicada en `crecer-dev`.
+  - 6 tests de la API (MFA, permisos, verificación y roles).
+  - En el navegador, sin crear datos: `/admin` sin rol muestra "No tenés acceso", y Perfil muestra la verificación en dos pasos.
+- **No verificado de punta a punta:** activar el MFA y usar el panel con una cuenta administradora real.
+- **Estado.** Aceptada.
+
 ---
 
 ## Decisiones pendientes de validación externa
