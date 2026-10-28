@@ -7,6 +7,8 @@ import { Linking, Pressable, View } from 'react-native';
 import { EvidenceChip, makeStyles, Text, useTheme } from '@/ui';
 import { minTouchTarget } from '@/ui/tokens';
 
+import { boldSegments, groupCitations } from './format';
+
 const useStyles = makeStyles((t) => ({
   bubble: {
     maxWidth: '88%',
@@ -91,11 +93,21 @@ export function AssistantBubble({
         </Text>
       ) : null}
       <Text tone={pending && !text ? 'muted' : 'default'}>
-        {text || 'Buscando en fichas revisadas…'}
+        {text
+          ? boldSegments(text).map((segment, index) =>
+              segment.bold ? (
+                <Text key={index} variant="bodyStrong">
+                  {segment.text}
+                </Text>
+              ) : (
+                segment.text
+              ),
+            )
+          : 'Buscando en fichas revisadas…'}
       </Text>
       {citations.length > 0 ? (
         <View style={styles.chips}>
-          {citations.map((c) =>
+          {groupCitations(citations).map((c) =>
             c.urlPath ? (
               <Link key={c.ref} href={c.urlPath} asChild>
                 <Pressable
