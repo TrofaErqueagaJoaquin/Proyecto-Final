@@ -28,6 +28,8 @@ const useStyles = makeStyles((t) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    // Los títulos largos se cortan en líneas dentro del chip en vez de salirse de la burbuja.
+    maxWidth: '100%',
     minHeight: minTouchTarget - 8,
     paddingHorizontal: t.space.sm,
     borderRadius: t.radius.pill,
@@ -116,13 +118,17 @@ export function AssistantBubble({
                   style={styles.chip}
                 >
                   <BookOpen size={14} color={colors.primary} aria-hidden />
-                  <Text variant="caption" tone="primary">{`${c.ref} · ${c.title}`}</Text>
+                  <Text variant="caption" tone="primary" style={{ flexShrink: 1 }}>
+                    {`${c.ref} · ${c.title}`}
+                  </Text>
                 </Pressable>
               </Link>
             ) : (
               <View key={c.ref} style={styles.chip}>
                 <BookOpen size={14} color={colors.inkMuted} aria-hidden />
-                <Text variant="caption">{`${c.ref} · ${c.title}`}</Text>
+                <Text variant="caption" style={{ flexShrink: 1 }}>
+                  {`${c.ref} · ${c.title}`}
+                </Text>
               </View>
             ),
           )}
