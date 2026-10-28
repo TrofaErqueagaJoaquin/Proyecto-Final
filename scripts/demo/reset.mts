@@ -58,6 +58,17 @@ await enforceGuards(
   'Se borran TODAS las cuentas (salvo administración) y familias del proyecto demo',
 );
 
+// Los catálogos de roles y permisos vienen de supabase/seed.sql, que `db push` no aplica.
+const roles = must(await service.from('roles').select('code'), 'roles');
+const missingRoles = USERS.flatMap((u) => (u.staff ? [u.staff] : [])).filter(
+  (code) => !roles.some((r) => r.code === code),
+);
+if (missingRoles.length > 0) {
+  throw new Error(
+    `Faltan roles (${missingRoles.join(', ')}): pegá supabase/seed.sql en el SQL Editor de crecer-demo.`,
+  );
+}
+
 // ── 1. Vaciar ───────────────────────────────────────────────────────────
 
 step('Borrando familias y cuentas');
@@ -85,7 +96,8 @@ for (let page = 1; ; page++) {
 
 for (const script of ['scripts/content-sync.mts', 'scripts/kb-ingest.mts']) {
   step(`Corriendo ${script}`);
-  const run = spawnSync('pnpm', ['exec', 'tsx', script], { stdio: 'inherit', shell: true });
+  // El mismo Node con el cargador de tsx: sin shell y con las variables de la demo heredadas.
+  const run = spawnSync(process.execPath, ['--import', 'tsx', script], { stdio: 'inherit' });
   if (run.status !== 0) throw new Error(`${script} terminó con error`);
 }
 
@@ -97,12 +109,21 @@ const passwords: [string, string][] = [];
 for (const user of USERS) {
   const address = email(user.key);
   const kept = existingStaff.get(address);
+  const password = randomBytes(12).toString('base64url');
   if (kept) {
     ids[user.key] = kept;
-    passwords.push([address, '(sin cambios: cuenta de administración)']);
+    // Se conserva para no perder su verificación en dos pasos. Si todavía no la activó (por
+    // ejemplo, si un reinicio anterior se cortó antes de mostrar la contraseña), recibe una nueva.
+    const factors = await service.auth.admin.mfa.listFactors({ userId: kept });
+    if (factors.error) throw new Error(`Factores de ${address}: ${factors.error.message}`);
+    if (factors.data.factors.some((f) => f.status === 'verified')) {
+      passwords.push([address, '(sin cambios: tiene verificación en dos pasos)']);
+    } else {
+      ok(await service.auth.admin.updateUserById(kept, { password }), `Contraseña de ${address}`);
+      passwords.push([address, password]);
+    }
     continue;
   }
-  const password = randomBytes(12).toString('base64url');
   const created = await service.auth.admin.createUser({
     id: demoId(`user:${user.key}`),
     email: address,
@@ -128,9 +149,19 @@ for (const user of USERS.filter((u) => u.staff)) {
     'user_roles',
   );
 }
+const accepted = new Set(
+  must(
+    await service
+      .from('consents')
+      .select('granted_by')
+      .eq('purpose', 'terms_privacy')
+      .is('revoked_at', null),
+    'consents (lectura)',
+  ).map((c) => c.granted_by),
+);
 ok(
   await service.from('consents').insert(
-    USERS.filter((u) => !existingStaff.has(email(u.key))).map((u) => ({
+    USERS.filter((u) => !accepted.has(id(u.key))).map((u) => ({
       purpose: 'terms_privacy',
       granted_by: id(u.key),
       policy_version: CURRENT_POLICY_VERSION,

@@ -31,6 +31,9 @@ pnpm exec supabase db push --linked --yes
 pnpm exec supabase link --project-ref swqfiabkdhsstyubdrdv
 ```
 
+Después, en el **SQL Editor** de `crecer-demo`, pegá y ejecutá el contenido de
+`supabase/seed.sql` (roles y permisos de administración: `db push` no lo aplica). Es idempotente.
+
 ## 3. Marcar la base como demo
 
 Es la cuarta guarda de `demo:reset`: una marca que vive en la base de destino y que ninguna
