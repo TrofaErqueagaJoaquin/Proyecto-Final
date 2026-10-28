@@ -56,6 +56,7 @@ function Message({
   outcome,
   riskLevel,
   riskCategory,
+  rehearsal,
 }: {
   role: 'user' | 'assistant';
   body: string;
@@ -63,12 +64,13 @@ function Message({
   outcome: AssistantMessage['outcome'] | null;
   riskLevel: 'none' | 'clinical' | 'high' | null;
   riskCategory: HighRiskCategory | null;
+  rehearsal: boolean;
 }) {
   if (role === 'user') return <UserBubble text={body} />;
   if (outcome === 'risk_redirect' && riskCategory) return <RiskCard category={riskCategory} />;
   return (
     <View style={{ gap: 8 }}>
-      <AssistantBubble text={body} citations={citations} />
+      <AssistantBubble text={body} citations={citations} rehearsal={rehearsal} />
       {riskLevel === 'clinical' ? <WhenToConsultCard /> : null}
     </View>
   );
@@ -174,6 +176,7 @@ export default function ConversationScreen() {
             outcome={m.outcome}
             riskLevel={m.riskLevel}
             riskCategory={storedRiskCategory(m)}
+            rehearsal={m.rehearsal}
           />
         ))}
         {pending ? (

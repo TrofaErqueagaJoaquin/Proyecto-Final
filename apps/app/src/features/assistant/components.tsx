@@ -73,15 +73,23 @@ export function AssistantBubble({
   text,
   citations,
   pending,
+  rehearsal,
 }: {
   text: string;
   citations: AssistantCitation[];
   pending?: boolean;
+  /** Respuesta del modelo de ensayo: nunca se presenta como generada en vivo (EXPOTEC_DEMO.md §6). */
+  rehearsal?: boolean;
 }) {
   const styles = useStyles();
   const { colors } = useTheme();
   return (
     <View style={[styles.bubble, styles.assistant]} accessibilityLiveRegion="polite">
+      {rehearsal ? (
+        <Text variant="caption" tone="muted">
+          Respuesta de ensayo (sin conexión al modelo)
+        </Text>
+      ) : null}
       <Text tone={pending && !text ? 'muted' : 'default'}>
         {text || 'Buscando en fichas revisadas…'}
       </Text>

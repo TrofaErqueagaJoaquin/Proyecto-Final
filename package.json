@@ -26,6 +26,9 @@
     "pro:verify": "tsx --env-file=apps/api/.env scripts/pro-verify.mts",
     "kb:ingest": "tsx --env-file=apps/api/.env scripts/kb-ingest.mts",
     "admin:grant": "tsx --env-file=apps/api/.env scripts/admin-grant.mts",
+    "demo:reset": "tsx --env-file=apps/api/.env.demo scripts/demo/reset.mts",
+    "demo:capture": "tsx --env-file=apps/api/.env.demo scripts/demo/capture.mts",
+    "test:scripts": "tsx --test scripts/demo/guards.test.ts",
     "prepare": "husky"
   },
   "devDependencies": {

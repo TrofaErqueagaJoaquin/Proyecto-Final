@@ -47,6 +47,7 @@ export interface StoredMessage {
   citations: AssistantCitation[];
   outcome: AssistantMessage['outcome'] | null;
   riskLevel: 'none' | 'clinical' | 'high' | null;
+  rehearsal: boolean;
 }
 
 export function useConversation(id: string | undefined) {
@@ -62,7 +63,7 @@ export function useConversation(id: string | undefined) {
           .maybeSingle(),
         supabase
           .from('assistant_messages')
-          .select('id, role, body, citations, outcome, risk_level')
+          .select('id, role, body, citations, outcome, risk_level, model')
           .eq('conversation_id', id ?? '')
           .order('created_at'),
       ]);
@@ -78,6 +79,7 @@ export function useConversation(id: string | undefined) {
           citations: m.citations as unknown as AssistantCitation[],
           outcome: m.outcome as StoredMessage['outcome'],
           riskLevel: m.risk_level as StoredMessage['riskLevel'],
+          rehearsal: m.model === 'fake',
         })),
       };
     },

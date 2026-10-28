@@ -48,6 +48,8 @@ export const AssistantMessageSchema = z.object({
   outcome: AssistantOutcomeSchema,
   riskLevel: z.enum(['none', 'clinical', 'high']),
   riskCategory: RiskCategorySchema.nullable(),
+  /** Respuesta del modelo de ensayo (AI_LLM_PROVIDER=fake): la app lo avisa siempre. */
+  rehearsal: z.boolean(),
 });
 export type AssistantMessage = z.infer<typeof AssistantMessageSchema>;
 

@@ -333,6 +333,7 @@ export function assistantRoute(deps: AssistantDeps) {
         outcome,
         riskLevel: risk.level,
         riskCategory: risk.category,
+        rehearsal: model === 'fake',
       };
       await send({ type: 'done', message });
     });

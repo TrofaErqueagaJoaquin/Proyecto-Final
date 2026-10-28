@@ -440,6 +440,21 @@
 - **No verificado de punta a punta:** activar el MFA y usar el panel con una cuenta administradora real.
 - **Estado.** Aceptada.
 
+### ADR-034 · Decisiones de implementación de la Fase 11
+
+- **Decisiones:**
+  1. **El escenario se arma como lo haría cada persona.** `demo:reset` entra con la cuenta de cada personaje (un enlace mágico generado con la clave de servicio, que no envía correo) y usa las mismas RPC y RLS de la app: `request_care`, `respond_care_request`, `save_week_plan`, `complete_plan_item`, las observaciones y los objetivos. Con la clave de servicio solo se escribe lo que necesita fechas del pasado (evaluaciones de hace 6 semanas, avances y actividades realizadas) y la verificación de credenciales.
+  2. **El resultado de las evaluaciones lo calcula el motor real** (`scoreAttempt` y `recommend`), igual que `POST /v1/assessments/:id/submit`: no hay puntajes escritos a mano.
+  3. **Las cuentas de administración sobreviven al reinicio.** `admin@…` y `verificador@…` se crean una sola vez para que conserven su verificación en dos pasos; el resto de las cuentas se borra y se recrea con contraseñas nuevas, que solo se muestran en la terminal.
+  4. **Cuatro guardas** (`scripts/demo/guards.ts`, con tests en CI): `APP_ENV=demo`, el _project ref_ fijo de `crecer-demo`, la confirmación `RESET DEMO` y la marca `app.environment = "demo"` cargada a mano en la base de destino.
+  5. **La conversación precargada es real:** `demo:capture` corre el asistente de la API en el mismo proceso, con la cuenta de Laura, y guarda la respuesta en `scripts/demo/fixtures/conversation.json`. Si la respuesta no cita fuentes, no se guarda.
+  6. **Respuestas de ensayo siempre visibles:** los mensajes del modelo falso llevan `rehearsal: true` y la app muestra "Respuesta de ensayo (sin conexión al modelo)". La API no arranca con `AI_LLM_PROVIDER=fake` en `prod`.
+  7. **Banner fijo** "Entorno de demostración · datos ficticios" en todas las pantallas cuando `EXPO_PUBLIC_APP_ENV=demo`.
+  8. **Vercel:** la web es el export estático de Expo con reescrituras para las rutas con parámetros; la API usa el preset de Hono (`src/index.ts`).
+- **Queda para F12:** `demo:smoke` (el E2E de los 7 puntos, junto con la suite de Playwright) y los tres ensayos cronometrados.
+- **No verificado:** el reinicio y la captura contra un proyecto `crecer-demo` real (no existía al escribirlos) y el despliegue en Vercel.
+- **Estado.** Aceptada.
+
 ---
 
 ## Decisiones pendientes de validación externa

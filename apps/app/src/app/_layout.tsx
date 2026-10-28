@@ -9,8 +9,10 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider as NavigationTheme } from
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { View } from 'react-native';
 
 import { AuthProvider } from '@/features/auth/AuthProvider';
+import { DemoBanner } from '@/features/demo/DemoBanner';
 import { queryClient } from '@/lib/query';
 import { ThemeProvider, useTheme } from '@/ui';
 
@@ -60,7 +62,10 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <ThemedNavigation />
+          <View style={{ flex: 1 }}>
+            <DemoBanner />
+            <ThemedNavigation />
+          </View>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

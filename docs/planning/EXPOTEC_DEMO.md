@@ -92,8 +92,10 @@ Una conversación de Laura sobre Tomi: "Se pone muy mal cuando le apago la table
 ```
 pnpm demo:reset          # deja el entorno en el estado del guion
 pnpm demo:capture        # (ensayo) genera y guarda la conversación real
-pnpm demo:smoke          # E2E de solo lectura de los 7 puntos
+pnpm demo:smoke          # E2E de solo lectura de los 7 puntos (llega con la suite E2E de F12)
 ```
+
+La puesta en marcha paso a paso está en `docs/setup/DEMO.md`.
 
 **Guardas de `demo:reset`** (en `scripts/demo/guards.ts`). El script **aborta** si no se cumplen todas estas condiciones:
 
@@ -104,7 +106,7 @@ pnpm demo:smoke          # E2E de solo lectura de los 7 puntos
 
 **Qué hace:**
 
-1. Borra, con la API de administración de Auth, los usuarios del dominio `@demo.crecerencasa.invalid`. Las cascadas eliminan sus datos.
+1. Borra las familias y, con la API de administración de Auth, todas las cuentas del proyecto salvo `admin@…` y `verificador@…`, que se conservan para no perder su verificación en dos pasos (ADR-034).
 2. Vacía las tablas de negocio (no los catálogos).
 3. Ejecuta `content:sync` y la ingestión (o reutiliza los embeddings guardados si no cambió el `checksum`).
 4. Crea los usuarios con **contraseñas generadas en ese momento**, que se muestran **solo en la terminal** del operador y se guardan en su gestor de contraseñas.
