@@ -89,10 +89,10 @@ de un centavo de dólar.
 
 Son dos proyectos de Vercel conectados al mismo repositorio de GitHub.
 
-| Proyecto            | Root Directory | Configuración                       |
-| ------------------- | -------------- | ----------------------------------- |
-| `crecer-demo-api`   | `apps/api`     | `apps/api/vercel.json` (Hono)       |
-| `crecer-demo` (web) | `apps/app`     | `apps/app/vercel.json` (export web) |
+| Proyecto            | Root Directory | Configuración                                                                   |
+| ------------------- | -------------- | ------------------------------------------------------------------------------- |
+| `crecer-demo-api`   | `apps/api`     | `apps/api/vercel.json` (función `api/index.mjs` con el paquete de `pnpm build`) |
+| `crecer-demo` (web) | `apps/app`     | `apps/app/vercel.json` (export web)                                             |
 
 **Variables de `crecer-demo-api`** (Settings → Environment Variables): las mismas del punto 4, más
 `CORS_ORIGINS=https://<dominio-de-la-web>` y `APP_PUBLIC_URL=https://<dominio-de-la-web>`.
