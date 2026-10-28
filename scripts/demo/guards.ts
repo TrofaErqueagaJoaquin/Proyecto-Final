@@ -2,7 +2,7 @@
 // contra el proyecto de Supabase de la demo, nunca contra dev ni prod.
 
 /** Project ref de `crecer-demo`. Se completa al crear el proyecto (docs/setup/DEMO.md). */
-export const DEMO_PROJECT_REF = '';
+export const DEMO_PROJECT_REF = 'vmuycohonhuaacluicoo';
 
 export const DEMO_EMAIL_DOMAIN = 'demo.crecerencasa.invalid';
 export const CONFIRMATION_PHRASE = 'RESET DEMO';
