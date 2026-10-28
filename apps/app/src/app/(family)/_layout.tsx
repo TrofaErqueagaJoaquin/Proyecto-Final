@@ -4,6 +4,7 @@ import {
   HeartHandshake,
   House,
   Puzzle,
+  Sparkles,
   UserRound,
   Users,
 } from 'lucide-react-native';
@@ -18,11 +19,12 @@ function familyNav(manage: boolean): NavItem[] {
   return [
     { href: '/hoy', label: 'Hoy', icon: House },
     { href: '/familia', label: 'Familia', icon: Users },
+    ...(manage ? [{ href: '/asistente', label: 'Asistente', icon: Sparkles }] : []),
     { href: '/mis-actividades', label: 'Actividades', icon: Puzzle },
     ...(manage
       ? [
-          { href: '/evaluaciones', label: 'Evaluaciones', icon: ClipboardList },
-          // En el teléfono se llega desde Familia (no entra una sexta pestaña).
+          // En el teléfono no entran más pestañas: se llega desde Familia y desde Hoy.
+          { href: '/evaluaciones', label: 'Evaluaciones', icon: ClipboardList, wideOnly: true },
           { href: '/profesionales', label: 'Profesionales', icon: HeartHandshake, wideOnly: true },
         ]
       : []),

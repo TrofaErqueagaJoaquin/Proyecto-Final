@@ -11,6 +11,7 @@ import { join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
 import { unaccent } from '@electric-sql/pglite/contrib/unaccent';
+import { vector } from '@electric-sql/pglite-pgvector';
 
 const root = join(import.meta.dirname, '..', 'supabase');
 const filter = process.argv[2] ?? '';
@@ -112,7 +113,7 @@ function tapLines(results) {
   return lines.flatMap((line) => line.split('\n'));
 }
 
-const db = await PGlite.create({ extensions: { pgcrypto, unaccent } });
+const db = await PGlite.create({ extensions: { pgcrypto, unaccent, vector } });
 await db.exec(SUPABASE_STUB);
 await db.exec(PGTAP_SHIM);
 // Igual que Supabase: public y extensions en el search_path de todas las sesiones.

@@ -33,6 +33,20 @@ const EnvSchema = z.object({
     z.string().min(1).optional(),
   ),
   MAIL_FROM: z.string().default('Crecer en Casa <no-responder@crecerencasa.invalid>'),
+  // Asistente (AI_ARCHITECTURE.md §3.1). Sin ANTHROPIC_API_KEY el asistente responde "no
+  // configurado", salvo AI_LLM_PROVIDER=fake (respuestas deterministas, sin costo: ensayos).
+  AI_LLM_PROVIDER: z.enum(['anthropic', 'fake']).default('anthropic'),
+  AI_CHAT_MODEL: z.string().default('claude-sonnet-5-5'),
+  ANTHROPIC_API_KEY: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().min(1).optional(),
+  ),
+  // Sin VOYAGE_API_KEY la búsqueda usa solo texto completo (modo degradado, §4.3).
+  AI_EMBEDDING_MODEL: z.string().default('voyage-3.5'),
+  VOYAGE_API_KEY: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().min(1).optional(),
+  ),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

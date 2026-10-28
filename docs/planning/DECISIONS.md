@@ -315,6 +315,60 @@
 - **No verificado de punta a punta:** el recorrido solicitar → aceptar → observar → revocar con dos cuentas reales, y la subida de archivos a Storage.
 - **Estado.** Aceptada.
 
+### ADR-030 · Decisiones de implementación de la Fase 8
+
+- **Decisiones:**
+  1. **Modelo y llamada.**
+     - Modelo `claude-sonnet-5-5` (ADR-028), con el SDK oficial `@anthropic-ai/sdk` 0.133.0, por streaming.
+     - Pensamiento adaptativo (no se envía `thinking`) con `output_config.effort: "low"`, como recomienda la referencia para chat.
+     - Sin temperatura. `max_tokens` de 4.096, porque el pensamiento también cuenta.
+     - `cache_control` sobre el `system`.
+     - Fallback del servidor (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`). Si igual declina (`stop_reason: "refusal"`), la familia recibe una respuesta segura.
+     - Solo se muestran los bloques `text`.
+  2. **Migraciones:**
+     - **0008:** `app_settings`, `kb_documents`, `kb_chunks` (pgvector 1024 + `tsv`), `kb_hybrid_search` (RRF k = 60, filtro por edad), conversaciones, mensajes y `ai_usage_daily`. También las funciones `assistant_quota`, `add_ai_usage` y `purge_expired_assistant_data` (programada con `pg_cron` cada hora, si está disponible).
+     - **0009:** la búsqueda por texto pasa de "todos los términos" a "cualquiera", ordena por relevancia y devuelve `fts_coverage`.
+     - **0010:** las actividades del catálogo también se indexan.
+  3. **Quién escribe qué.**
+     - La base de conocimiento, las cuotas y el uso los toca solo `service_role`.
+     - La persona crea y borra sus conversaciones (RLS: solo su autor, y solo owner o guardian).
+     - Los mensajes los escribe la API, así el cliente no puede manipular el historial (AI_ARCHITECTURE.md §7.3).
+     - El cliente no puede cambiar el vencimiento.
+  4. **Retención:** 24 horas sin historial. Con el consentimiento `chat_history` y el historial activado en la familia, 30 o 90 días. Cada mensaje renueva el vencimiento.
+  5. **Seguridad:**
+     - El filtro de riesgo determinista (`packages/domain/src/safety`) corre antes que todo. El riesgo alto se responde siempre, sin modelo, sin cuotas y aunque falte la clave.
+     - Los patrones se afinaron contra falsos positivos frecuentes en esta app ("abusa de las pantallas", "le toca la tablet", "se cortó el video").
+     - El streaming se corta apenas aparece un patrón prohibido (dosis, diagnóstico, "adicción"), así la familia nunca lo lee.
+     - El post-chequeo quita las citas inventadas.
+     - Las respuestas fijas de riesgo quedan con `verifiedAt: null` hasta verificar las líneas (V5) y la interfaz lo dice.
+  6. **Hay evidencia** si la similitud por vector es de al menos 0,35, o si alguno de los 3 primeros por texto cubre al menos el 20% de los términos de la pregunta.
+     - Medido con preguntas reales sobre `crecer-dev`: la búsqueda ubica bien el documento, pero su cobertura va de 0,2 a 1.
+     - El umbral solo frena lo que no coincide en nada; el modelo se abstiene si los documentos no alcanzan.
+     - Se calibra con el banco de evaluación.
+  7. **Sin claves no se rompe nada:**
+     - Sin `ANTHROPIC_API_KEY`, el asistente responde "todavía no está configurado".
+     - Sin `VOYAGE_API_KEY`, la búsqueda usa solo texto completo.
+     - Con `AI_LLM_PROVIDER=fake`, responde sin costo para los ensayos.
+     - `pnpm kb:ingest` indexa con hash, así que repetirlo no cuesta.
+  8. **Tope de gasto:** el costo se estima con `usage` y la tabla de precios (Sonnet 5.5: US$2 / 10 por millón; caché US$0,20 / 2,50). Al llegar a US$10 en el mes, el asistente se pausa. Cuotas por persona: 30 por día y 6 por minuto.
+  9. **Interfaz:**
+     - Asistente es una pestaña para owner y guardian. En el teléfono, Evaluaciones y Profesionales se mueven a Familia y Hoy.
+     - Cada conversación se crea eligiendo sobre quién es, con el interruptor "Usar el contexto de la familia", que pide el consentimiento `ai_personal_context` la primera vez.
+     - Las respuestas muestran chips de citas y la tarjeta de ayuda destacada ante riesgo.
+     - Arriba se ve el aviso de retención y está el botón "Borrar conversación".
+     - La respuesta se lee por partes con `expo/fetch`, en web y en el teléfono.
+  10. **Fuera de esta fase:**
+      - El banco de evaluación de 100 preguntas y `pnpm ai:eval`: cuestan dinero, se corren a mano y el banco lo escribe el equipo.
+      - Los documentos subidos (P1).
+      - La reformulación de consultas (P2).
+- **Para activarlo:** cargar `ANTHROPIC_API_KEY` y, si se quiere búsqueda semántica, `VOYAGE_API_KEY` en `apps/api/.env`. Después correr `pnpm kb:ingest` (con Voyage vuelve a indexar con embeddings) y reiniciar la API.
+- **Verificado:**
+  - Las 22 verificaciones pgTAP nuevas en PGlite (con pgvector) y las migraciones aplicadas en `crecer-dev`, con 45 documentos y 136 fragmentos indexados.
+  - 174 tests de seguridad (más de 100 variantes de riesgo), los del fragmentador y 14 de la ruta con proveedores espía: el riesgo nunca llega al modelo.
+  - En el navegador, con el modelo falso: crear la conversación, responder por streaming con citas, la tarjeta de riesgo y borrar.
+- **No verificado:** respuestas reales de Sonnet 5.5 y embeddings de Voyage, porque faltan las claves. Tampoco que `pg_cron` haya quedado programado en `crecer-dev`.
+- **Estado.** Aceptada.
+
 ---
 
 ## Decisiones pendientes de validación externa

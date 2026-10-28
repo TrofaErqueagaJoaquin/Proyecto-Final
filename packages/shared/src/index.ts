@@ -1,4 +1,5 @@
 export * from './api/assessments';
+export * from './api/assistant';
 export * from './api/health';
 export * from './api/me';
 export type { Database, Json } from './db.types';

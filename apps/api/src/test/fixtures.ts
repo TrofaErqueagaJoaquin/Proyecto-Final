@@ -1,5 +1,13 @@
 import type { MeResponse } from '@crecer/shared';
 
+import type {
+  AssistantPort,
+  ConversationRow,
+  Quota,
+  SaveMessageInput,
+  SearchHit,
+} from '../modules/assistant/port';
+
 import type { AppDeps } from '../app';
 import type { AuthorizationPort } from '../auth/authorization';
 import { loadEnv } from '../env';
@@ -69,9 +77,62 @@ export function fakeDeps(overrides: Partial<AppDeps> = {}): AppDeps {
       resolveTargets: () => Promise.resolve({ content: new Map(), activities: new Map() }),
       finalize: () => Promise.resolve('ok'),
     },
+    assistant: memoryAssistant().port,
+    llm: null,
+    embeddings: null,
     mailer: { sendInvitation: () => Promise.resolve(false) },
     now: () => new Date('2026-10-27T12:00:00.000Z'),
     generateToken: () => 'token-de-prueba',
     ...overrides,
   };
+}
+
+/** Asistente en memoria: conversaciones, mensajes guardados, uso y una base de conocimiento. */
+export function memoryAssistant(
+  options: {
+    conversations?: Record<string, ConversationRow & { userId: string }>;
+    hits?: SearchHit[];
+    quota?: Partial<Quota>;
+  } = {},
+) {
+  const saved: SaveMessageInput[] = [];
+  const usage: { costUsd: number; outputTokens: number }[] = [];
+  const searches: { query: string; embedding: number[] | null; age: number | null }[] = [];
+  const port: AssistantPort = {
+    loadConversation: (auth, id) => {
+      const c = options.conversations?.[id];
+      return Promise.resolve(c && c.userId === auth.userId ? c : null);
+    },
+    loadHistory: (_auth, id) =>
+      Promise.resolve(
+        saved.filter((m) => m.conversationId === id).map((m) => ({ role: m.role, body: m.body })),
+      ),
+    memberAgeMonths: () => Promise.resolve(48),
+    familyContext: () => Promise.resolve('Integrante de 4 años.'),
+    quota: () =>
+      Promise.resolve({
+        enabled: true,
+        monthlyBudgetUsd: 10,
+        monthCostUsd: 0,
+        dailyLimit: 30,
+        minuteLimit: 6,
+        todayMessages: 0,
+        minuteMessages: 0,
+        ...options.quota,
+      }),
+    saveMessage: (input) => {
+      saved.push(input);
+      return Promise.resolve(`00000000-0000-4000-8000-${String(saved.length).padStart(12, '0')}`);
+    },
+    addUsage: (input) => {
+      usage.push({ costUsd: input.costUsd, outputTokens: input.outputTokens });
+      return Promise.resolve();
+    },
+    touchConversation: () => Promise.resolve(),
+    search: (query, embedding, age) => {
+      searches.push({ query, embedding, age });
+      return Promise.resolve(options.hits ?? []);
+    },
+  };
+  return { port, saved, usage, searches };
 }

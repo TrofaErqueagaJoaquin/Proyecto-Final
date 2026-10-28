@@ -71,7 +71,11 @@ const POSTGRES_MESSAGES: Record<string, string> = {
 
 /** Mensaje en lenguaje claro para cualquier error (Auth, API, base o desconocido). */
 export function friendlyError(error: unknown): string {
-  if (error instanceof ApiError) return API_MESSAGES[error.code] ?? error.message;
+  if (error instanceof ApiError) {
+    // Estos mensajes de la API dicen el motivo concreto (límite del día, del mes, sin configurar).
+    if (error.code === 'RATE_LIMITED' || error.code === 'ASSISTANT_DISABLED') return error.message;
+    return API_MESSAGES[error.code] ?? error.message;
+  }
   if (typeof error === 'object' && error !== null && 'code' in error) {
     const { code, message } = error as { code?: unknown; message?: unknown };
     if (code === 'P0001') {

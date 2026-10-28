@@ -4,6 +4,10 @@ import { cors } from 'hono/cors';
 import { requestId } from 'hono/request-id';
 import { secureHeaders } from 'hono/secure-headers';
 
+import { createAnthropicProvider } from './ai/providers/anthropic';
+import { createFakeLlm } from './ai/providers/fake';
+import type { EmbeddingProvider, LlmProvider } from './ai/providers/types';
+import { createVoyageProvider } from './ai/providers/voyage';
 import { createSupabaseAuthorization, type AuthorizationPort } from './auth/authorization';
 import { createSupabaseTokenVerifier, type TokenVerifier } from './auth/verify-token';
 import type { Env } from './env';
@@ -16,6 +20,8 @@ import {
   createSupabaseAssessments,
   type AssessmentsPort,
 } from './modules/assessments/submit';
+import { createSupabaseAssistant, type AssistantPort } from './modules/assistant/port';
+import { assistantRoute } from './modules/assistant/route';
 import {
   createSupabaseInvitations,
   generateInvitationToken,
@@ -33,6 +39,11 @@ export interface AppDeps {
   loadMe: LoadMe;
   invitations: InvitationsPort;
   assessments: AssessmentsPort;
+  assistant: AssistantPort;
+  /** null = sin clave: el asistente responde "no configurado" (salvo riesgo alto). */
+  llm: LlmProvider | null;
+  /** null = búsqueda solo por texto completo. */
+  embeddings: EmbeddingProvider | null;
   mailer: Mailer;
   now: () => Date;
   generateToken: () => string;
@@ -45,6 +56,16 @@ export function createDefaultDeps(env: Env): AppDeps {
     loadMe: createSupabaseMeRepository(env),
     invitations: createSupabaseInvitations(env),
     assessments: createSupabaseAssessments(env),
+    assistant: createSupabaseAssistant(env),
+    llm:
+      env.AI_LLM_PROVIDER === 'fake'
+        ? createFakeLlm()
+        : env.ANTHROPIC_API_KEY
+          ? createAnthropicProvider(env.ANTHROPIC_API_KEY, env.AI_CHAT_MODEL)
+          : null,
+    embeddings: env.VOYAGE_API_KEY
+      ? createVoyageProvider(env.VOYAGE_API_KEY, env.AI_EMBEDDING_MODEL)
+      : null,
     mailer: env.RESEND_API_KEY
       ? createResendMailer(env.RESEND_API_KEY, env.MAIL_FROM)
       : disabledMailer,
@@ -101,6 +122,12 @@ export function createApp(env: Env, deps: AppDeps) {
 
   app.use('/v1/assessments/*', authenticated);
   app.route('/', assessmentsRoute({ assessments: deps.assessments }));
+
+  app.use('/v1/assistant/*', authenticated);
+  app.route(
+    '/',
+    assistantRoute({ assistant: deps.assistant, llm: deps.llm, embeddings: deps.embeddings }),
+  );
 
   app.notFound((c) => errorResponse(c, 404, 'NOT_FOUND', 'El recurso no existe.'));
 

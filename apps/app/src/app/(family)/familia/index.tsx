@@ -1,6 +1,6 @@
 import { FAMILY_ROLE_LABELS, type FamilyRole } from '@crecer/shared';
 import { Link } from 'expo-router';
-import { ChevronRight, HeartHandshake, UserPlus, Users } from 'lucide-react-native';
+import { ChevronRight, ClipboardList, HeartHandshake, UserPlus, Users } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
@@ -260,6 +260,14 @@ export default function FamilyScreen() {
       <MembersCard familyId={family.id} manage={manage} />
       <AdultsCard familyId={family.id} myRole={family.role} myUserId={myUserId} />
       {manage ? <InvitationsCard familyId={family.id} /> : null}
+      {manage ? (
+        <LinkCard
+          href="/evaluaciones"
+          title="Evaluaciones"
+          description="La evaluación de hábitos de cada integrante, sus resultados y el historial."
+          leading={<ClipboardList color={theme.colors.primary} size={28} aria-hidden />}
+        />
+      ) : null}
       {manage ? (
         <LinkCard
           href="/profesionales"

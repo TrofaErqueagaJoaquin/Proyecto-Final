@@ -24,6 +24,7 @@
     "content:check": "tsx scripts/content-sync.mts --check",
     "content:sync": "tsx --env-file=apps/api/.env scripts/content-sync.mts",
     "pro:verify": "tsx --env-file=apps/api/.env scripts/pro-verify.mts",
+    "kb:ingest": "tsx --env-file=apps/api/.env scripts/kb-ingest.mts",
     "prepare": "husky"
   },
   "devDependencies": {
@@ -32,6 +33,7 @@
     "@crecer/domain": "workspace:*",
     "@crecer/shared": "workspace:*",
     "@electric-sql/pglite": "0.5.10",
+    "@electric-sql/pglite-pgvector": "0.0.11",
     "@supabase/supabase-js": "^2.118.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",

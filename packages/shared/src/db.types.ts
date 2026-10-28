@@ -360,6 +360,60 @@ export type Database = {
           },
         ]
       }
+      ai_usage_daily: {
+        Row: {
+          cache_read_tokens: number
+          cache_write_tokens: number
+          cost_usd: number
+          day: string
+          family_id: string | null
+          input_tokens: number
+          messages: number
+          output_tokens: number
+          user_id: string
+        }
+        Insert: {
+          cache_read_tokens?: number
+          cache_write_tokens?: number
+          cost_usd?: number
+          day: string
+          family_id?: string | null
+          input_tokens?: number
+          messages?: number
+          output_tokens?: number
+          user_id: string
+        }
+        Update: {
+          cache_read_tokens?: number
+          cache_write_tokens?: number
+          cost_usd?: number
+          day?: string
+          family_id?: string | null
+          input_tokens?: number
+          messages?: number
+          output_tokens?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       assessment_answers: {
         Row: {
           attempt_id: string
@@ -511,6 +565,53 @@ export type Database = {
             columns: ["attempt_id"]
             isOneToOne: false
             referencedRelation: "assessment_attempts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assistant_messages: {
+        Row: {
+          body: string
+          citations: Json
+          conversation_id: string
+          created_at: string
+          id: string
+          model: string | null
+          outcome: string | null
+          prompt_version: string | null
+          risk_level: string | null
+          role: string
+        }
+        Insert: {
+          body: string
+          citations?: Json
+          conversation_id: string
+          created_at?: string
+          id?: string
+          model?: string | null
+          outcome?: string | null
+          prompt_version?: string | null
+          risk_level?: string | null
+          role: string
+        }
+        Update: {
+          body?: string
+          citations?: Json
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          model?: string | null
+          outcome?: string | null
+          prompt_version?: string | null
+          risk_level?: string | null
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
         ]
@@ -820,6 +921,64 @@ export type Database = {
             columns: ["source_id"]
             isOneToOne: false
             referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          created_at: string
+          expires_at: string
+          family_id: string
+          id: string
+          member_id: string | null
+          title: string
+          updated_at: string
+          use_personal_context: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          family_id: string
+          id?: string
+          member_id?: string | null
+          title?: string
+          updated_at?: string
+          use_personal_context?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          family_id?: string
+          id?: string
+          member_id?: string | null
+          title?: string
+          updated_at?: string
+          use_personal_context?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1211,6 +1370,113 @@ export type Database = {
             columns: ["goal_id"]
             isOneToOne: false
             referencedRelation: "follow_up_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kb_chunks: {
+        Row: {
+          body: string
+          document_id: string
+          embedding: string | null
+          heading_path: string
+          id: string
+          ordinal: number
+          token_estimate: number
+          tsv: unknown
+        }
+        Insert: {
+          body: string
+          document_id: string
+          embedding?: string | null
+          heading_path: string
+          id?: string
+          ordinal: number
+          token_estimate: number
+          tsv?: unknown
+        }
+        Update: {
+          body?: string
+          document_id?: string
+          embedding?: string | null
+          heading_path?: string
+          id?: string
+          ordinal?: number
+          token_estimate?: number
+          tsv?: unknown
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kb_chunks_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "kb_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kb_documents: {
+        Row: {
+          activity_id: string | null
+          age_max_months: number | null
+          age_min_months: number | null
+          content_item_id: string | null
+          embedding_model: string | null
+          evidence_label: string
+          id: string
+          indexed_at: string
+          slug: string
+          source_hash: string
+          status: string
+          title: string
+          type: string
+          url_path: string | null
+        }
+        Insert: {
+          activity_id?: string | null
+          age_max_months?: number | null
+          age_min_months?: number | null
+          content_item_id?: string | null
+          embedding_model?: string | null
+          evidence_label: string
+          id?: string
+          indexed_at?: string
+          slug: string
+          source_hash: string
+          status?: string
+          title: string
+          type: string
+          url_path?: string | null
+        }
+        Update: {
+          activity_id?: string | null
+          age_max_months?: number | null
+          age_min_months?: number | null
+          content_item_id?: string | null
+          embedding_model?: string | null
+          evidence_label?: string
+          id?: string
+          indexed_at?: string
+          slug?: string
+          source_hash?: string
+          status?: string
+          title?: string
+          type?: string
+          url_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kb_documents_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: true
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kb_documents_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: true
+            referencedRelation: "content_items"
             referencedColumns: ["id"]
           },
         ]
@@ -1966,6 +2232,18 @@ export type Database = {
         Args: { p_relationship: string; p_token: string }
         Returns: string
       }
+      add_ai_usage: {
+        Args: {
+          p_cache_read_tokens: number
+          p_cache_write_tokens: number
+          p_cost_usd: number
+          p_family: string
+          p_input_tokens: number
+          p_output_tokens: number
+          p_user: string
+        }
+        Returns: undefined
+      }
       add_family_member: {
         Args: {
           p_alias: string
@@ -1981,6 +2259,7 @@ export type Database = {
         Args: { p_birth_month: string; p_on: string }
         Returns: number
       }
+      assistant_quota: { Args: { p_user: string }; Returns: Json }
       can_manage_attempt: { Args: { p_attempt_id: string }; Returns: boolean }
       can_read_goal: {
         Args: { p_family: string; p_member: string }
@@ -1989,6 +2268,10 @@ export type Database = {
       can_write_goal: {
         Args: { p_family: string; p_member: string }
         Returns: boolean
+      }
+      conversation_expiry: {
+        Args: { p_family: string; p_user: string }
+        Returns: string
       }
       create_family: {
         Args: { p_name: string; p_relationship: string }
@@ -2018,6 +2301,29 @@ export type Database = {
         Args: { p_professional: string }
         Returns: boolean
       }
+      kb_hybrid_search: {
+        Args: {
+          p_age_months?: number
+          p_count?: number
+          p_embedding?: string
+          p_query: string
+        }
+        Returns: {
+          body: string
+          chunk_id: string
+          document_id: string
+          evidence_label: string
+          fts_coverage: number
+          fts_rank: number
+          heading_path: string
+          score: number
+          similarity: number
+          slug: string
+          title: string
+          type: string
+          url_path: string
+        }[]
+      }
       log_audit: {
         Args: {
           p_action: string
@@ -2037,6 +2343,7 @@ export type Database = {
         Args: { p_assignment: string; p_member: string }
         Returns: Json
       }
+      purge_expired_assistant_data: { Args: never; Returns: number }
       questionnaire_definition: {
         Args: { p_version_id: string }
         Returns: Json
