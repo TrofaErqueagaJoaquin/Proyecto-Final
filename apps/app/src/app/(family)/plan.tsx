@@ -38,11 +38,15 @@ export default function PlanScreen() {
   const weekStart = mondayOf(localDate());
   const plans = useWeekPlans(family?.id, weekStart);
   const generate = useGeneratePlan();
-  const [scope, setScope] = useState<string>(FAMILY);
+  const [chosen, setScope] = useState<string | null>(null);
 
   if (isPending) return <Skeleton height={300} />;
   if (!family) return <Redirect href="/familia/nueva" />;
 
+  // Sin elección, se abre el plan que ya existe esta semana (primero el de la familia): si no,
+  // "Toda la familia" mostraba "Todavía no hay plan" aunque Tomi tuviera el suyo.
+  const existing = plans.data?.find((p) => p.member_id === null) ?? plans.data?.[0];
+  const scope = chosen ?? existing?.member_id ?? FAMILY;
   const manage = canManage(family.role);
   const memberId = scope === FAMILY ? null : scope;
   const plan = plans.data?.find((p) => p.member_id === memberId);
