@@ -75,6 +75,18 @@ if (missingRoles.length > 0) {
 // ── 1. Vaciar ───────────────────────────────────────────────────────────
 
 step('Borrando familias y cuentas');
+// Primero los acompañamientos (y en cascada sus permisos): access_grants.consent_id es RESTRICT, y
+// al borrar la familia sus consentimientos se irían antes que los permisos que los usan.
+ok(
+  await service.from('care_assignments').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+  'care_assignments',
+);
+// Y los planes: al borrar los registros de actividades, plan_items.log_id pasa a null y un ítem
+// "hecho" sin registro viola su check.
+ok(
+  await service.from('family_plans').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+  'family_plans',
+);
 ok(
   await service.from('families').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
   'families',
