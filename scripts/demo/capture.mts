@@ -7,7 +7,7 @@
 //
 // Corre el asistente de la API en este proceso, con la cuenta de Laura, contra el proyecto demo.
 
-import { writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 
 import { AssistantEventSchema } from '@crecer/shared';
 
@@ -89,6 +89,7 @@ try {
       outcome: m.outcome as ConversationFixture['messages'][number]['outcome'],
     })),
   };
+  await mkdir(new URL('./fixtures/', import.meta.url), { recursive: true });
   await writeFile(
     new URL('./fixtures/conversation.json', import.meta.url),
     `${JSON.stringify(fixture, null, 2)}\n`,

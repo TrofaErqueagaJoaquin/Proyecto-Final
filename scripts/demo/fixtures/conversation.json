@@ -1,0 +1,58 @@
+{
+  "capturedAt": "2026-10-28T14:42:16.193Z",
+  "model": "claude-haiku-5-5",
+  "promptVersion": "assistant.v1",
+  "title": "Se pone muy mal cuando le apago la tablet. ¿Qué puedo hacer?",
+  "messages": [
+    {
+      "role": "user",
+      "body": "Se pone muy mal cuando le apago la tablet. ¿Qué puedo hacer?",
+      "citations": [],
+      "riskLevel": "none",
+      "outcome": null
+    },
+    {
+      "role": "assistant",
+      "body": "Cuando el corte es abrupto y sin aviso, se hace más difícil para cualquier chico [F3]. Podés hacer la transición más llevadera con estos pasos:\n\n1. **Acordá antes cuánto va a durar** o cuántos episodios va a ver [F4].\n2. **Avisá cuando falten 5 minutos y cuando empiece el último** [F4].\n3. **Que apague él, si puede** [F4].\n4. **Tené lista una actividad puente atractiva**, como merienda, un juego o salir un rato [F4]. La transición dura unos 5 minutos [F2].\n5. **Si hace falta, sumá una pausa para calmarse:** respirar soplando velitas no necesita materiales [F1].\n\nAntes de apagar, revisá si tiene hambre, sueño o cansancio, porque esas cosas también pueden aumentar la reacción [F6].\n\n**Con poco tiempo:** avisá 5 minutos antes, pedile que apague él y tené a mano algo corto para hacer enseguida [F2][F4].\n\nEstas son propuestas del proyecto, no recomendaciones oficiales. Si las reacciones son muy intensas o no mejoran, consultá con un profesional. La app tiene la guía \"Cuándo consultar\".",
+      "citations": [
+        {
+          "ref": "F3",
+          "slug": "ficha-c-reaccion-al-apagar",
+          "title": "Ficha C · Reacción intensa al apagar",
+          "urlPath": "/situaciones/ficha-c-reaccion-al-apagar",
+          "evidenceLabel": "propuesta_proyecto"
+        },
+        {
+          "ref": "F4",
+          "slug": "final-con-aviso",
+          "title": "Actividad: Final con aviso y actividad puente",
+          "urlPath": "/actividades/final-con-aviso",
+          "evidenceLabel": "propuesta_proyecto"
+        },
+        {
+          "ref": "F2",
+          "slug": "final-con-aviso",
+          "title": "Actividad: Final con aviso y actividad puente",
+          "urlPath": "/actividades/final-con-aviso",
+          "evidenceLabel": "propuesta_proyecto"
+        },
+        {
+          "ref": "F1",
+          "slug": "respirar-soplando-velitas",
+          "title": "Actividad: Respirar soplando velitas",
+          "urlPath": "/actividades/respirar-soplando-velitas",
+          "evidenceLabel": "propuesta_proyecto"
+        },
+        {
+          "ref": "F6",
+          "slug": "ficha-b-pantalla-para-calmarse",
+          "title": "Ficha B · Necesita la pantalla para calmarse",
+          "urlPath": "/situaciones/ficha-b-pantalla-para-calmarse",
+          "evidenceLabel": "propuesta_proyecto"
+        }
+      ],
+      "riskLevel": "none",
+      "outcome": "answered"
+    }
+  ]
+}

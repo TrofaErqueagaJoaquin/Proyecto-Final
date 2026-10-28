@@ -50,6 +50,9 @@ const monthsAgo = (months: number) => {
   const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - months, 1));
   return isoDay(d);
 };
+/** En las inserciones de varias filas, lo que una fila no trae toma el valor por defecto de la base
+ *  (sin esto, supabase-js manda null y choca con las columnas not null). */
+const DEFAULT_COLUMNS = { defaultToNull: false };
 const step = (text: string) => {
   console.log(`· ${text}`);
 };
@@ -189,16 +192,19 @@ const sofi = demoId('member:sofi');
 const juli = demoId('member:juli');
 
 ok(
-  await service.from('families').insert([
-    {
-      id: garcia,
-      name: 'Familia García',
-      created_by: id('laura'),
-      chat_history_enabled: true,
-      chat_retention_days: 90,
-    },
-    { id: pereyra, name: 'Familia Pereyra', created_by: id('carla') },
-  ]),
+  await service.from('families').insert(
+    [
+      {
+        id: garcia,
+        name: 'Familia García',
+        created_by: id('laura'),
+        chat_history_enabled: true,
+        chat_retention_days: 90,
+      },
+      { id: pereyra, name: 'Familia Pereyra', created_by: id('carla') },
+    ],
+    DEFAULT_COLUMNS,
+  ),
   'families',
 );
 ok(
@@ -223,36 +229,42 @@ ok(
   'family_memberships',
 );
 ok(
-  await service.from('family_preferences').insert([
-    {
-      family_id: garcia,
-      minutes_per_day: 30,
-      space: 'indoor',
-      budget: 'low',
-      interests: ['movimiento', 'arte', 'lectura'],
-    },
-    { family_id: pereyra, minutes_per_day: 20, space: 'small_indoor', budget: 'free' },
-  ]),
+  await service.from('family_preferences').insert(
+    [
+      {
+        family_id: garcia,
+        minutes_per_day: 30,
+        space: 'indoor',
+        budget: 'low',
+        interests: ['movimiento', 'arte', 'lectura'],
+      },
+      { family_id: pereyra, minutes_per_day: 20, space: 'small_indoor', budget: 'free' },
+    ],
+    DEFAULT_COLUMNS,
+  ),
   'family_preferences',
 );
 ok(
-  await service.from('family_members').insert([
-    {
-      id: tomi,
-      family_id: garcia,
-      alias: 'Tomi',
-      birth_month: monthsAgo(51),
-      interests: ['dinosaurios', 'bloques'],
-    },
-    {
-      id: sofi,
-      family_id: garcia,
-      alias: 'Sofi',
-      birth_month: monthsAgo(136),
-      interests: ['música', 'dibujo'],
-    },
-    { id: juli, family_id: pereyra, alias: 'Juli', birth_month: monthsAgo(88) },
-  ]),
+  await service.from('family_members').insert(
+    [
+      {
+        id: tomi,
+        family_id: garcia,
+        alias: 'Tomi',
+        birth_month: monthsAgo(51),
+        interests: ['dinosaurios', 'bloques'],
+      },
+      {
+        id: sofi,
+        family_id: garcia,
+        alias: 'Sofi',
+        birth_month: monthsAgo(136),
+        interests: ['música', 'dibujo'],
+      },
+      { id: juli, family_id: pereyra, alias: 'Juli', birth_month: monthsAgo(88) },
+    ],
+    DEFAULT_COLUMNS,
+  ),
   'family_members',
 );
 ok(
@@ -412,7 +424,7 @@ async function submitAssessment(input: {
     ];
   });
   if (recRows.length > 0) {
-    must(await service.from('recommendations').insert(recRows), 'recommendations');
+    ok(await service.from('recommendations').insert(recRows), 'recommendations');
   }
   ok(
     await service.from('audit_log').insert({
