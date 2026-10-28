@@ -36,7 +36,8 @@ const EnvSchema = z.object({
   // Asistente (AI_ARCHITECTURE.md §3.1). Sin ANTHROPIC_API_KEY el asistente responde "no
   // configurado", salvo AI_LLM_PROVIDER=fake (respuestas deterministas, sin costo: ensayos).
   AI_LLM_PROVIDER: z.enum(['anthropic', 'fake']).default('anthropic'),
-  AI_CHAT_MODEL: z.string().default('claude-sonnet-5-5'),
+  // Haiku 5.5: unas 20 veces más barato que Sonnet 5.5 (ADR-032). Se cambia con esta variable.
+  AI_CHAT_MODEL: z.string().default('claude-haiku-5-5'),
   ANTHROPIC_API_KEY: z.preprocess(
     (value) => (value === '' ? undefined : value),
     z.string().min(1).optional(),

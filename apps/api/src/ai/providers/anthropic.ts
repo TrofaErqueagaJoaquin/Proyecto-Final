@@ -3,12 +3,20 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { LlmEvent, LlmProvider, LlmUsage } from './types';
 
 /**
- * Claude por streaming (ADR-028: claude-sonnet-5-5).
+ * Modelos que aceptan el fallback del servidor (`fallbacks: "default"`). Claude Haiku 5.5 no lo
+ * tiene: con él, una negativa llega directo como `refusal` y la familia recibe la respuesta segura.
+ */
+export function supportsServerFallback(model: string): boolean {
+  return /^claude-(sonnet-5-5|opus-5|opus-5-5|fable-5|fable-5-1)$/.test(model);
+}
+
+/**
+ * Claude por streaming (ADR-032: claude-haiku-5-5 por defecto; claude-sonnet-5-5 configurable).
  * - Pensamiento adaptativo (no se envía `thinking`) con esfuerzo `low`: respuestas de chat.
  * - Sin temperatura: los parámetros de muestreo devuelven 400.
  * - `system` con cache_control: la parte fija se cobra a precio de caché.
  * - Si el modelo declina (`stop_reason: "refusal"`), el fallback del servidor lo reintenta en
- *   otro modelo cuando la categoría lo permite; si igual declina, se avisa como `refusal`.
+ *   otro modelo cuando el modelo y la categoría lo permiten; si no, se avisa como `refusal`.
  * Solo se reenvían los bloques `text`: los de pensamiento no se muestran.
  */
 export function createAnthropicProvider(apiKey: string, model: string): LlmProvider {
@@ -22,8 +30,9 @@ export function createAnthropicProvider(apiKey: string, model: string): LlmProvi
         {
           model,
           max_tokens: maxOutputTokens,
-          betas: ['server-side-fallback-2026-07-01'],
-          fallbacks: 'default',
+          ...(supportsServerFallback(model)
+            ? { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' as const }
+            : {}),
           output_config: { effort: 'low' },
           system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
           messages: [{ role: 'user', content: user }],
