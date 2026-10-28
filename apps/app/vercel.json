@@ -6,37 +6,60 @@
   "outputDirectory": "dist",
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/actividades/:slug", "destination": "/actividades/[slug].html" },
-    { "source": "/etapas/:slug", "destination": "/etapas/[slug].html" },
-    { "source": "/situaciones/:slug", "destination": "/situaciones/[slug].html" },
-    { "source": "/directorio/:id", "destination": "/directorio/[id].html" },
-    { "source": "/asistente/:conversationId", "destination": "/asistente/[conversationId].html" },
+    {
+      "source": "/actividades/:slug",
+      "destination": "/actividades/%5Bslug%5D"
+    },
+    {
+      "source": "/etapas/:slug",
+      "destination": "/etapas/%5Bslug%5D"
+    },
+    {
+      "source": "/situaciones/:slug",
+      "destination": "/situaciones/%5Bslug%5D"
+    },
+    {
+      "source": "/directorio/:id",
+      "destination": "/directorio/%5Bid%5D"
+    },
+    {
+      "source": "/asistente/:conversationId",
+      "destination": "/asistente/%5BconversationId%5D"
+    },
     {
       "source": "/evaluaciones/historial/:memberId",
-      "destination": "/evaluaciones/historial/[memberId].html"
+      "destination": "/evaluaciones/historial/%5BmemberId%5D"
     },
     {
       "source": "/evaluaciones/:attemptId/responder",
-      "destination": "/evaluaciones/[attemptId]/responder.html"
+      "destination": "/evaluaciones/%5BattemptId%5D/responder"
     },
     {
       "source": "/evaluaciones/:attemptId/resultado",
-      "destination": "/evaluaciones/[attemptId]/resultado.html"
+      "destination": "/evaluaciones/%5BattemptId%5D/resultado"
     },
-    { "source": "/familia/integrante/:id", "destination": "/familia/integrante/[id].html" },
+    {
+      "source": "/familia/integrante/:id",
+      "destination": "/familia/integrante/%5Bid%5D"
+    },
     {
       "source": "/profesionales/:assignmentId",
-      "destination": "/profesionales/[assignmentId].html"
+      "destination": "/profesionales/%5BassignmentId%5D"
     },
     {
       "source": "/profesional/casos/:assignmentId/:memberId",
-      "destination": "/profesional/casos/[assignmentId]/[memberId].html"
+      "destination": "/profesional/casos/%5BassignmentId%5D/%5BmemberId%5D"
     }
   ],
   "headers": [
     {
       "source": "/_expo/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     }
   ]
 }
