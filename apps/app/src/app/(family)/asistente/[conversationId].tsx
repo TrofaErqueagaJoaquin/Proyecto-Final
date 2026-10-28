@@ -128,21 +128,37 @@ export default function ConversationScreen() {
 
   return (
     <Screen scroll={false}>
-      <Text variant="heading">{c.title}</Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        <Clock size={14} color={colors.inkMuted} aria-hidden />
-        <Text variant="small" tone="muted">
-          {retentionLabel(c.expires_at)}
-          {c.use_personal_context ? ' Usa el contexto de la familia.' : ''}
-        </Text>
-      </View>
-
+      {/* Todo se desplaza menos la pregunta, que queda siempre a mano abajo (en el celular el
+          encabezado fijo dejaba muy poco lugar para leer la respuesta). */}
       <ScrollView
         ref={scroll}
-        style={{ flex: 1 }}
-        contentContainerStyle={{ gap: 12, paddingVertical: 8 }}
+        style={{ flex: 1, minHeight: 0 }}
+        contentContainerStyle={{ gap: 12, paddingBottom: 8 }}
+        keyboardShouldPersistTaps="handled"
+        onLayout={() => scroll.current?.scrollToEnd({ animated: false })}
         onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: false })}
       >
+        <Text variant="heading">{c.title}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <Clock size={14} color={colors.inkMuted} aria-hidden />
+          <Text variant="small" tone="muted" style={{ flexShrink: 1 }}>
+            {retentionLabel(c.expires_at)}
+            {c.use_personal_context ? ' Usa el contexto de la familia.' : ''}
+          </Text>
+          <ConfirmAction
+            label="Borrar conversación"
+            confirmLabel="Sí, borrar"
+            description="Se borra ya, con todos sus mensajes. No se puede deshacer."
+            loading={remove.isPending}
+            onConfirm={() => {
+              remove.mutate(conversationId, {
+                onSuccess: () => {
+                  router.replace('/asistente');
+                },
+              });
+            }}
+          />
+        </View>
         {c.messages.length === 0 && !pending ? (
           <Text tone="muted">
             Preguntá lo que necesites sobre pantallas, sueño, juego o rutinas. Por ejemplo: “Se pone
@@ -178,7 +194,7 @@ export default function ConversationScreen() {
         editable={!pending}
         onSubmitEditing={send}
       />
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
         <Button
           label="Enviar"
           icon={Send}
@@ -186,23 +202,10 @@ export default function ConversationScreen() {
           disabled={question.trim() === ''}
           onPress={send}
         />
-        <ConfirmAction
-          label="Borrar conversación"
-          confirmLabel="Sí, borrar"
-          description="Se borra ya, con todos sus mensajes. No se puede deshacer."
-          loading={remove.isPending}
-          onConfirm={() => {
-            remove.mutate(conversationId, {
-              onSuccess: () => {
-                router.replace('/asistente');
-              },
-            });
-          }}
-        />
+        <Text variant="small" tone="muted" style={{ flexShrink: 1, flexBasis: 160, flexGrow: 1 }}>
+          Orienta, no diagnostica. Si hay riesgo inmediato, llamá al 911.
+        </Text>
       </View>
-      <Text variant="small" tone="muted">
-        Orienta, no diagnostica. Si hay riesgo inmediato, llamá al 911.
-      </Text>
     </Screen>
   );
 }

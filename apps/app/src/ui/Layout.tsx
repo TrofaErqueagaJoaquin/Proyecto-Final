@@ -10,6 +10,7 @@ import { makeStyles, useTheme } from './theme';
 const useStyles = makeStyles((t) => ({
   safe: { flex: 1, backgroundColor: t.colors.bg },
   scroll: { flexGrow: 1 },
+  fill: { flex: 1, minHeight: 0 },
   content: {
     width: '100%',
     alignSelf: 'center',
@@ -41,7 +42,11 @@ export function Screen({
   edges?: ('top' | 'bottom' | 'left' | 'right')[];
 }) {
   const styles = useStyles();
-  const content = <View style={[styles.content, { maxWidth }]}>{children}</View>;
+  // Sin desplazamiento propio (chat), el contenido ocupa el alto disponible y su ScrollView interno
+  // es el que se desplaza; si no, crece con los mensajes y lo de abajo queda fuera de la pantalla.
+  const content = (
+    <View style={[styles.content, { maxWidth }, !scroll && styles.fill]}>{children}</View>
+  );
   return (
     <SafeAreaView style={styles.safe} edges={edges}>
       {scroll ? (
