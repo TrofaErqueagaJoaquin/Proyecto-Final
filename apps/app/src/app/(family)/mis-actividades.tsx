@@ -1,25 +1,52 @@
 import { Link } from 'expo-router';
-import { Bookmark, CircleCheck, Clock, Puzzle } from 'lucide-react-native';
+import { Bookmark, CalendarDays, CircleCheck, Clock, Puzzle, Target } from 'lucide-react-native';
 import { View } from 'react-native';
 
 import { useActiveFamily } from '@/features/families/queries';
 import { ActivityIcon } from '@/features/library/activityVisuals';
 import { LinkCard } from '@/features/library/LinkCard';
 import { useActivityLogs, useSavedActivities } from '@/features/library/queries';
-import { Badge, Button, Card, EmptyState, ErrorState, Screen, Skeleton, Text } from '@/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  ErrorState,
+  Screen,
+  Skeleton,
+  Text,
+  useTheme,
+} from '@/ui';
 
 export default function MyActivitiesScreen() {
   const { isPending, family } = useActiveFamily();
   const saved = useSavedActivities(family?.id);
   const logs = useActivityLogs(family?.id);
+  const { colors } = useTheme();
 
   if (isPending) return <Skeleton height={300} />;
 
   return (
     <Screen>
       <Text variant="title">Actividades</Text>
+      {family ? (
+        <>
+          <LinkCard
+            href="/plan"
+            title="Plan de la semana"
+            description="De 5 a 7 ideas posibles con su tiempo y su espacio."
+            leading={<CalendarDays size={28} color={colors.primary} aria-hidden />}
+          />
+          <LinkCard
+            href="/objetivos"
+            title="Objetivos"
+            description="Lo que se propusieron como familia y cómo vienen."
+            leading={<Target size={28} color={colors.primary} aria-hidden />}
+          />
+        </>
+      ) : null}
       <Link href="/actividades" asChild>
-        <Button label="Explorar el catálogo" icon={Puzzle} />
+        <Button label="Explorar el catálogo" icon={Puzzle} variant="secondary" />
       </Link>
 
       {!family ? (

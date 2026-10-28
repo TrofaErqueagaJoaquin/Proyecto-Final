@@ -95,6 +95,16 @@ const DOMAIN_ERRORS: Record<
   },
   CARE_NOT_PENDING: { status: 409, code: 'CONFLICT', text: 'Esa solicitud ya fue respondida.' },
   CARE_NOT_OPEN: { status: 409, code: 'CONFLICT', text: 'Ese acompañamiento ya terminó.' },
+  PLAN_EMPTY: {
+    status: 409,
+    code: 'CONFLICT',
+    text: 'No encontramos actividades para armar el plan.',
+  },
+  PLAN_OUTSIDE_WEEK: {
+    status: 400,
+    code: 'VALIDATION_ERROR',
+    text: 'La fecha no corresponde a esa semana.',
+  },
 };
 
 /**

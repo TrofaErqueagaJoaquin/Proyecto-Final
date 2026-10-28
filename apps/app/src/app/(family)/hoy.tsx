@@ -1,8 +1,8 @@
 import { Link } from 'expo-router';
-import { Sprout, Users } from 'lucide-react-native';
+import { Users } from 'lucide-react-native';
 
 import { useMe } from '@/features/auth/queries';
-import { canManage } from '@/features/families/queries';
+import { TodaySection } from '@/features/plans/TodaySection';
 import { Button, Card, EmptyState, ErrorState, GrowthLine, Screen, Skeleton, Text } from '@/ui';
 
 /** Inicio del espacio familiar: UNA sugerencia concreta para hoy (UX_AND_NAVIGATION.md §2.3). */
@@ -39,20 +39,10 @@ export default function TodayScreen() {
           />
         </Card>
       ) : (
-        <Card>
-          <EmptyState
-            icon={Sprout}
-            title="Tu sugerencia del día llega pronto"
-            description="Cuando completes la primera evaluación de hábitos (lleva unos 6 minutos), acá vas a ver una idea concreta para hoy."
-            action={
-              canManage(me.data.families[0]?.role) ? (
-                <Link href="/evaluaciones" asChild>
-                  <Button label="Hacer la evaluación" />
-                </Link>
-              ) : undefined
-            }
-          />
-        </Card>
+        <TodaySection
+          familyId={me.data.families[0]?.id ?? ''}
+          role={me.data.families[0]?.role ?? 'caregiver'}
+        />
       )}
     </Screen>
   );

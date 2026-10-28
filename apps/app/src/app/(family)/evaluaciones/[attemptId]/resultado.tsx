@@ -1,6 +1,6 @@
 import { answersFromRows, formatAge, type Band, type Contribution } from '@crecer/domain';
 import { Link, useLocalSearchParams } from 'expo-router';
-import { ClipboardList, History } from 'lucide-react-native';
+import { CalendarDays, ClipboardList, History } from 'lucide-react-native';
 import { View } from 'react-native';
 
 import { friendlyError } from '@/copy/errors';
@@ -21,6 +21,7 @@ import {
   useUpdateRecommendation,
 } from '@/features/assessments/queries';
 import { TextLink } from '@/features/auth/components';
+import { ToGoalButton } from '@/features/goals/ToGoalButton';
 import { LinkCard } from '@/features/library/LinkCard';
 import {
   Badge,
@@ -117,6 +118,9 @@ export default function ResultScreen() {
     )
     .filter((text): text is string => text !== null);
   const alias = attempt.data.family_members?.alias ?? '';
+
+  // Fuera del map: TypeScript no conserva el estrechamiento dentro del callback.
+  const memberId = attempt.data.member_id;
 
   return (
     <Screen>
@@ -230,10 +234,15 @@ export default function ResultScreen() {
                   }}
                 />
               ))}
+              <ToGoalButton title={target.title} reason={rec.reason} memberId={memberId} />
             </View>
           </View>
         );
       })}
+
+      <Link href="/plan" asChild>
+        <Button label="Armar el plan de la semana" icon={CalendarDays} />
+      </Link>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <Link href={`/evaluaciones/historial/${attempt.data.member_id}`} asChild>

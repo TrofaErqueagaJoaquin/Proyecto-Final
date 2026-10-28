@@ -60,6 +60,9 @@ const DOMAIN_MESSAGES: Record<DomainErrorCode, string> = {
     'Ya tienen un acompañamiento abierto (o una solicitud pendiente) con este profesional.',
   CARE_NOT_PENDING: 'Esa solicitud ya fue respondida o cancelada.',
   CARE_NOT_OPEN: 'Ese acompañamiento ya terminó.',
+  PLAN_EMPTY:
+    'No encontramos actividades que entren en su tiempo, espacio y presupuesto. Probá cambiar las preferencias.',
+  PLAN_OUTSIDE_WEEK: 'Esa fecha no corresponde a la semana del plan.',
 };
 
 // Códigos SQLSTATE que pueden llegar por PostgREST.

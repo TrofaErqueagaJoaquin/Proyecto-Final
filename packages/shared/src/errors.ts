@@ -55,5 +55,7 @@ export const DomainErrorCodeSchema = z.enum([
   'CARE_ALREADY_OPEN',
   'CARE_NOT_PENDING',
   'CARE_NOT_OPEN',
+  'PLAN_EMPTY',
+  'PLAN_OUTSIDE_WEEK',
 ]);
 export type DomainErrorCode = z.infer<typeof DomainErrorCodeSchema>;

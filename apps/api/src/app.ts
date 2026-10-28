@@ -29,6 +29,7 @@ import {
   type InvitationsPort,
 } from './modules/families/invitations';
 import { createSupabaseMeRepository, type LoadMe } from './modules/me/repository';
+import { createSupabasePlans, plansRoute, type PlansPort } from './modules/plans/generate';
 import type { AppBindings } from './types';
 import { API_VERSION } from './version';
 
@@ -40,6 +41,7 @@ export interface AppDeps {
   invitations: InvitationsPort;
   assessments: AssessmentsPort;
   assistant: AssistantPort;
+  plans: PlansPort;
   /** null = sin clave: el asistente responde "no configurado" (salvo riesgo alto). */
   llm: LlmProvider | null;
   /** null = búsqueda solo por texto completo. */
@@ -57,6 +59,7 @@ export function createDefaultDeps(env: Env): AppDeps {
     invitations: createSupabaseInvitations(env),
     assessments: createSupabaseAssessments(env),
     assistant: createSupabaseAssistant(env),
+    plans: createSupabasePlans(env),
     llm:
       env.AI_LLM_PROVIDER === 'fake'
         ? createFakeLlm()
@@ -122,6 +125,12 @@ export function createApp(env: Env, deps: AppDeps) {
 
   app.use('/v1/assessments/*', authenticated);
   app.route('/', assessmentsRoute({ assessments: deps.assessments }));
+
+  app.use('/v1/plans/*', authenticated);
+  app.route(
+    '/',
+    plansRoute({ plans: deps.plans, authorization: deps.authorization, now: deps.now }),
+  );
 
   app.use('/v1/assistant/*', authenticated);
   app.route(

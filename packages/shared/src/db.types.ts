@@ -1223,6 +1223,58 @@ export type Database = {
           },
         ]
       }
+      family_plans: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          family_id: string
+          generator_version: string
+          id: string
+          member_id: string | null
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          family_id: string
+          generator_version: string
+          id?: string
+          member_id?: string | null
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          family_id?: string
+          generator_version?: string
+          id?: string
+          member_id?: string | null
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_plans_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "family_plans_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "family_plans_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       family_preferences: {
         Row: {
           budget: string | null
@@ -1495,6 +1547,67 @@ export type Database = {
           description?: string
         }
         Relationships: []
+      }
+      plan_items: {
+        Row: {
+          activity_id: string
+          created_at: string
+          id: string
+          log_id: string | null
+          plan_id: string
+          reason: string
+          scheduled_for: string
+          slot: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          activity_id: string
+          created_at?: string
+          id?: string
+          log_id?: string | null
+          plan_id: string
+          reason: string
+          scheduled_for: string
+          slot?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          activity_id?: string
+          created_at?: string
+          id?: string
+          log_id?: string | null
+          plan_id?: string
+          reason?: string
+          scheduled_for?: string
+          slot?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_items_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_items_log_id_fkey"
+            columns: ["log_id"]
+            isOneToOne: false
+            referencedRelation: "activity_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_items_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "family_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       professional_credentials: {
         Row: {
@@ -2269,6 +2382,10 @@ export type Database = {
         Args: { p_family: string; p_member: string }
         Returns: boolean
       }
+      complete_plan_item: {
+        Args: { p_item: string; p_member_ids: string[]; p_rating: number }
+        Returns: string
+      }
       conversation_expiry: {
         Args: { p_family: string; p_user: string }
         Returns: string
@@ -2334,6 +2451,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      plan_family: { Args: { p_plan: string }; Returns: string }
       pro_cases: { Args: never; Returns: Json }
       pro_has_scope: {
         Args: { p_family: string; p_member: string; p_scope: string }
@@ -2379,6 +2497,16 @@ export type Database = {
           p_value: number
         }
         Returns: undefined
+      }
+      save_week_plan: {
+        Args: {
+          p_family: string
+          p_generator_version: string
+          p_items: Json
+          p_member: string
+          p_week_start: string
+        }
+        Returns: string
       }
       shares_family_with: { Args: { p_user_id: string }; Returns: boolean }
       start_assessment: {

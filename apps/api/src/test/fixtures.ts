@@ -78,6 +78,10 @@ export function fakeDeps(overrides: Partial<AppDeps> = {}): AppDeps {
       finalize: () => Promise.resolve('ok'),
     },
     assistant: memoryAssistant().port,
+    plans: {
+      loadInput: () => Promise.reject(new Error('sin planes')),
+      save: () => Promise.resolve('66666666-6666-4666-8666-666666666666'),
+    },
     llm: null,
     embeddings: null,
     mailer: { sendInvitation: () => Promise.resolve(false) },

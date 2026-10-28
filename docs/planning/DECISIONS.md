@@ -369,6 +369,33 @@
 - **No verificado:** respuestas reales de Sonnet 5.5 y embeddings de Voyage, porque faltan las claves. Tampoco que `pg_cron` haya quedado programado en `crecer-dev`.
 - **Estado.** Aceptada.
 
+### ADR-031 · Decisiones de implementación de la Fase 7
+
+- **Decisiones:**
+  1. **Generador puro** (`packages/domain/src/plans`, versión `plans.v1`), determinista: el desempate usa un hash del id y la semana. Las restricciones se verifican en 300 casos con semilla:
+     - edad (en un plan familiar alcanza con que sirva para algún integrante), tiempo por día, espacio y presupuesto;
+     - de 5 a 7 ítems según el tiempo (5 con 10 minutos, 7 con 30 o más);
+     - ninguna actividad más de 2 veces;
+     - siempre una opción de 10 minutos o menos sin materiales, si el catálogo apto tiene alguna.
+  2. **Prioridades:** primero lo recomendado por la evaluación, después lo que coincide con los intereses de la familia (mapa interés → tipo de actividad). Hay penalización por repetir tipo y por lo hecho en los últimos 14 días. Los días se reparten en la semana.
+  3. **Migración 0011:** `family_plans` (un plan por semana, para la familia o para cada integrante, siempre desde un lunes) y `plan_items` (con `log_id` hacia `activity_logs`).
+     - `save_week_plan()` reemplaza el plan de esa semana y solo la ejecutan owner o guardian.
+     - `complete_plan_item()` registra la actividad con participantes y valoración en la misma transacción. Puede marcarla cualquier adulto, y marcarla dos veces no duplica el registro.
+     - La caregiver ve el plan y marca o saltea, pero no cambia actividades (trigger).
+  4. **`POST /v1/plans/generate`:** lee con el JWT (RLS), genera y guarda. Si no hay actividades aptas responde 409. "Otra idea" corre el mismo generador en la app, con el catálogo público.
+  5. **Objetivos desde la familia** sobre las tablas de la Fase 9: crear, anotar avances con porcentaje (100% lo marca como logrado), cambiar el estado, y "Convertir en objetivo" desde cada recomendación del resultado.
+  6. **Interfaz:**
+     - "Hoy" muestra la actividad del día (o la próxima) con "Hecho" y "Otra idea", y los objetivos en curso.
+     - Plan y Objetivos se abren desde Actividades y desde Hoy.
+     - El resultado de la evaluación lleva a "Armar el plan de la semana".
+- **Verificado:**
+  - Los 313 tests del generador y las 19 verificaciones pgTAP nuevas.
+  - 4 tests de la API.
+  - El generador con el catálogo real de `crecer-dev`, en tres perfiles de familia (sin escribir datos).
+  - En el navegador: Hoy, Plan y Objetivos.
+- **No verificado de punta a punta:** armar el plan y marcar "Hecho" con la cuenta real (no se crearon datos en la cuenta del equipo).
+- **Estado.** Aceptada.
+
 ---
 
 ## Decisiones pendientes de validación externa
