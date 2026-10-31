@@ -1,0 +1,103 @@
+name: APK de Android
+
+# Compila un APK instalable (firmado con la clave de desarrollo de Expo, no apto para Google Play)
+# y lo publica en la Release "apk-demo" del repositorio, para descargarlo directo desde el celular.
+#
+# Las direcciones del backend se leen de Settings → Secrets and variables → Actions (Secrets o
+# Variables, cualquiera de las dos sirve). Son valores públicos del cliente, pero igual no se
+# commitean (docs/setup/DEMO.md):
+#   EXPO_PUBLIC_API_URL, EXPO_PUBLIC_SUPABASE_URL, EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+# Sin esos valores el APK se compila igual (para detectar errores), pero no se publica.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, claude/apk-android]
+    paths:
+      - 'apps/app/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/android-apk.yml'
+
+permissions:
+  contents: write # crear o actualizar la Release con el APK
+
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+  EXPO_NO_TELEMETRY: 1
+  EXPO_PUBLIC_APP_ENV: demo
+  EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL || vars.EXPO_PUBLIC_API_URL }}
+  EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL || vars.EXPO_PUBLIC_SUPABASE_URL }}
+  EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY || vars.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+
+jobs:
+  apk:
+    name: Compilar APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4 # usa la versión de "packageManager"
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: ¿Están configuradas las direcciones del backend?
+        id: config
+        run: |
+          if [ -n "$EXPO_PUBLIC_API_URL" ] && [ -n "$EXPO_PUBLIC_SUPABASE_URL" ] && [ -n "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Faltan EXPO_PUBLIC_API_URL, EXPO_PUBLIC_SUPABASE_URL o EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY en Settings → Secrets and variables → Actions. Se compila con valores ficticios solo para verificar; el APK no se publica."
+            {
+              echo "EXPO_PUBLIC_API_URL=https://api.invalid"
+              echo "EXPO_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co"
+              echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_placeholder"
+            } >> "$GITHUB_ENV"
+          fi
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Generar el proyecto nativo (Expo prebuild)
+        working-directory: apps/app
+        run: pnpm exec expo prebuild --platform android --no-install
+
+      - name: Compilar el APK
+        working-directory: apps/app/android
+        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+
+      - name: Renombrar el APK
+        run: |
+          mkdir -p out
+          cp apps/app/android/app/build/outputs/apk/release/app-release.apk out/crecer-en-casa.apk
+          ls -lh out
+
+      - uses: actions/upload-artifact@v4
+        if: steps.config.outputs.ready == 'true'
+        with:
+          name: crecer-en-casa-apk
+          path: out/crecer-en-casa.apk
+
+      - name: Publicar en la Release "apk-demo"
+        if: steps.config.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES="APK de Android de Crecer en Casa (entorno de demostración). Compilado desde ${GITHUB_SHA::7} el $(date -u '+%Y-%m-%d %H:%M') UTC. Para instalarlo, abrí el archivo crecer-en-casa.apk desde el celular y permití instalar apps de origen desconocido."
+          if gh release view apk-demo >/dev/null 2>&1; then
+            gh release upload apk-demo out/crecer-en-casa.apk --clobber
+            gh release edit apk-demo --notes "$NOTES"
+          else
+            gh release create apk-demo out/crecer-en-casa.apk --target "$GITHUB_SHA" --title "APK de Android (demo)" --notes "$NOTES" --prerelease
+          fi
