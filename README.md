@@ -9,6 +9,8 @@ asistente con IA que cita sus fuentes y con profesionales de matrícula verifica
 
 - **Demo** (datos ficticios): <https://crecer-demo.vercel.app> · API:
   <https://crecer-demo-api.vercel.app/v1/health>
+- **APK de Android:** [descargar e instalar](https://expo.dev/accounts/joacotrofa/projects/crecer-en-casa/builds/5fda736a-db56-4c17-ba7f-6f0c8924a407)
+  (la página tiene un QR para instalarlo desde el celular; se conecta a la demo).
 - **Tres tipos de usuario:** familia (responsable principal, responsable y cuidador/a), profesional
   y administración (con verificación en dos pasos).
 - **Inicio de sesión:** correo y contraseña, Google, GitHub, Discord y verificación en dos pasos (TOTP).
