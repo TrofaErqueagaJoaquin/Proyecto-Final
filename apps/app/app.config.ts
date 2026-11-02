@@ -7,7 +7,8 @@ const config: ExpoConfig = {
   name: 'Crecer en Casa',
   slug: 'crecer-en-casa',
   version: '0.1.0',
-  orientation: 'portrait',
+  // Vertical y horizontal: las pantallas se adaptan al ancho (en tablets y apaisado, con menú lateral).
+  orientation: 'default',
   icon: './assets/images/icon.png',
   scheme: 'crecerencasa',
   userInterfaceStyle: 'automatic',

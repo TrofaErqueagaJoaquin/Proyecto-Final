@@ -3,9 +3,23 @@
 Plataforma web y móvil de orientación familiar sobre desarrollo infantil y uso de pantallas
 (proyecto final · Expotec). **Nombre provisorio.**
 
-> Estado: **Fase 1 · Fundamentos.** Todavía no hay funcionalidades de producto: la app muestra una
-> pantalla de prueba que confirma la conexión con la API. El plan completo está en
-> [`docs/planning/`](docs/planning/README.md).
+Ayuda a las familias a **comprender** qué necesita cada edad, **identificar** hábitos con una
+evaluación orientativa, **actuar** con actividades y un plan semanal, y **acompañarse** con un
+asistente con IA que cita sus fuentes y con profesionales de matrícula verificada.
+
+- **Demo** (datos ficticios): <https://crecer-demo.vercel.app> · API:
+  <https://crecer-demo-api.vercel.app/v1/health>
+- **Tres tipos de usuario:** familia (responsable principal, responsable y cuidador/a), profesional
+  y administración (con verificación en dos pasos).
+- **Inicio de sesión:** correo y contraseña, Google, GitHub y verificación en dos pasos (TOTP).
+
+| Documento                                      | Para qué                                             |
+| ---------------------------------------------- | ---------------------------------------------------- |
+| [Guía de instalación](docs/INSTALACION.md)     | Instalar y configurar app, API, base de datos y APK  |
+| [Manual de usuario](docs/MANUAL_DE_USUARIO.md) | Cómo usar la app con cada rol                        |
+| [Documentación de la API](docs/API.md)         | Endpoints, parámetros, respuestas y códigos de error |
+| [Demo y publicación](docs/setup/DEMO.md)       | Entorno de demostración y despliegue en Vercel       |
+| [Plan y arquitectura](docs/planning/README.md) | Decisiones, base de datos, roles y seguridad         |
 
 ## Estructura
 
@@ -17,9 +31,16 @@ packages/
   shared/     Esquemas zod, tipos y contratos compartidos entre app y API
   domain/     Lógica de dominio pura y testeable
   config/     Configuración compartida de TypeScript y ESLint
+supabase/
+  migrations/ Tablas, funciones y reglas de acceso (RLS) de PostgreSQL
+  tests/      Pruebas de permisos (pgTAP)
+content/      Biblioteca, actividades, fuentes y cuestionario (Markdown y YAML)
+scripts/      Carga de contenido, base de conocimiento, roles y reinicio de la demo
 docs/
+  API.md, INSTALACION.md, MANUAL_DE_USUARIO.md
   planning/   Arquitectura, decisiones y plan (fuente de verdad)
   research/   Investigación de base
+  demo/       Capturas de la demo
 ```
 
 ## Requisitos
@@ -43,6 +64,9 @@ cp apps/api/.env.example apps/api/.env
 cp apps/app/.env.example apps/app/.env
 pnpm dev          # API en http://localhost:8787 y Expo en http://localhost:8081
 ```
+
+Antes hay que crear la base de datos en Supabase y completar los `.env`: los pasos están en la
+[guía de instalación](docs/INSTALACION.md).
 
 En Expo, apretá `w` para abrir la web, o escaneá el QR con Expo Go o un build de desarrollo.
 
