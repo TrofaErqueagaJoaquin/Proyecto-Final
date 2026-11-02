@@ -48,6 +48,11 @@ const config: ExpoConfig = {
   experiments: {
     reactCompiler: true,
   },
+  // Proyecto de EAS (compilación del APK en la nube): expo.dev/accounts/joacotrofa/projects/crecer-en-casa
+  owner: 'joacotrofa',
+  extra: {
+    eas: { projectId: 'cdcb70b9-1886-40b2-8733-f3771e890c9f' },
+  },
 };
 
 export default config;
