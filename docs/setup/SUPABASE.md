@@ -72,6 +72,17 @@ pnpm exec supabase db push --linked --include-seed
 2. _Authorization callback URL_: `https://<project-ref>.supabase.co/auth/v1/callback`.
 3. Copiá _Client ID_ y un _Client secret_ nuevo en **Authentication → Providers → GitHub** y activalo.
 
+### Discord
+
+1. En el [portal de desarrolladores de Discord](https://discord.com/developers/applications):
+   **New Application** → **OAuth2**.
+2. En **Redirects**, agregá `https://<project-ref>.supabase.co/auth/v1/callback` y guardá.
+3. Copiá _Client ID_ y _Client Secret_ (**Reset Secret**) en **Authentication → Providers →
+   Discord** y activalo.
+
+En **URL Configuration → Redirect URLs** agregá también `crecerencasa://**`, para que el ingreso con
+redes sociales vuelva a la app de Android.
+
 ## 4. Primer administrador
 
 Los roles administrativos no se pueden asignar desde la app (ni siquiera por otro administrador:

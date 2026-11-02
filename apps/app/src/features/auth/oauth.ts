@@ -5,12 +5,12 @@ import { supabase } from '@/lib/supabase';
 
 import { authRedirectUrl } from './redirect';
 
-export type OAuthProvider = 'google' | 'github';
+export type OAuthProvider = 'google' | 'github' | 'discord';
 
 WebBrowser.maybeCompleteAuthSession();
 
 /**
- * Ingreso con Google o GitHub (PKCE).
+ * Ingreso con Google, GitHub o Discord (PKCE).
  * - Web: Supabase redirige el navegador y vuelve a /callback.
  * - Nativo: se abre el navegador del sistema y el deep link vuelve con el código.
  */

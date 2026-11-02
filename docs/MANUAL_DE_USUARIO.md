@@ -37,7 +37,7 @@ causa o propuesta del proyecto) y sus fuentes.
 2. Escribí tu correo y una contraseña (al menos 10 caracteres, con letras y números), aceptá los
    términos y tocá **Crear cuenta**. Te llega un correo para confirmarla.
 3. Para entrar después: **Ingresar** → correo y contraseña. También podés usar **Continuar con
-   Google** o **Continuar con GitHub**.
+   Google**, **Continuar con GitHub** o **Continuar con Discord**.
 4. ¿Te olvidaste la contraseña? En **Ingresar**, tocá **Olvidé mi contraseña** y te llega un enlace.
 
 La sesión queda guardada: al cerrar y volver a abrir la app seguís conectado. Para salir, andá a

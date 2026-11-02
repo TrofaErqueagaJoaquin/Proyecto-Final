@@ -18,7 +18,7 @@ La sesión usa **JWT con token de acceso y token de renovación** (Supabase Auth
 | Registro              | `POST /auth/v1/signup`                                                       | `{ "email", "password" }`                        |
 | Inicio de sesión      | `POST /auth/v1/token?grant_type=password`                                    | `{ "email", "password" }`                        |
 | Renovar el token      | `POST /auth/v1/token?grant_type=refresh_token`                               | `{ "refresh_token" }`                            |
-| Redes sociales        | `GET /auth/v1/authorize?provider=google` (o `github`)                        | — (redirige al proveedor y vuelve a `/callback`) |
+| Redes sociales        | `GET /auth/v1/authorize?provider=google` (o `github`, `discord`)             | — (redirige al proveedor y vuelve a `/callback`) |
 | Segundo factor (TOTP) | `POST /auth/v1/factors` · `/factors/{id}/challenge` · `/factors/{id}/verify` | código de 6 dígitos                              |
 | Cerrar sesión         | `POST /auth/v1/logout`                                                       | —                                                |
 

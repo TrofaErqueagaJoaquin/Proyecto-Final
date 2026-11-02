@@ -94,6 +94,13 @@ export function OAuthButtons() {
         disabled={pending !== null}
         onPress={() => void start('github')}
       />
+      <Button
+        label="Continuar con Discord"
+        variant="secondary"
+        loading={pending === 'discord'}
+        disabled={pending !== null}
+        onPress={() => void start('discord')}
+      />
       {error ? <Banner tone="danger">{error}</Banner> : null}
     </View>
   );

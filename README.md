@@ -11,7 +11,7 @@ asistente con IA que cita sus fuentes y con profesionales de matrícula verifica
   <https://crecer-demo-api.vercel.app/v1/health>
 - **Tres tipos de usuario:** familia (responsable principal, responsable y cuidador/a), profesional
   y administración (con verificación en dos pasos).
-- **Inicio de sesión:** correo y contraseña, Google, GitHub y verificación en dos pasos (TOTP).
+- **Inicio de sesión:** correo y contraseña, Google, GitHub, Discord y verificación en dos pasos (TOTP).
 
 | Documento                                      | Para qué                                             |
 | ---------------------------------------------- | ---------------------------------------------------- |
