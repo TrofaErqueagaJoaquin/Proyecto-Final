@@ -455,6 +455,39 @@
 - **No verificado:** el reinicio y la captura contra un proyecto `crecer-demo` real (no existía al escribirlos) y el despliegue en Vercel.
 - **Estado.** Aceptada.
 
+### ADR-035 · Rediseño de la experiencia: entrada mínima, chequeos cortos y Brote
+
+- **Contexto.** En la prueba con el docente, la app resultó pesada: el registro pedía muchos datos y
+  la evaluación de 5 a 7 minutos llegaba antes de cualquier recompensa. Quien la usa suele estar
+  cansado o preocupado ("ya no sabe qué más hacer").
+- **Decisiones:**
+  1. **Paleta "cálida y luminosa"** (crema, coral, menta, sol y tinta) y tipografía Nunito en
+     títulos. El coral vivo se usa como **relleno con texto oscuro** (`brand`/`onBrand`); para texto y
+     enlaces, un coral profundo (`primary`). Todos los pares siguen pasando el test de contraste AA.
+  2. **Entrada mínima:** Google primero; con correo, solo correo y contraseña (mínimo 8). Después, una
+     sola pantalla con apodo, edad (no mes y año) y un único "Acepto" que crea familia, integrante y
+     consentimientos (`useQuickStart`, con las RPC de siempre). La familia se llama "Mi familia" y se
+     puede cambiar.
+  3. **Chequeo de 1 minuto + temas.** `chequeo` (6 preguntas, una por dimensión) y `tema-*` (sueño,
+     calma, pantallas, movimiento, acuerdos) son cuestionarios publicados como cualquier otro,
+     **generados desde `habitos-v1`** con las mismas preguntas, reglas y recomendaciones: no hay
+     puntajes nuevos que validar (V4 los cubre). Un tema copia las respuestas del chequeo de 1 minuto
+     y no repite esas preguntas. La evaluación completa sigue disponible.
+  4. **Hoy como centro:** saludo de Brote, racha, la invitación a personalizar en grande (chequeo o
+     el tema "por dónde empezar"), una actividad para hoy (si el plan no asignó nada a hoy, la
+     primera pendiente), "Pausa para vos" y logros. Rachas y logros se calculan con
+     `activity_logs` y los chequeos enviados: **sin tablas nuevas**.
+  5. **Brote** (SVG propio con 4 estados de ánimo) en lugar de emojis; se mueve poco y respeta
+     "reducir movimiento".
+  6. **Sonidos y vibraciones** (`expo-audio`, `expo-haptics`) solo en momentos lindos (actividad
+     hecha, logro, fin de la respiración); se apagan en Perfil y no suenan con el teléfono en
+     silencio.
+  7. **"Pausa para vos"**: el ánimo no se guarda. "Al límite" muestra las mismas líneas de la
+     respuesta fija de riesgo del asistente (911 y 135), con el aviso de verificación pendiente (V5).
+- **Consecuencias.** La APK hay que volver a compilarla (dos módulos nativos nuevos). La
+  contraseña mínima de Supabase Auth tiene que bajar a 8 en el panel para coincidir con la app.
+- **Estado.** Aceptada.
+
 ---
 
 ## Decisiones pendientes de validación externa

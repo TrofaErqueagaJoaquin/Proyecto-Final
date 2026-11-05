@@ -55,7 +55,7 @@ export default function MyActivitiesScreen() {
             icon={Bookmark}
             title="Creá tu familia para guardar actividades"
             action={
-              <Link href="/familia/nueva" asChild>
+              <Link href="/bienvenida" asChild>
                 <Button label="Crear mi familia" variant="secondary" />
               </Link>
             }

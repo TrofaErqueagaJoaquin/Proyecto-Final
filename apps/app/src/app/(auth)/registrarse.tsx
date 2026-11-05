@@ -1,42 +1,47 @@
-import { CURRENT_POLICY_VERSION, SignUpSchema, type SignUpInput } from '@crecer/shared';
+import { SignUpSchema, type SignUpInput } from '@crecer/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Redirect } from 'expo-router';
-import { MailCheck } from 'lucide-react-native';
+import { Redirect, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { useController, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 
 import { friendlyError } from '@/copy/errors';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { AuthScreen, OAuthButtons, TextLink } from '@/features/auth/components';
 import { authRedirectUrl } from '@/features/auth/redirect';
+import { BroteSays } from '@/features/brote/Brote';
 import { supabase } from '@/lib/supabase';
-import { Banner, Button, Checkbox, EmptyState, FormTextField, Text } from '@/ui';
+import { Banner, Button, FormTextField, Text } from '@/ui';
 
+/**
+ * Registro mínimo (rediseño de 2026): redes sociales primero y, si no, correo y contraseña. Nada
+ * más: el nombre sale del correo y los términos se aceptan en la bienvenida.
+ */
 export default function SignUpScreen() {
   const auth = useAuth();
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState<string | null>(null);
   const { control, handleSubmit, formState } = useForm<SignUpInput>({
     resolver: zodResolver(SignUpSchema),
-    defaultValues: { displayName: '', email: '', password: '', acceptTerms: false as true },
+    defaultValues: { email: '', password: '' },
   });
-  const terms = useController({ control, name: 'acceptTerms' });
 
   if (auth.status === 'signedIn') return <Redirect href="/hoy" />;
 
-  const onSubmit = handleSubmit(async ({ displayName, email, password }) => {
+  const onSubmit = handleSubmit(async ({ email, password }) => {
     setError(null);
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        emailRedirectTo: authRedirectUrl('/callback'),
-        // La aceptación se convierte en un consentimiento real en el primer ingreso (RequireSession).
-        data: { full_name: displayName, terms_version: CURRENT_POLICY_VERSION },
-      },
+      options: { emailRedirectTo: authRedirectUrl('/callback') },
     });
     if (signUpError) {
       setError(friendlyError(signUpError));
+      return;
+    }
+    // Si el proyecto no pide confirmar el correo, la sesión ya está abierta: directo a la bienvenida.
+    if (data.session) {
+      router.replace('/bienvenida');
       return;
     }
     // Mismo mensaje exista o no la cuenta: no se revela qué correos están registrados.
@@ -45,34 +50,29 @@ export default function SignUpScreen() {
 
   if (sentTo) {
     return (
-      <AuthScreen title="Revisá tu correo">
-        <EmptyState
-          icon={MailCheck}
-          title="Te enviamos un enlace de confirmación"
-          description={`Abrí el correo que mandamos a ${sentTo} y tocá el enlace para activar tu cuenta. Si no lo ves, revisá la carpeta de spam.`}
-          action={<TextLink href="/ingresar">Volver a ingresar</TextLink>}
-        />
+      <AuthScreen title="¡Ya casi!">
+        <BroteSays mood="feliz">{`Te mandé un enlace a ${sentTo}. Tocalo y seguimos.`}</BroteSays>
+        <Text tone="muted">
+          Si no lo ves en un minuto, mirá en spam o en promociones. Con Google entrás sin esperar.
+        </Text>
+        <OAuthButtons />
+        <TextLink href="/ingresar">Volver a ingresar</TextLink>
       </AuthScreen>
     );
   }
 
   return (
     <AuthScreen
-      title="Crear una cuenta"
-      subtitle="Gratis y sin publicidad. Solo pedimos lo necesario."
+      title="Creá tu cuenta"
+      subtitle="Gratis, sin publicidad y en menos de un minuto."
+      greeting="¡Hola! Soy Brote. Te acompaño a armar rutinas más lindas en casa."
       footer={
         <Text>
           ¿Ya tenés cuenta? <TextLink href="/ingresar">Ingresar</TextLink>
         </Text>
       }
     >
-      <FormTextField
-        control={control}
-        name="displayName"
-        label="¿Cómo querés que te llamemos?"
-        autoComplete="name"
-        textContentType="name"
-      />
+      <OAuthButtons leading />
       <FormTextField
         control={control}
         name="email"
@@ -87,31 +87,19 @@ export default function SignUpScreen() {
         control={control}
         name="password"
         label="Contraseña"
-        hint="Al menos 10 caracteres, con letras y números."
+        hint="Al menos 8 caracteres, con letras y números."
         autoComplete="new-password"
         textContentType="newPassword"
         secureTextEntry
+        onSubmitEditing={() => void onSubmit()}
       />
-      <Checkbox
-        checked={terms.field.value === true}
-        onChange={(checked) => {
-          terms.field.onChange(checked);
-        }}
-        label="Acepto los términos y la política de privacidad"
-        error={terms.fieldState.error?.message}
-      >
-        <Text>
-          Acepto los <TextLink href="/legal/terminos">términos</TextLink> y la{' '}
-          <TextLink href="/legal/privacidad">política de privacidad</TextLink>.
-        </Text>
-      </Checkbox>
       {error ? <Banner tone="danger">{error}</Banner> : null}
       <Button
         label="Crear cuenta"
+        variant="secondary"
         loading={formState.isSubmitting}
         onPress={() => void onSubmit()}
       />
-      <OAuthButtons />
     </AuthScreen>
   );
 }

@@ -22,7 +22,7 @@ function RequestAction({ professionalId }: { professionalId: string }) {
   }
   if (!family) {
     return (
-      <Link href="/familia/nueva" asChild>
+      <Link href="/bienvenida" asChild>
         <Button label="Crear tu familia para pedir acompañamiento" />
       </Link>
     );

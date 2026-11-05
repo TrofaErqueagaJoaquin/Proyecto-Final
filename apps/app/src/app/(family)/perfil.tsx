@@ -8,12 +8,14 @@ import { friendlyError } from '@/copy/errors';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { authKeys, useMe } from '@/features/auth/queries';
 import { MfaSettingsCard } from '@/features/auth/mfa';
+import { feedback, setFeedbackSettings, useFeedbackSettings } from '@/features/feedback/feedback';
 import { useMyProfessionalProfile } from '@/features/professionals/queries';
 import { supabase } from '@/lib/supabase';
 import {
   Banner,
   Button,
   Card,
+  Checkbox,
   ErrorState,
   makeStyles,
   Screen,
@@ -127,6 +129,35 @@ function NameCard({ initialName, email }: { initialName: string; email: string |
   );
 }
 
+/** Sonidos y vibraciones (rediseño de 2026): se guardan en este dispositivo. */
+function FeedbackCard() {
+  const settings = useFeedbackSettings();
+  return (
+    <Card>
+      <Text variant="subheading">Sonidos y vibraciones</Text>
+      <Text tone="muted">
+        Festejan las actividades hechas y los logros. Con el teléfono en silencio, no suenan.
+      </Text>
+      <Checkbox
+        checked={settings.sound}
+        label="Sonidos"
+        onChange={(sound) => {
+          setFeedbackSettings({ sound });
+          if (sound) feedback('done');
+        }}
+      />
+      <Checkbox
+        checked={settings.vibration}
+        label="Vibraciones"
+        onChange={(vibration) => {
+          setFeedbackSettings({ vibration });
+          if (vibration) feedback('tap');
+        }}
+      />
+    </Card>
+  );
+}
+
 export default function ProfileScreen() {
   const styles = useStyles();
   const theme = useTheme();
@@ -187,6 +218,8 @@ export default function ProfileScreen() {
           })}
         </View>
       </Card>
+
+      <FeedbackCard />
 
       <ProfessionalSpaceCard />
 

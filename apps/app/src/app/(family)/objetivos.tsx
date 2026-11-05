@@ -187,7 +187,7 @@ export default function GoalsScreen() {
   const goals = useGoals(family?.id);
 
   if (isPending) return <Skeleton height={300} />;
-  if (!family) return <Redirect href="/familia/nueva" />;
+  if (!family) return <Redirect href="/bienvenida" />;
 
   const manage = canManage(family.role);
   const options = [

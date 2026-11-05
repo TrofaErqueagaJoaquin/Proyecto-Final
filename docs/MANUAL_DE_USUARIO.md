@@ -34,10 +34,11 @@ causa o propuesta del proyecto) y sus fuentes.
 ## 2. Crear una cuenta e ingresar
 
 1. Tocá **Crear una cuenta gratis**.
-2. Escribí tu correo y una contraseña (al menos 10 caracteres, con letras y números), aceptá los
-   términos y tocá **Crear cuenta**. Te llega un correo para confirmarla.
-3. Para entrar después: **Ingresar** → correo y contraseña. También podés usar **Continuar con
-   Google**, **Continuar con GitHub** o **Continuar con Discord**.
+2. Lo más rápido es **Continuar con Google** (también hay GitHub y Discord). Si preferís el correo,
+   escribí tu correo y una contraseña (al menos 8 caracteres, con letras y números) y tocá **Crear
+   cuenta**. Te llega un correo para confirmarla.
+3. Para entrar después: **Ingresar** → el mismo botón (Google, GitHub o Discord) o correo y
+   contraseña.
 4. ¿Te olvidaste la contraseña? En **Ingresar**, tocá **Olvidé mi contraseña** y te llega un enlace.
 
 La sesión queda guardada: al cerrar y volver a abrir la app seguís conectado. Para salir, andá a
@@ -50,22 +51,54 @@ pide un código del teléfono.
 
 ## 3. Familia
 
-### Armar la familia
+### Los primeros dos minutos
 
-1. La primera vez, tocá **Crear mi familia**, poné un nombre y tu relación (madre, padre, tutor…).
-2. En **Familia → Agregar integrante**, cargá a cada chico con un **apodo** y el **mes y año de
+Brote, el personaje de la app, acompaña los primeros pasos:
+
+1. **Empecemos:** contale cómo le decís a tu peque (un apodo alcanza), su edad y, si querés, quién
+   sos (mamá, papá, abuela…). Con un solo **Acepto** quedan aceptados los términos y el permiso
+   para guardar esos datos. Tocá **¡Empezar!**
+2. **Chequeo de 1 minuto:** 6 preguntas, una por pantalla (sueño, movimiento, pantallas, calma y
+   acuerdos en casa). Se contesta tocando la opción y pasa sola a la siguiente.
+3. **Resultado al instante:** Brote festeja, te muestra una fortaleza, **por dónde empezar** y una
+   **actividad para hoy** (**¡Vamos!** la abre).
+
+### Hoy
+
+- Arriba, Brote saluda y, si vienen haciendo actividades varios días seguidos, aparece la
+  **racha** (un fueguito con los días).
+- **La tarjeta grande** propone personalizar: si falta el chequeo de 1 minuto, lo invita; si ya está,
+  propone un **chequeo por tema** (sueño, calma, pantallas, movimiento o acuerdos) de menos de un
+  minuto. No repite lo que ya contestaste.
+- **Para hoy:** la primera vez tocá **¡Armá mi semana!** y aparece la actividad del día. **Hecho**
+  la registra (quiénes participaron y cómo les fue), **Otra idea** la cambia y **Saltear** la deja
+  para otro día.
+- **Pausa para vos:** un minuto para quien cuida. Elegís cómo estás hoy (no se guarda), hacés una
+  respiración guiada de 5 ciclos y leés una frase amable. Si elegís **Al límite**, aparecen las
+  líneas de ayuda y el acceso a profesionales.
+- **Tus logros:** primer chequeo, primera actividad, 3 y 7 días seguidos, 10 actividades y 3 chequeos
+  por tema. Cuando ganás uno nuevo, hay festejo.
+
+Los sonidos y las vibraciones se apagan en **Perfil → Sonidos y vibraciones**. Con el teléfono en
+silencio no suenan.
+
+### Más integrantes y otros adultos
+
+1. En **Familia → Agregar integrante**, cargá a cada chico con un **apodo** y el **mes y año de
    nacimiento**. No se pide nombre real, DNI, escuela ni fotos.
-3. **Invitar a otro adulto:** escribí su correo y elegí el rol:
+2. **Invitar a otro adulto:** escribí su correo y elegí el rol:
    - **Responsable:** puede hacer todo, igual que vos.
    - **Cuidador/a** (por ejemplo, una abuela): ve el plan y marca actividades, pero no ve las
      evaluaciones ni usa el asistente.
 
    La app te da un enlace para compartir por WhatsApp o correo.
 
-4. En **Preferencias** indicá cuánto tiempo tienen por día, el espacio y el presupuesto: el plan
+3. En **Preferencias** indicá cuánto tiempo tienen por día, el espacio y el presupuesto: el plan
    semanal los usa.
 
-### Hacer una evaluación
+### La evaluación completa
+
+Para una mirada más detallada que los chequeos cortos:
 
 1. **Familia → Evaluaciones**, elegí al integrante y tocá **Empezar** (o **Hacer otra**).
 2. Son preguntas sobre sueño, movimiento, pantallas, calma y acuerdos en casa: lleva de 5 a 7
@@ -77,13 +110,11 @@ pide un código del teléfono.
 
 Es una orientación, no un diagnóstico.
 
-### Hoy y el plan de la semana
+### El plan de la semana
 
-- **Hoy** muestra la actividad del día. Tocá **Hecho** cuando la hagan (anotás quiénes participaron
-  y cómo les fue), **Otra idea** para cambiarla o **Saltear**.
-- **Ver el plan de la semana** → **Armar el plan**: arma de 5 a 7 actividades según la edad y sus
-  preferencias, empezando por lo que recomendó la evaluación. Siempre hay una de 10 minutos sin
-  materiales. Arriba elegís si es para toda la familia o para un integrante.
+**Hoy → Ver el plan de la semana**: de 5 a 7 actividades según la edad y sus preferencias,
+empezando por lo que recomendaron los chequeos. Siempre hay una de 10 minutos sin materiales. Arriba
+elegís si es para toda la familia o para un integrante.
 
 ### Objetivos
 

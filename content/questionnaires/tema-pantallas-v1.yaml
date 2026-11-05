@@ -1,0 +1,246 @@
+# Pantallas (rediseño de 2026). Generado desde habitos-v1.yaml: mismas preguntas, opciones,
+# puntaje y reglas de recomendación. NO es un instrumento validado: es una propuesta del proyecto.
+# Una versión publicada no se edita: para cambiar algo, copiá el archivo y subí `version`.
+slug: tema-pantallas
+title: Pantallas
+description: Cómo y con quién se usan las pantallas en casa.
+version: 1
+evidenceLabel: propuesta_proyecto
+estimatedMinutes: 1
+minAgeMonths: 0
+maxAgeMonths: 215
+sections:
+  - code: pantalla_tiempo
+    title: Tiempo de pantalla
+    description: Pantallas para entretenerse, sin contar la escuela ni las videollamadas.
+    questions:
+      - code: screen_weekday
+        prompt: En un día de semana, ¿cuánto tiempo usa pantallas para entretenerse (videos, juegos,
+          series)?
+        type: single
+        options:
+          - code: none
+            label: Nada
+            value: 0
+          - code: lt30
+            label: Menos de 30 minutos
+            value: 0.25
+          - code: m30_60
+            label: Entre 30 minutos y 1 hora
+            value: 0.75
+          - code: h1_2
+            label: Entre 1 y 2 horas
+            value: 1.5
+          - code: h2_3
+            label: Entre 2 y 3 horas
+            value: 2.5
+          - code: gt3
+            label: Más de 3 horas
+            value: 3.5
+  - code: pantalla_contexto
+    title: Cómo se usan las pantallas
+    description: Con quién, qué contenido y en qué momentos.
+    questions:
+      - code: co_viewing
+        prompt: Cuando usa pantallas, ¿un adulto mira con él o ella o conversan sobre lo que vio?
+        type: single
+        showIf:
+          question: screen_weekday
+          noneOf:
+            - none
+        options:
+          - code: often
+            label: Casi siempre
+            value: 100
+          - code: sometimes
+            label: A veces
+            value: 50
+          - code: rarely
+            label: Casi nunca
+            value: 0
+      - code: content_chosen
+        prompt: ¿El contenido está elegido para su edad (por un adulto o con un perfil infantil)?
+        type: single
+        showIf:
+          question: screen_weekday
+          noneOf:
+            - none
+        options:
+          - code: always
+            label: Casi siempre
+            value: 100
+          - code: sometimes
+            label: A veces
+            value: 50
+          - code: rarely
+            label: Casi nunca
+            value: 0
+      - code: autoplay_off
+        prompt: ¿Está desactivada la reproducción automática (el video siguiente que arranca solo)?
+        type: single
+        showIf:
+          question: screen_weekday
+          noneOf:
+            - none
+        options:
+          - code: yes
+            label: Sí
+            value: 100
+          - code: dont_know
+            label: No sé cómo hacerlo
+            value: 30
+          - code: no
+            label: No
+            value: 0
+      - code: meals_screens
+        prompt: ¿Hay pantallas prendidas durante las comidas?
+        type: single
+        options:
+          - code: never
+            label: Casi nunca
+            value: 100
+          - code: sometimes
+            label: Algunas comidas
+            value: 50
+          - code: most_days
+            label: La mayoría de las comidas
+            value: 0
+scoring:
+  engineVersion: 1.0.0
+  maxRecommendations: 3
+  dimensions:
+    - code: pantalla_tiempo
+      bands: &a1
+        - max: 39
+          band: priority
+        - max: 69
+          band: watch
+        - max: 100
+          band: strength
+      texts:
+        strength: El tiempo de pantalla está cerca de lo que sugieren las guías para su edad.
+        watch: El tiempo de pantalla está un poco por encima de lo que sugieren las guías para su edad.
+        priority:
+          El tiempo de pantalla está bastante por encima de lo sugerido para su edad. Conviene
+          bajarlo de a poco.
+    - code: pantalla_contexto
+      bands: *a1
+      texts:
+        strength: Cómo se usan las pantallas en casa ayuda mucho, con compañía y contenido elegido.
+        watch: Hay detalles del uso para ajustar, como la TV de fondo o la reproducción automática.
+        priority:
+          Cambiar cómo se usan las pantallas puede ayudar más que contar minutos. Hay pasos simples
+          para empezar.
+  questionScoring:
+    screen_weekday:
+      type: age_range
+      ranges:
+        - ageMonths:
+            - 0
+            - 23
+          ideal:
+            - 0
+            - 0
+        - ageMonths:
+            - 24
+            - 59
+          ideal:
+            - 0
+            - 1
+      tolerance: 1
+    co_viewing:
+      type: option_value
+    content_chosen:
+      type: option_value
+    autoplay_off:
+      type: option_value
+    meals_screens:
+      type: option_value
+  recommendations:
+    - code: baby_videos
+      when:
+        maxAgeMonths: 23
+        answer:
+          screen_weekday:
+            - lt30
+            - m30_60
+            - h1_2
+            - h2_3
+            - gt3
+      target:
+        contentSlug: ficha-a-bebe-videos
+      priority: 1
+      reason: Contaste que usa pantallas antes de los 2 años.
+    - code: screen_time_little
+      when:
+        dimension: pantalla_tiempo
+        bandIn:
+          - priority
+          - watch
+        minAgeMonths: 24
+        maxAgeMonths: 59
+      target:
+        contentSlug: ficha-d-pocas-actividades
+      priority: 2
+      reason: El tiempo de pantalla está por encima de lo sugerido para su edad.
+    - code: meals_without_screens
+      when:
+        minAgeMonths: 36
+        answer:
+          meals_screens:
+            - sometimes
+            - most_days
+      target:
+        activitySlug: mesa-sin-pantallas
+      priority: 2
+      reason: Hay pantallas en las comidas.
+    - code: context_reading
+      when:
+        dimension: pantalla_contexto
+        bandIn:
+          - priority
+          - watch
+        minAgeMonths: 24
+        maxAgeMonths: 96
+      target:
+        activitySlug: leer-con-preguntas
+      priority: 3
+      reason: Conversar sobre lo que ven y leen juntos ayuda más que contar minutos.
+    - code: stage_0_2
+      when:
+        maxAgeMonths: 35
+      target:
+        contentSlug: etapa-0-2
+      priority: 5
+      reason: Qué necesita a esta edad.
+    - code: stage_3_5
+      when:
+        minAgeMonths: 36
+        maxAgeMonths: 71
+      target:
+        contentSlug: etapa-3-5
+      priority: 5
+      reason: Qué necesita a esta edad.
+    - code: stage_6_8
+      when:
+        minAgeMonths: 72
+        maxAgeMonths: 107
+      target:
+        contentSlug: etapa-6-8
+      priority: 5
+      reason: Qué necesita a esta edad.
+    - code: stage_9_11
+      when:
+        minAgeMonths: 108
+        maxAgeMonths: 143
+      target:
+        contentSlug: etapa-9-11
+      priority: 5
+      reason: Qué necesita a esta edad.
+    - code: stage_12_17
+      when:
+        minAgeMonths: 144
+      target:
+        contentSlug: etapa-12-17
+      priority: 5
+      reason: Qué necesita a esta edad.

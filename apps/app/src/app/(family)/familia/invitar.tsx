@@ -78,7 +78,7 @@ export default function InviteScreen() {
   const role = useController({ control, name: 'role' });
 
   if (isPending) return <Skeleton height={300} />;
-  if (!family) return <Redirect href="/familia/nueva" />;
+  if (!family) return <Redirect href="/bienvenida" />;
   if (!canManage(family.role)) return <Redirect href="/familia" />;
 
   const onSubmit = handleSubmit((values) => {

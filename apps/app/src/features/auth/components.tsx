@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 
 import { friendlyError } from '@/copy/errors';
+import { BroteSays } from '@/features/brote/Brote';
 import { Banner, Button, Card, Logo, makeStyles, Screen, Text } from '@/ui';
 
 import { signInWithProvider, type OAuthProvider } from './oauth';
@@ -21,11 +22,14 @@ export function AuthScreen({
   subtitle,
   children,
   footer,
+  greeting,
 }: {
   title: string;
   subtitle?: string;
   children: ReactNode;
   footer?: ReactNode;
+  /** Lo que dice Brote arriba de la tarjeta (un saludo corto y cálido). */
+  greeting?: string;
 }) {
   const styles = useStyles();
   return (
@@ -33,6 +37,7 @@ export function AuthScreen({
       <View style={styles.header}>
         <Logo />
       </View>
+      {greeting ? <BroteSays size={84}>{greeting}</BroteSays> : null}
       <Card>
         <Text variant="heading">{title}</Text>
         {subtitle ? <Text tone="muted">{subtitle}</Text> : null}
@@ -54,7 +59,11 @@ export function TextLink({ href, children }: { href: string; children: string })
   );
 }
 
-export function OAuthButtons() {
+/**
+ * Ingreso con redes sociales. `leading`: van primero (es el camino más rápido) y el separador
+ * "o con tu correo" queda debajo.
+ */
+export function OAuthButtons({ leading = false }: { leading?: boolean }) {
   const styles = useStyles();
   const [pending, setPending] = useState<OAuthProvider | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -71,18 +80,22 @@ export function OAuthButtons() {
     }
   }
 
+  const divider = (
+    <View style={styles.divider} aria-hidden>
+      <View style={styles.line} />
+      <Text variant="small" tone="muted">
+        {leading ? 'o con tu correo' : 'o'}
+      </Text>
+      <View style={styles.line} />
+    </View>
+  );
+
   return (
     <View style={styles.oauth}>
-      <View style={styles.divider} aria-hidden>
-        <View style={styles.line} />
-        <Text variant="small" tone="muted">
-          o
-        </Text>
-        <View style={styles.line} />
-      </View>
+      {leading ? null : divider}
       <Button
         label="Continuar con Google"
-        variant="secondary"
+        variant={leading ? 'primary' : 'secondary'}
         loading={pending === 'google'}
         disabled={pending !== null}
         onPress={() => void start('google')}
@@ -102,6 +115,7 @@ export function OAuthButtons() {
         onPress={() => void start('discord')}
       />
       {error ? <Banner tone="danger">{error}</Banner> : null}
+      {leading ? divider : null}
     </View>
   );
 }

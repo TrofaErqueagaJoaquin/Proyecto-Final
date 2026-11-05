@@ -1,0 +1,164 @@
+# Sueño (rediseño de 2026). Generado desde habitos-v1.yaml: mismas preguntas, opciones,
+# puntaje y reglas de recomendación. NO es un instrumento validado: es una propuesta del proyecto.
+# Una versión publicada no se edita: para cambiar algo, copiá el archivo y subí `version`.
+slug: tema-sueno
+title: Sueño
+description: Tres preguntas sobre las horas de sueño y lo que pasa antes de dormir.
+version: 1
+evidenceLabel: propuesta_proyecto
+estimatedMinutes: 1
+minAgeMonths: 0
+maxAgeMonths: 215
+sections:
+  - code: sueno
+    title: Sueño
+    description: Cuánto duerme y qué pasa antes de dormir.
+    questions:
+      - code: sleep_hours
+        prompt: En un día habitual, ¿cuántas horas duerme en total, contando las siestas?
+        help: Un número aproximado alcanza. Por ejemplo, 10 u 11,5.
+        type: number
+        number:
+          min: 0
+          max: 24
+          step: 0.5
+          unit: horas
+      - code: screens_before_bed
+        prompt: En la hora antes de dormir, ¿usa pantallas?
+        type: single
+        options:
+          - code: never
+            label: Casi nunca
+            value: 100
+          - code: sometimes
+            label: Algunos días (1 a 3 por semana)
+            value: 50
+          - code: most_days
+            label: La mayoría de los días
+            value: 0
+      - code: device_in_bedroom
+        prompt: ¿Duerme con algún dispositivo en el dormitorio (celular, tablet, TV)?
+        type: single
+        options:
+          - code: no
+            label: No
+            value: 100
+          - code: yes
+            label: Sí
+            value: 0
+scoring:
+  engineVersion: 1.0.0
+  maxRecommendations: 3
+  dimensions:
+    - code: sueno
+      bands:
+        - max: 39
+          band: priority
+        - max: 69
+          band: watch
+        - max: 100
+          band: strength
+      texts:
+        strength: Las horas de sueño y lo que pasa antes de dormir acompañan bien. Vale la pena sostenerlo.
+        watch:
+          Hay algo del sueño para mirar, como las horas o las pantallas antes de dormir. Un cambio
+          chico ayuda.
+        priority:
+          El sueño puede ser un buen lugar para empezar. Una rutina tranquila antes de dormir suele
+          ayudar a toda la casa.
+  questionScoring:
+    sleep_hours:
+      type: age_range
+      ranges:
+        - ageMonths:
+            - 0
+            - 3
+          ideal:
+            - 14
+            - 17
+        - ageMonths:
+            - 4
+            - 11
+          ideal:
+            - 12
+            - 16
+        - ageMonths:
+            - 12
+            - 35
+          ideal:
+            - 11
+            - 14
+        - ageMonths:
+            - 36
+            - 59
+          ideal:
+            - 10
+            - 13
+        - ageMonths:
+            - 60
+            - 155
+          ideal:
+            - 9
+            - 11
+        - ageMonths:
+            - 156
+            - 215
+          ideal:
+            - 8
+            - 10
+      tolerance: 1
+    screens_before_bed:
+      type: option_value
+    device_in_bedroom:
+      type: option_value
+  recommendations:
+    - code: sleep_routine
+      when:
+        dimension: sueno
+        bandIn:
+          - priority
+          - watch
+        minAgeMonths: 12
+        maxAgeMonths: 144
+      target:
+        activitySlug: rutina-para-dormir
+      priority: 1
+      reason: El sueño apareció como algo para mirar.
+    - code: stage_0_2
+      when:
+        maxAgeMonths: 35
+      target:
+        contentSlug: etapa-0-2
+      priority: 5
+      reason: Qué necesita a esta edad.
+    - code: stage_3_5
+      when:
+        minAgeMonths: 36
+        maxAgeMonths: 71
+      target:
+        contentSlug: etapa-3-5
+      priority: 5
+      reason: Qué necesita a esta edad.
+    - code: stage_6_8
+      when:
+        minAgeMonths: 72
+        maxAgeMonths: 107
+      target:
+        contentSlug: etapa-6-8
+      priority: 5
+      reason: Qué necesita a esta edad.
+    - code: stage_9_11
+      when:
+        minAgeMonths: 108
+        maxAgeMonths: 143
+      target:
+        contentSlug: etapa-9-11
+      priority: 5
+      reason: Qué necesita a esta edad.
+    - code: stage_12_17
+      when:
+        minAgeMonths: 144
+      target:
+        contentSlug: etapa-12-17
+      priority: 5
+      reason: Qué necesita a esta edad.

@@ -1,0 +1,280 @@
+# Calma (rediseño de 2026). Generado desde habitos-v1.yaml: mismas preguntas, opciones,
+# puntaje y reglas de recomendación. NO es un instrumento validado: es una propuesta del proyecto.
+# Una versión publicada no se edita: para cambiar algo, copiá el archivo y subí `version`.
+slug: tema-calma
+title: Calma
+description: Cómo se calma y qué pasa cuando se apaga la pantalla.
+version: 1
+evidenceLabel: propuesta_proyecto
+estimatedMinutes: 1
+minAgeMonths: 0
+maxAgeMonths: 215
+sections:
+  - code: pantalla_tiempo
+    title: Tiempo de pantalla
+    description: Pantallas para entretenerse, sin contar la escuela ni las videollamadas.
+    questions:
+      - code: screen_weekday
+        prompt: En un día de semana, ¿cuánto tiempo usa pantallas para entretenerse (videos, juegos,
+          series)?
+        type: single
+        options:
+          - code: none
+            label: Nada
+            value: 0
+          - code: lt30
+            label: Menos de 30 minutos
+            value: 0.25
+          - code: m30_60
+            label: Entre 30 minutos y 1 hora
+            value: 0.75
+          - code: h1_2
+            label: Entre 1 y 2 horas
+            value: 1.5
+          - code: h2_3
+            label: Entre 2 y 3 horas
+            value: 2.5
+          - code: gt3
+            label: Más de 3 horas
+            value: 3.5
+  - code: calma
+    title: Calma
+    description: Qué lo ayuda cuando está muy enojado o angustiado.
+    minAgeMonths: 12
+    maxAgeMonths: 155
+    questions:
+      - code: device_to_calm
+        prompt: Cuando está muy enojado o angustiado, ¿con qué frecuencia la pantalla es la forma de
+          calmarlo?
+        type: single
+        options:
+          - code: rarely
+            label: Casi nunca
+            value: 100
+          - code: sometimes
+            label: A veces
+            value: 60
+          - code: often
+            label: Seguido
+            value: 20
+          - code: almost_always
+            label: Casi siempre
+            value: 0
+      - code: calm_strategies
+        prompt: ¿Qué otras cosas le ayudan a calmarse? Elegí todas las que funcionen.
+        type: multi
+        options:
+          - code: hug
+            label: Un abrazo o estar en brazos
+            value: 50
+          - code: quiet_place
+            label: Un lugar tranquilo
+            value: 50
+          - code: movement
+            label: Moverse o salir un rato
+            value: 50
+          - code: music_story
+            label: Música o un cuento
+            value: 50
+          - code: talk
+            label: Hablar de lo que pasó
+            value: 50
+          - code: none_yet
+            label: Todavía no encontramos otra
+            value: 0
+      - code: reaction_turn_off
+        prompt: Cuando se termina el tiempo de pantalla, ¿cómo suele reaccionar?
+        type: single
+        minAgeMonths: 24
+        showIf:
+          question: screen_weekday
+          noneOf:
+            - none
+        options:
+          - code: calm
+            label: Lo acepta sin problema
+            value: 100
+          - code: complains
+            label: Protesta un poco y sigue
+            value: 70
+          - code: intense
+            label: Se enoja mucho
+            value: 30
+          - code: very_intense
+            label: Se enoja muchísimo y cuesta que se calme
+            value: 0
+scoring:
+  engineVersion: 1.0.0
+  maxRecommendations: 3
+  dimensions:
+    - code: pantalla_tiempo
+      bands: &a1
+        - max: 39
+          band: priority
+        - max: 69
+          band: watch
+        - max: 100
+          band: strength
+      texts:
+        strength: El tiempo de pantalla está cerca de lo que sugieren las guías para su edad.
+        watch: El tiempo de pantalla está un poco por encima de lo que sugieren las guías para su edad.
+        priority:
+          El tiempo de pantalla está bastante por encima de lo sugerido para su edad. Conviene
+          bajarlo de a poco.
+    - code: calma
+      bands: *a1
+      texts:
+        strength: Tiene varias formas de calmarse además de la pantalla.
+        watch: La pantalla aparece seguido para calmarse. Sumar otras opciones de a poco ayuda.
+        priority:
+          Calmarse sin pantalla está costando. Es un buen momento para practicar otras formas, en
+          momentos tranquilos.
+  questionScoring:
+    screen_weekday:
+      type: age_range
+      ranges:
+        - ageMonths:
+            - 0
+            - 23
+          ideal:
+            - 0
+            - 0
+        - ageMonths:
+            - 24
+            - 59
+          ideal:
+            - 0
+            - 1
+      tolerance: 1
+    device_to_calm:
+      type: option_value
+    calm_strategies:
+      type: multi_sum
+      cap: 100
+    reaction_turn_off:
+      type: option_value
+  recommendations:
+    - code: baby_videos
+      when:
+        maxAgeMonths: 23
+        answer:
+          screen_weekday:
+            - lt30
+            - m30_60
+            - h1_2
+            - h2_3
+            - gt3
+      target:
+        contentSlug: ficha-a-bebe-videos
+      priority: 1
+      reason: Contaste que usa pantallas antes de los 2 años.
+    - code: calm_with_device
+      when:
+        minAgeMonths: 24
+        maxAgeMonths: 107
+        answer:
+          device_to_calm:
+            - often
+            - almost_always
+      target:
+        contentSlug: ficha-b-pantalla-para-calmarse
+      priority: 1
+      reason: La pantalla aparece seguido para calmarse.
+    - code: turn_off_reaction
+      when:
+        minAgeMonths: 24
+        maxAgeMonths: 143
+        answer:
+          reaction_turn_off:
+            - intense
+            - very_intense
+      target:
+        contentSlug: ficha-c-reaccion-al-apagar
+      priority: 1
+      reason: Apagar la pantalla está costando.
+    - code: turn_off_bridge
+      when:
+        minAgeMonths: 30
+        maxAgeMonths: 132
+        answer:
+          reaction_turn_off:
+            - intense
+            - very_intense
+      target:
+        activitySlug: final-con-aviso
+      priority: 2
+      reason: Avisar antes del final y tener algo para hacer después ayuda a apagar.
+    - code: screen_time_little
+      when:
+        dimension: pantalla_tiempo
+        bandIn:
+          - priority
+          - watch
+        minAgeMonths: 24
+        maxAgeMonths: 59
+      target:
+        contentSlug: ficha-d-pocas-actividades
+      priority: 2
+      reason: El tiempo de pantalla está por encima de lo sugerido para su edad.
+    - code: calm_box
+      when:
+        dimension: calma
+        bandIn:
+          - priority
+          - watch
+        minAgeMonths: 30
+        maxAgeMonths: 96
+      target:
+        activitySlug: caja-de-calma
+      priority: 2
+      reason: Sumar otras formas de calmarse, practicadas en momentos tranquilos.
+    - code: calm_breathing
+      when:
+        dimension: calma
+        bandIn:
+          - priority
+          - watch
+        minAgeMonths: 30
+        maxAgeMonths: 108
+      target:
+        activitySlug: respirar-soplando-velitas
+      priority: 3
+      reason: Respirar despacio es una forma de calmarse que se puede practicar jugando.
+    - code: stage_0_2
+      when:
+        maxAgeMonths: 35
+      target:
+        contentSlug: etapa-0-2
+      priority: 5
+      reason: Qué necesita a esta edad.
+    - code: stage_3_5
+      when:
+        minAgeMonths: 36
+        maxAgeMonths: 71
+      target:
+        contentSlug: etapa-3-5
+      priority: 5
+      reason: Qué necesita a esta edad.
+    - code: stage_6_8
+      when:
+        minAgeMonths: 72
+        maxAgeMonths: 107
+      target:
+        contentSlug: etapa-6-8
+      priority: 5
+      reason: Qué necesita a esta edad.
+    - code: stage_9_11
+      when:
+        minAgeMonths: 108
+        maxAgeMonths: 143
+      target:
+        contentSlug: etapa-9-11
+      priority: 5
+      reason: Qué necesita a esta edad.
+    - code: stage_12_17
+      when:
+        minAgeMonths: 144
+      target:
+        contentSlug: etapa-12-17
+      priority: 5
+      reason: Qué necesita a esta edad.

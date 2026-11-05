@@ -15,7 +15,7 @@ export default function FamilyProfessionalsScreen() {
   const care = useFamilyCare(family?.id);
 
   if (isPending) return <Skeleton height={300} />;
-  if (!family) return <Redirect href="/familia/nueva" />;
+  if (!family) return <Redirect href="/bienvenida" />;
   if (!canManage(family.role)) {
     return (
       <Screen>

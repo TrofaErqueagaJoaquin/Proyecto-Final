@@ -54,7 +54,7 @@ pnpm exec supabase db push --linked --include-seed
 | Sección                         | Ajuste                                                                                                                                                              |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Sign In / Providers → Email** | _Confirm email_ **activado**. Las RPC asumen que toda sesión por correo está verificada                                                                             |
-| **Policies → Passwords**        | Mínimo 10 caracteres, letras y números; activar la protección de contraseñas filtradas si el plan lo permite **[A verificar]**                                      |
+| **Policies → Passwords**        | Mínimo 8 caracteres (ADR-035), letras y números; activar la protección de contraseñas filtradas si el plan lo permite **[A verificar]**                             |
 | **URL Configuration**           | _Site URL_: `http://localhost:8081` (en `prod`, el dominio real). _Redirect URLs_: `http://localhost:8081/**`, `crecerencasa://**` y la URL de Vercel cuando exista |
 | **Multi-Factor**                | TOTP habilitado (obligatorio para roles administrativos)                                                                                                            |
 | **Emails → SMTP Settings**      | Configurar Resend antes de invitar personas reales: el SMTP incluido tiene un límite muy bajo **[A verificar]**                                                     |

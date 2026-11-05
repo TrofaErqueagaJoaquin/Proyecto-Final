@@ -41,7 +41,7 @@ export default function PlanScreen() {
   const [chosen, setScope] = useState<string | null>(null);
 
   if (isPending) return <Skeleton height={300} />;
-  if (!family) return <Redirect href="/familia/nueva" />;
+  if (!family) return <Redirect href="/bienvenida" />;
 
   // Sin elección, se abre el plan que ya existe esta semana (primero el de la familia): si no,
   // "Toda la familia" mostraba "Todavía no hay plan" aunque Tomi tuviera el suyo.

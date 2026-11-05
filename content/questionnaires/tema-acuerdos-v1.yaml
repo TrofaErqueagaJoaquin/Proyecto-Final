@@ -1,0 +1,157 @@
+# Acuerdos en casa (rediseño de 2026). Generado desde habitos-v1.yaml: mismas preguntas, opciones,
+# puntaje y reglas de recomendación. NO es un instrumento validado: es una propuesta del proyecto.
+# Una versión publicada no se edita: para cambiar algo, copiá el archivo y subí `version`.
+slug: tema-acuerdos
+title: Acuerdos en casa
+description: Las reglas sobre pantallas y cómo las sostienen los adultos.
+version: 1
+evidenceLabel: propuesta_proyecto
+estimatedMinutes: 1
+minAgeMonths: 0
+maxAgeMonths: 215
+sections:
+  - code: acuerdos
+    title: Acuerdos en casa
+    description: Reglas sobre cuándo y dónde se usan las pantallas.
+    minAgeMonths: 36
+    questions:
+      - code: clear_rules
+        prompt: ¿Hay acuerdos claros sobre cuándo y dónde se usan las pantallas?
+        type: single
+        options:
+          - code: yes
+            label: Sí
+            value: 100
+          - code: partly
+            label: Más o menos
+            value: 50
+          - code: no
+            label: Todavía no
+            value: 0
+      - code: adults_follow
+        prompt: ¿Los adultos también cumplen esos acuerdos?
+        type: single
+        showIf:
+          question: clear_rules
+          noneOf:
+            - no
+        options:
+          - code: mostly
+            label: Casi siempre
+            value: 100
+          - code: sometimes
+            label: A veces
+            value: 50
+          - code: rarely
+            label: Casi nunca
+            value: 0
+      - code: rules_reviewed
+        prompt: ¿Revisan los acuerdos cada tanto, a medida que crece?
+        type: single
+        showIf:
+          question: clear_rules
+          noneOf:
+            - no
+        options:
+          - code: yes
+            label: Sí
+            value: 100
+          - code: sometimes
+            label: De vez en cuando
+            value: 60
+          - code: no
+            label: No
+            value: 20
+      - code: child_participated
+        prompt: ¿Participó al armar los acuerdos?
+        type: single
+        minAgeMonths: 108
+        showIf:
+          question: clear_rules
+          noneOf:
+            - no
+        options:
+          - code: yes
+            label: Sí
+            value: 100
+          - code: partly
+            label: En parte
+            value: 60
+          - code: no
+            label: No
+            value: 20
+scoring:
+  engineVersion: 1.0.0
+  maxRecommendations: 3
+  dimensions:
+    - code: acuerdos
+      bands:
+        - max: 39
+          band: priority
+        - max: 69
+          band: watch
+        - max: 100
+          band: strength
+      texts:
+        strength: Los acuerdos en casa están claros y los adultos también los cumplen.
+        watch: Hay acuerdos, pero se pueden ajustar o revisar juntos.
+        priority: Armar acuerdos simples sobre cuándo y dónde usar pantallas puede bajar las discusiones.
+  questionScoring:
+    clear_rules:
+      type: option_value
+    adults_follow:
+      type: option_value
+    rules_reviewed:
+      type: option_value
+    child_participated:
+      type: option_value
+  recommendations:
+    - code: family_agreement
+      when:
+        dimension: acuerdos
+        bandIn:
+          - priority
+          - watch
+        minAgeMonths: 72
+      target:
+        activitySlug: acuerdo-familiar-de-pantallas
+      priority: 2
+      reason: Los acuerdos en casa se pueden armar o revisar juntos.
+    - code: stage_0_2
+      when:
+        maxAgeMonths: 35
+      target:
+        contentSlug: etapa-0-2
+      priority: 5
+      reason: Qué necesita a esta edad.
+    - code: stage_3_5
+      when:
+        minAgeMonths: 36
+        maxAgeMonths: 71
+      target:
+        contentSlug: etapa-3-5
+      priority: 5
+      reason: Qué necesita a esta edad.
+    - code: stage_6_8
+      when:
+        minAgeMonths: 72
+        maxAgeMonths: 107
+      target:
+        contentSlug: etapa-6-8
+      priority: 5
+      reason: Qué necesita a esta edad.
+    - code: stage_9_11
+      when:
+        minAgeMonths: 108
+        maxAgeMonths: 143
+      target:
+        contentSlug: etapa-9-11
+      priority: 5
+      reason: Qué necesita a esta edad.
+    - code: stage_12_17
+      when:
+        minAgeMonths: 144
+      target:
+        contentSlug: etapa-12-17
+      priority: 5
+      reason: Qué necesita a esta edad.

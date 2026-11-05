@@ -39,7 +39,7 @@ export default function NewPasswordScreen() {
         control={control}
         name="password"
         label="Contraseña nueva"
-        hint="Al menos 10 caracteres, con letras y números."
+        hint="Al menos 8 caracteres, con letras y números."
         autoComplete="new-password"
         textContentType="newPassword"
         secureTextEntry

@@ -22,6 +22,11 @@ const TEXT_PAIRS: [keyof Palette, keyof Palette][] = [
   ['caution', 'surface'],
   ['success', 'surface'],
   ['info', 'surface'],
+  ['onBrand', 'brand'],
+  ['onBrand', 'mint'],
+  ['onBrand', 'sun'],
+  ['ink', 'mintSoft'],
+  ['ink', 'sunSoft'],
 ];
 
 // Bordes de controles e íconos: 3:1 contra el fondo (WCAG 1.4.11).

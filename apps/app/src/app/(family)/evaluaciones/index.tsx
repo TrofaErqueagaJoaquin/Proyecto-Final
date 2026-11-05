@@ -36,7 +36,7 @@ export default function AssessmentsScreen() {
   const start = useStartAssessment();
 
   if (isPending) return <Skeleton height={300} />;
-  if (!family) return <Redirect href="/familia/nueva" />;
+  if (!family) return <Redirect href="/bienvenida" />;
   if (!manage) {
     // ROLES_AND_PERMISSIONS.md §3: la caregiver no ve evaluaciones.
     return (

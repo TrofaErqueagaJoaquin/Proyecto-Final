@@ -25,6 +25,12 @@ const useStyles = makeStyles((t) => ({
     borderRadius: t.radius.lg,
     padding: t.space.xl,
     gap: t.space.md,
+    // Sombra cálida y suave: las tarjetas "flotan" sobre el crema.
+    shadowColor: '#B8452A',
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
   logo: { flexDirection: 'row', alignItems: 'center', gap: t.space.sm },
 }));
@@ -75,7 +81,7 @@ export function Logo({ size = 'md' }: { size?: 'md' | 'lg' }) {
         // Marca, no encabezado: usa la tipografía de títulos sin rol de heading.
         variant="bodyStrong"
         style={{
-          fontFamily: 'Fraunces_600SemiBold',
+          fontFamily: 'Nunito_800ExtraBold',
           fontSize: size === 'lg' ? 31 : 20,
           lineHeight: size === 'lg' ? 38 : 26,
         }}

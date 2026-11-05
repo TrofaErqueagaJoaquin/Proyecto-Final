@@ -14,7 +14,7 @@ export default function NewMemberScreen() {
   const [consentError, setConsentError] = useState(false);
 
   if (isPending) return <Skeleton height={300} />;
-  if (!family) return <Redirect href="/familia/nueva" />;
+  if (!family) return <Redirect href="/bienvenida" />;
   if (!canManage(family.role)) return <Redirect href="/familia" />;
 
   return (
