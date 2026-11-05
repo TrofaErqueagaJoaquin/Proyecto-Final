@@ -7,6 +7,7 @@ import { BroteSays } from '@/features/brote/Brote';
 import { PersonalizeCard } from '@/features/chequeo/PersonalizeCard';
 import { canManage } from '@/features/families/queries';
 import { LogrosStrip, StreakChip, useFamilyProgress } from '@/features/logros/LogrosStrip';
+import { useMyProfessionalProfile } from '@/features/professionals/queries';
 import { TodaySection } from '@/features/plans/TodaySection';
 import { ErrorState, makeStyles, Screen, Skeleton, Text, useTheme } from '@/ui';
 
@@ -73,6 +74,7 @@ export default function TodayScreen() {
   const me = useMe();
   const family = me.data?.families[0];
   const progress = useFamilyProgress(family?.id);
+  const professional = useMyProfessionalProfile();
 
   if (me.isPending) {
     return (
@@ -83,7 +85,13 @@ export default function TodayScreen() {
     );
   }
   if (me.isError) return <ErrorState onRetry={() => void me.refetch()} />;
-  if (!family) return <Redirect href="/bienvenida" />;
+  if (!family) {
+    // Sin familia: quien es profesional o administra va a su espacio; las familias, a empezar.
+    if (professional.isPending) return <Skeleton height={180} />;
+    if (professional.data) return <Redirect href="/profesional" />;
+    if (me.data.permissions.length > 0) return <Redirect href="/admin" />;
+    return <Redirect href="/bienvenida" />;
+  }
 
   // Quien entra con correo no carga nombre: el perfil queda con la parte del correo, que no saludamos.
   const display = me.data.profile.displayName;

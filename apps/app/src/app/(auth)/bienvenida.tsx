@@ -54,12 +54,17 @@ export default function WelcomeScreen() {
     return <Skeleton height={320} />;
   }
   const hasFamily = (me.data?.families.length ?? 0) > 0;
-  if (terms.data?.accepted && hasFamily) return <Redirect href={safeNextPath(next)} />;
-
   const viaInvitation = next?.startsWith('/invitacion') === true;
+  // Profesionales y administración no arman una familia: solo aceptan los términos.
+  const otherSpace =
+    next?.startsWith('/profesional') === true || next?.startsWith('/admin') === true;
+  const termsOnly = viaInvitation || hasFamily || otherSpace;
+  if (terms.data?.accepted && (hasFamily || otherSpace)) {
+    return <Redirect href={safeNextPath(next)} />;
+  }
 
   // Solo términos: invitación a una familia, alguien que ya tiene familia o un cambio de política.
-  if (viaInvitation || hasFamily) {
+  if (termsOnly) {
     return (
       <AuthScreen
         title={terms.data?.hasAny ? 'Actualizamos los términos' : '¡Qué bueno que llegaste!'}
@@ -170,6 +175,9 @@ export default function WelcomeScreen() {
         />
         <Text variant="small" tone="muted" center>
           Después te hago 6 preguntas rápidas para darte una idea para hoy.
+        </Text>
+        <Text variant="small" tone="muted" center>
+          ¿Sos profesional? <TextLink href="/profesional/perfil">Creá tu perfil</TextLink>
         </Text>
       </View>
     </AuthScreen>
