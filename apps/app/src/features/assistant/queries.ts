@@ -10,7 +10,7 @@ import { fetch as expoFetch } from 'expo/fetch';
 
 import { useAuth } from '@/features/auth/AuthProvider';
 import { ApiError } from '@/lib/api';
-import { publicEnv } from '@/lib/env';
+import { apiBaseUrl } from '@/lib/env';
 import { supabase } from '@/lib/supabase';
 
 import { createSseParser } from './sse';
@@ -186,7 +186,7 @@ export async function sendQuestion(
   let response: Awaited<ReturnType<typeof expoFetch>>;
   try {
     response = await expoFetch(
-      `${publicEnv.EXPO_PUBLIC_API_URL}/v1/assistant/conversations/${conversationId}/messages`,
+      `${apiBaseUrl}/v1/assistant/conversations/${conversationId}/messages`,
       {
         method: 'POST',
         headers: {

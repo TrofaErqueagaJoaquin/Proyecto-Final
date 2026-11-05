@@ -1,6 +1,6 @@
 import { Sprout } from 'lucide-react-native';
 import type { ReactNode } from 'react';
-import { ScrollView, View, type ViewStyle } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, View, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
@@ -53,15 +53,29 @@ export function Screen({
   const content = (
     <View style={[styles.content, { maxWidth }, !scroll && styles.fill]}>{children}</View>
   );
+  // Teclado: en iOS el ScrollView corre el contenido para que el campo activo quede a la vista; en
+  // Android (y en las pantallas sin desplazamiento, como el chat) la pantalla se achica.
+  const ios = Platform.OS === 'ios';
   return (
     <SafeAreaView style={styles.safe} edges={edges}>
-      {scroll ? (
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          {content}
-        </ScrollView>
-      ) : (
-        content
-      )}
+      <KeyboardAvoidingView
+        style={styles.fill}
+        behavior={ios ? (scroll ? undefined : 'padding') : 'height'}
+        enabled={Platform.OS !== 'web'}
+      >
+        {scroll ? (
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={ios ? 'interactive' : 'on-drag'}
+            automaticallyAdjustKeyboardInsets={ios}
+          >
+            {content}
+          </ScrollView>
+        ) : (
+          content
+        )}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

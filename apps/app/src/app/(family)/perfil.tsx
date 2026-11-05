@@ -178,7 +178,22 @@ export default function ProfileScreen() {
         <Skeleton height={200} />
       </Screen>
     );
-  if (me.isError) return <ErrorState onRetry={() => void me.refetch()} />;
+  // Aunque no carguen los datos, siempre se puede cerrar la sesión (si no, la persona queda trabada).
+  if (me.isError)
+    return (
+      <Screen>
+        <ErrorState onRetry={() => void me.refetch()} />
+        <Button
+          label="Cerrar sesión"
+          variant="secondary"
+          icon={LogOut}
+          loading={signOut.isPending}
+          onPress={() => {
+            signOut.mutate('local');
+          }}
+        />
+      </Screen>
+    );
 
   return (
     <Screen>
