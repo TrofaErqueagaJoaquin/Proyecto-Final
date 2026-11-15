@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useController, useForm } from 'react-hook-form';
 import { View } from 'react-native';
 
-import { Button, ChipGroup, FormTextField, Text } from '@/ui';
+import { Button, ChipGroup, FormTextField, monthYearMask, Text } from '@/ui';
 
 export interface MemberFormValues {
   alias: string;
@@ -34,6 +34,8 @@ export function MemberForm({
   const now = new Date();
   const { control, handleSubmit } = useForm<MemberInput>({
     resolver: zodResolver(makeMemberSchema(now)),
+    // Valida cada campo al salir de él y después mientras se corrige.
+    mode: 'onTouched',
     defaultValues,
   });
   const interests = useController({ control, name: 'interests' });
@@ -53,14 +55,17 @@ export function MemberForm({
         label="Apodo"
         hint="No uses el nombre completo: alcanza con un apodo."
         autoCapitalize="words"
+        maxLength={40}
       />
       <FormTextField
         control={control}
         name="birthMonth"
         label="Mes y año de nacimiento"
-        hint="Formato MM/AAAA, por ejemplo 03/2022. Solo guardamos el mes."
+        hint="Por ejemplo 03/2022: la barra se pone sola. Solo guardamos el mes."
         placeholder="MM/AAAA"
         inputMode="numeric"
+        mask={monthYearMask}
+        maxLength={7}
       />
       <ChipGroup
         multiple

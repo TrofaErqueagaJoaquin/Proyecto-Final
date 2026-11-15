@@ -23,6 +23,8 @@ export default function SignUpScreen() {
   const [sentTo, setSentTo] = useState<string | null>(null);
   const { control, handleSubmit, formState } = useForm<SignUpInput>({
     resolver: zodResolver(SignUpSchema),
+    // Valida cada campo al salir de él y después mientras se corrige.
+    mode: 'onTouched',
     defaultValues: { email: '', password: '' },
   });
 

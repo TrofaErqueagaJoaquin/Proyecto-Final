@@ -14,6 +14,8 @@ export default function RequestResetScreen() {
   const [sent, setSent] = useState(false);
   const { control, handleSubmit, formState } = useForm<RequestPasswordResetInput>({
     resolver: zodResolver(RequestPasswordResetSchema),
+    // Valida cada campo al salir de él y después mientras se corrige.
+    mode: 'onTouched',
     defaultValues: { email: '' },
   });
 

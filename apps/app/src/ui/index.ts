@@ -7,6 +7,7 @@ export { Card, GrowthLine, Logo, Screen } from './Layout';
 export { Text, type TextTone, type TextVariant } from './Text';
 export { FormTextField } from './FormTextField';
 export { TextField } from './TextField';
+export { digitsMask, monthYearMask, type Mask } from './masks';
 export {
   makeStyles,
   ThemeProvider,

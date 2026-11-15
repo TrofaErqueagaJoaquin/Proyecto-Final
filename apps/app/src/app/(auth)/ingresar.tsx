@@ -19,6 +19,8 @@ export default function SignInScreen() {
   const [error, setError] = useState<string | null>(null);
   const { control, handleSubmit, formState } = useForm<SignInInput>({
     resolver: zodResolver(SignInSchema),
+    // Valida cada campo al salir de él y después mientras se corrige.
+    mode: 'onTouched',
     defaultValues: { email: '', password: '' },
   });
 

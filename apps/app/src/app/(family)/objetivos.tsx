@@ -143,6 +143,11 @@ function NewGoal({
   const create = useCreateGoal(familyId);
   const [title, setTitle] = useState('');
   const [about, setAbout] = useState(FAMILY);
+  const [titleTouched, setTitleTouched] = useState(false);
+  const titleError =
+    title.trim().length < 3
+      ? 'Contá en pocas palabras qué quieren lograr (al menos 3 letras).'
+      : undefined;
   return (
     <Card>
       <Text variant="subheading">Nuevo objetivo</Text>
@@ -151,15 +156,20 @@ function NewGoal({
         placeholder="Por ejemplo: apagar las pantallas una hora antes de dormir"
         value={title}
         onChangeText={setTitle}
+        onBlur={() => {
+          setTitleTouched(true);
+        }}
+        error={titleTouched ? titleError : undefined}
         maxLength={120}
       />
       <ChipGroup label="¿Para quién?" options={options} value={about} onChange={setAbout} />
       {create.error ? <Banner tone="danger">{friendlyError(create.error)}</Banner> : null}
       <Button
         label="Crear objetivo"
-        disabled={title.trim().length < 3}
         loading={create.isPending}
         onPress={() => {
+          setTitleTouched(true);
+          if (titleError) return;
           create.mutate(
             {
               title: title.trim(),
@@ -171,6 +181,7 @@ function NewGoal({
             {
               onSuccess: () => {
                 setTitle('');
+                setTitleTouched(false);
               },
             },
           );

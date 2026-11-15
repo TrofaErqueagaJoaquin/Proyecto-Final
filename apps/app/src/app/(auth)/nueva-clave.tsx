@@ -17,6 +17,8 @@ export default function NewPasswordScreen() {
   const [error, setError] = useState<string | null>(null);
   const { control, handleSubmit, formState } = useForm<NewPasswordInput>({
     resolver: zodResolver(NewPasswordSchema),
+    // Valida cada campo al salir de él y después mientras se corrige.
+    mode: 'onTouched',
     defaultValues: { password: '', confirm: '' },
   });
 

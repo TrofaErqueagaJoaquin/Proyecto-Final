@@ -10,6 +10,7 @@ import { safeNextPath } from '@/features/auth/redirect';
 import { AGE_OPTIONS, birthMonthFromAge } from '@/features/families/age';
 import { useQuickStart } from '@/features/families/queries';
 import { feedback } from '@/features/feedback/feedback';
+import { aliasError as validateAlias } from '@/features/forms/validators';
 import { Banner, Button, Checkbox, ChipGroup, Skeleton, Text, TextField } from '@/ui';
 
 const RELATIONSHIPS = [
@@ -48,6 +49,7 @@ export default function WelcomeScreen() {
   const [relationship, setRelationship] = useState<string>('otro');
   const [checked, setChecked] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
+  const [aliasTouched, setAliasTouched] = useState(false);
 
   if (auth.status === 'signedOut') return <Redirect href="/ingresar" />;
   if (auth.status === 'loading' || terms.isPending || me.isPending) {
@@ -105,7 +107,8 @@ export default function WelcomeScreen() {
     );
   }
 
-  const aliasError = showErrors && alias.trim() === '' ? 'Contanos cómo le decís.' : undefined;
+  // El apodo se revisa al salir del campo; edad y aceptación, al tocar "¡Empezar!".
+  const aliasError = showErrors || aliasTouched ? validateAlias(alias) : undefined;
   const ageError = showErrors && age === null ? 'Elegí su edad.' : undefined;
   const termsError = showErrors && !checked ? 'Necesitamos tu aceptación.' : undefined;
 
@@ -116,6 +119,9 @@ export default function WelcomeScreen() {
         hint="Un apodo alcanza: no hace falta el nombre real."
         value={alias}
         onChangeText={setAlias}
+        onBlur={() => {
+          setAliasTouched(true);
+        }}
         maxLength={40}
         error={aliasError}
         autoCapitalize="words"
@@ -153,7 +159,7 @@ export default function WelcomeScreen() {
           fullWidth
           loading={start.isPending}
           onPress={() => {
-            if (alias.trim() === '' || age === null || !checked) {
+            if (validateAlias(alias) || age === null || !checked) {
               setShowErrors(true);
               return;
             }

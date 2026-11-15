@@ -4,6 +4,12 @@ import { useState } from 'react';
 import { View } from 'react-native';
 
 import { friendlyError } from '@/copy/errors';
+import {
+  contactError,
+  displayNameError,
+  placeError,
+  requiredError,
+} from '@/features/forms/validators';
 import { VerificationBadge } from '@/features/professionals/components';
 import {
   CREDENTIAL_KIND_LABELS,
@@ -35,6 +41,7 @@ import {
   Screen,
   Skeleton,
   Text,
+  digitsMask,
   TextField,
   useTheme,
 } from '@/ui';
@@ -64,13 +71,30 @@ function ProfileForm({ initial }: { initial: ProfessionalProfile | null }) {
   );
   const [listed, setListed] = useState(initial?.is_listed ?? true);
 
-  const nameError =
-    name.trim().length < 3 ? 'Escribí tu nombre como querés que lo vean las familias.' : undefined;
+  // Cada campo muestra su error al salir de él; al guardar, se muestran todos.
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [attempted, setAttempted] = useState(false);
+  const touch = (field: string) => () => {
+    setTouched((t) => ({ ...t, [field]: true }));
+  };
+  const shown = (field: string, error: string | undefined) =>
+    attempted || touched[field] ? error : undefined;
+
   const yearsNumber = years.trim() === '' ? null : Number(years);
-  const yearsError =
-    yearsNumber !== null && (!Number.isInteger(yearsNumber) || yearsNumber < 0 || yearsNumber > 70)
-      ? 'Un número entre 0 y 70.'
-      : undefined;
+  const errors = {
+    name: displayNameError(name),
+    specialties: chosen.length === 0 ? 'Elegí al menos una especialidad.' : undefined,
+    modalities: modalities.length === 0 ? 'Elegí al menos una modalidad.' : undefined,
+    bio:
+      bio.trim() === ''
+        ? undefined
+        : requiredError(bio, 20, 'Contá un poco más: al menos 20 caracteres.'),
+    city: placeError(city),
+    province: placeError(province),
+    contact: contactError(contact),
+    years: yearsNumber !== null && yearsNumber > 70 ? 'Un número entre 0 y 70.' : undefined,
+  };
+  const hasErrors = Object.values(errors).some((e) => e !== undefined);
 
   const input: ProfileInput = {
     display_name: name.trim(),
@@ -92,7 +116,8 @@ function ProfileForm({ initial }: { initial: ProfessionalProfile | null }) {
         placeholder="Por ejemplo: Lic. Paula Ríos"
         value={name}
         onChangeText={setName}
-        error={save.isIdle ? undefined : nameError}
+        onBlur={touch('name')}
+        error={shown('name', errors.name)}
         maxLength={80}
       />
       {specialties.data ? (
@@ -102,6 +127,7 @@ function ProfileForm({ initial }: { initial: ProfessionalProfile | null }) {
           options={specialties.data.map((s) => ({ value: s.code, label: s.label }))}
           value={chosen}
           onChange={setChosen}
+          error={attempted ? errors.specialties : undefined}
         />
       ) : null}
       <ChipGroup
@@ -110,30 +136,52 @@ function ProfileForm({ initial }: { initial: ProfessionalProfile | null }) {
         options={MODALITY_OPTIONS}
         value={modalities}
         onChange={setModalities}
+        error={attempted ? errors.modalities : undefined}
       />
       <TextField
         label="Sobre tu trabajo"
         hint="Con quiénes trabajás y cómo. Las familias lo leen en el directorio."
         value={bio}
         onChangeText={setBio}
+        onBlur={touch('bio')}
+        error={shown('bio', errors.bio)}
         multiline
         maxLength={1200}
       />
-      <TextField label="Ciudad" value={city} onChangeText={setCity} maxLength={80} />
-      <TextField label="Provincia" value={province} onChangeText={setProvince} maxLength={80} />
       <TextField
-        label="Contacto público"
+        label="Ciudad (opcional)"
+        value={city}
+        onChangeText={setCity}
+        onBlur={touch('city')}
+        error={shown('city', errors.city)}
+        maxLength={80}
+      />
+      <TextField
+        label="Provincia (opcional)"
+        value={province}
+        onChangeText={setProvince}
+        onBlur={touch('province')}
+        error={shown('province', errors.province)}
+        maxLength={80}
+      />
+      <TextField
+        label="Contacto público (opcional)"
         hint="Un correo o un teléfono de consultorio. Se muestra en el directorio."
         value={contact}
         onChangeText={setContact}
+        onBlur={touch('contact')}
+        error={shown('contact', errors.contact)}
+        autoCapitalize="none"
         maxLength={160}
       />
       <TextField
-        label="Años de experiencia"
+        label="Años de experiencia (opcional)"
         value={years}
         onChangeText={setYears}
+        onBlur={touch('years')}
         inputMode="numeric"
-        error={yearsError}
+        mask={digitsMask(2)}
+        error={shown('years', errors.years)}
         maxLength={2}
       />
       <Checkbox
@@ -141,13 +189,17 @@ function ProfileForm({ initial }: { initial: ProfessionalProfile | null }) {
         onChange={setListed}
         label="Aparecer en el directorio cuando mis credenciales estén verificadas"
       />
+      {attempted && hasErrors ? (
+        <Banner tone="danger">Revisá los campos marcados antes de guardar.</Banner>
+      ) : null}
       {save.isSuccess ? <Banner tone="success">Guardamos tu perfil.</Banner> : null}
       {save.error ? <Banner tone="danger">{friendlyError(save.error)}</Banner> : null}
       <Button
         label={initial ? 'Guardar cambios' : 'Crear mi perfil'}
         loading={save.isPending}
-        disabled={nameError !== undefined || yearsError !== undefined}
         onPress={() => {
+          setAttempted(true);
+          if (hasErrors) return;
           save.mutate({ ...input, exists: initial !== null });
         }}
       />
@@ -163,6 +215,24 @@ function AddCredential() {
   const [number, setNumber] = useState('');
   const [issuer, setIssuer] = useState('');
   const [file, setFile] = useState<CredentialInput['file']>(null);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [attempted, setAttempted] = useState(false);
+  const touch = (field: string) => () => {
+    setTouched((t) => ({ ...t, [field]: true }));
+  };
+  const shown = (field: string, error: string | undefined) =>
+    attempted || touched[field] ? error : undefined;
+  const errors = {
+    profession: requiredError(profession, 2, 'Escribí tu profesión, como figura en el título.'),
+    jurisdiction: placeError(jurisdiction),
+    number:
+      number.trim() !== '' && !/^[A-Za-z0-9 ./-]+$/.test(number.trim())
+        ? 'Usá solo letras, números, puntos, barras o guiones.'
+        : undefined,
+    issuer:
+      issuer.trim() !== '' && issuer.trim().length < 2 ? 'Escribí quién la emite.' : undefined,
+  };
+  const hasErrors = Object.values(errors).some((e) => e !== undefined);
 
   const reset = () => {
     setProfession('');
@@ -181,6 +251,8 @@ function AddCredential() {
         placeholder="Por ejemplo: Licenciada en Psicopedagogía"
         value={profession}
         onChangeText={setProfession}
+        onBlur={touch('profession')}
+        error={shown('profession', errors.profession)}
         maxLength={80}
       />
       <TextField
@@ -188,12 +260,17 @@ function AddCredential() {
         placeholder="Por ejemplo: Provincia de Buenos Aires"
         value={jurisdiction}
         onChangeText={setJurisdiction}
+        onBlur={touch('jurisdiction')}
+        error={shown('jurisdiction', errors.jurisdiction)}
         maxLength={80}
       />
       <TextField
         label="Número de matrícula"
         value={number}
         onChangeText={setNumber}
+        onBlur={touch('number')}
+        error={shown('number', errors.number)}
+        autoCapitalize="characters"
         maxLength={40}
       />
       <TextField
@@ -201,6 +278,8 @@ function AddCredential() {
         placeholder="Por ejemplo: Colegio de Psicopedagogos"
         value={issuer}
         onChangeText={setIssuer}
+        onBlur={touch('issuer')}
+        error={shown('issuer', errors.issuer)}
         maxLength={120}
       />
       <Button
@@ -231,8 +310,9 @@ function AddCredential() {
       <Button
         label="Guardar credencial"
         loading={add.isPending}
-        disabled={profession.trim().length < 2}
         onPress={() => {
+          setAttempted(true);
+          if (hasErrors) return;
           add.mutate(
             {
               kind,
@@ -242,7 +322,13 @@ function AddCredential() {
               issuer: blank(issuer),
               file,
             },
-            { onSuccess: reset },
+            {
+              onSuccess: () => {
+                reset();
+                setTouched({});
+                setAttempted(false);
+              },
+            },
           );
         }}
       />
