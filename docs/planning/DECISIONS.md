@@ -484,6 +484,10 @@
      silencio.
   7. **"Pausa para vos"**: el ánimo no se guarda. "Al límite" muestra las mismas líneas de la
      respuesta fija de riesgo del asistente (911 y 135), con el aviso de verificación pendiente (V5).
+  8. **Validación campo por campo** (agregado el 15/11): los formularios con esquema compartido
+     validan al salir de cada campo (`mode: 'onTouched'`); los demás usan `useFieldErrors` con reglas
+     de `features/forms/validators.ts`. Ningún botón queda gris sin explicar por qué: al tocarlo se
+     marcan los campos a corregir. "Mes y año" usa una máscara que pone la barra sola.
 - **Consecuencias.** La APK hay que volver a compilarla (dos módulos nativos nuevos). La
   contraseña mínima de Supabase Auth tiene que bajar a 8 en el panel para coincidir con la app.
 - **Estado.** Aceptada.

@@ -85,6 +85,19 @@ pnpm demo:reset
 `demo:capture` deja `scripts/demo/fixtures/conversation.json`: revisalo y commitealo. Cuesta menos
 de un centavo de dólar.
 
+**Capturas para la presentación** (después de un `demo:reset`, con la web ya publicada):
+
+```
+pnpm demo:screens
+```
+
+Abre la web de la demo con el Chrome de la compu, entra como cada persona con una sesión de enlace
+mágico (sin contraseñas ni correos) y guarda las pantallas en `docs/demo/capturas/`: computadora a
+1440 × 900 (1,5×) y celular a 390 × 844 (3×). Para otra web, pasala como argumento:
+`pnpm demo:screens http://localhost:8082`. Arma el plan de la semana de Laura si falta y completa
+el chequeo de sueño de Tomi para mostrar el resultado; el próximo `demo:reset` lo deshace. La
+administración pide verificación en dos pasos y se captura a mano.
+
 ## 6. Publicar en Vercel
 
 Son dos proyectos de Vercel conectados al mismo repositorio de GitHub.

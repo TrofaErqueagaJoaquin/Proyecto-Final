@@ -183,6 +183,8 @@ export function Skeleton({
   return (
     <Animated.View
       aria-hidden
+      // Marca para las pruebas y las capturas: esperar a que no quede nada cargando.
+      testID="skeleton"
       style={[
         { height, width, borderRadius: radius.sm, backgroundColor: colors.surfaceSunken, opacity },
         style,
