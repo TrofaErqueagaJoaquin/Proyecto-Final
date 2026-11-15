@@ -100,7 +100,10 @@ async function shot(page: Page, folder: string, name: string, path?: string) {
   console.log(`✔ ${folder}/${name}`);
 }
 
-/** Contesta el chequeo abierto: primera opción, "Listo" en los números, hasta el resultado. */
+/**
+ * Contesta el chequeo abierto con la última opción (la que más pide trabajar) para que el resultado
+ * muestre "por dónde empezar" y una actividad para hoy; "Listo" en los números.
+ */
 async function answerCheck(page: Page) {
   for (let i = 0; i < 12; i += 1) {
     await page.waitForTimeout(900);
@@ -114,7 +117,7 @@ async function answerCheck(page: Page) {
       await listo.click();
       continue;
     }
-    const option = page.getByRole('radio').first();
+    const option = page.getByRole('radio').last();
     if (await option.isVisible().catch(() => false)) await option.click();
   }
   throw new Error('El chequeo no llegó al resultado');
