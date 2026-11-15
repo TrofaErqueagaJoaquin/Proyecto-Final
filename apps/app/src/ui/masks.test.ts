@@ -32,6 +32,13 @@ describe('monthYearMask', () => {
     expect(monthYearMask('0', '03')).toBe('0');
   });
 
+  it('respeta la barra escrita o pegada con mes de un dígito', () => {
+    expect(monthYearMask('3/2022', '')).toBe('03/2022');
+    expect(type('1/2023')).toBe('01/2023');
+    expect(monthYearMask('03/2', '03/')).toBe('03/2');
+    expect(monthYearMask('03/', '03/2')).toBe('03/');
+  });
+
   it('acepta un valor pegado entero', () => {
     expect(monthYearMask('03/2022', '')).toBe('03/2022');
     expect(monthYearMask('032022', '')).toBe('03/2022');

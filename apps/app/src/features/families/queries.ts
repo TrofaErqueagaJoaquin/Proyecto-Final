@@ -319,10 +319,10 @@ export function useQuickStart() {
       alias: string;
       birthMonth: string;
     }) => {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) throw new Error('Sin sesión');
       if (input.acceptTerms) {
-        const { data: userData } = await supabase.auth.getUser();
-        const userId = userData.user?.id;
-        if (!userId) throw new Error('Sin sesión');
         const terms = await supabase.from('consents').insert({
           purpose: 'terms_privacy',
           granted_by: userId,
@@ -331,13 +331,39 @@ export function useQuickStart() {
         // 23505: ya estaba aceptada (doble toque).
         if (terms.error && terms.error.code !== '23505') throw terms.error;
       }
-      const family = await supabase.rpc('create_family', {
-        p_name: 'Mi familia',
-        p_relationship: input.relationship,
-      });
-      if (family.error) throw family.error;
+      // Reintento seguro: si un intento anterior ya creó la familia (y falló después), se reusa en
+      // lugar de crear otra "Mi familia"; si el integrante también quedó creado, se devuelve ese.
+      const owned = await supabase
+        .from('family_memberships')
+        .select('family_id')
+        .eq('user_id', userId)
+        .eq('role', 'owner')
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (owned.error) throw owned.error;
+      let familyId = owned.data?.family_id;
+      if (familyId) {
+        const existing = await supabase
+          .from('family_members')
+          .select('id')
+          .eq('family_id', familyId)
+          .eq('alias', input.alias)
+          .is('archived_at', null)
+          .limit(1)
+          .maybeSingle();
+        if (existing.error) throw existing.error;
+        if (existing.data) return existing.data.id;
+      } else {
+        const family = await supabase.rpc('create_family', {
+          p_name: 'Mi familia',
+          p_relationship: input.relationship,
+        });
+        if (family.error) throw family.error;
+        familyId = family.data;
+      }
       const member = await supabase.rpc('add_family_member', {
-        p_family_id: family.data,
+        p_family_id: familyId,
         p_alias: input.alias,
         p_birth_month: input.birthMonth,
         p_interests: [],

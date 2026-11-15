@@ -9,6 +9,17 @@ export type Mask = (next: string, previous: string) => string;
  * mayor a 1 se completa con 0 ("4" → "04/"). Al borrar, la barra se va con el mes.
  */
 export const monthYearMask: Mask = (next, previous) => {
+  // Con barra escrita o pegada ("3/2022", "1/"): el mes es lo que está antes de la barra.
+  const slash = next.indexOf('/');
+  if (slash > 0) {
+    let month = next.slice(0, slash).replace(/\D/g, '').slice(-2);
+    const year = next
+      .slice(slash + 1)
+      .replace(/\D/g, '')
+      .slice(0, 4);
+    if (month.length === 1) month = `0${month}`;
+    if (month !== '') return `${month}/${year}`;
+  }
   let digits = next.replace(/\D/g, '').slice(0, 6);
   if (/^[2-9]$/.test(digits)) digits = `0${digits}`;
   const deleting = next.length < previous.length;

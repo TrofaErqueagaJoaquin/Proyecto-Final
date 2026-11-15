@@ -76,7 +76,7 @@ export function CheckResult({
 
       {start ? (
         <Card>
-          <Badge tone="caution">{`${BAND_LABELS.priority} · ${title(start.dimension_code)}`}</Badge>
+          <Badge tone="caution">{`${BAND_LABELS[start.band as keyof typeof BAND_LABELS]} · ${title(start.dimension_code)}`}</Badge>
           <Text>{text(start.dimension_code, start.band)}</Text>
         </Card>
       ) : null}

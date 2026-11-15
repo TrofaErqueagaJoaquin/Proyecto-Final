@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { View } from 'react-native';
 
 import { friendlyError } from '@/copy/errors';
+import { useFieldErrors } from '@/features/forms/useFieldErrors';
 import { canManage, useActiveFamily, useMembers } from '@/features/families/queries';
 import {
   latestProgress,
@@ -143,11 +144,12 @@ function NewGoal({
   const create = useCreateGoal(familyId);
   const [title, setTitle] = useState('');
   const [about, setAbout] = useState(FAMILY);
-  const [titleTouched, setTitleTouched] = useState(false);
-  const titleError =
-    title.trim().length < 3
-      ? 'Contá en pocas palabras qué quieren lograr (al menos 3 letras).'
-      : undefined;
+  const fields = useFieldErrors({
+    title:
+      title.trim().length < 3
+        ? 'Contá en pocas palabras qué quieren lograr (al menos 3 letras).'
+        : undefined,
+  });
   return (
     <Card>
       <Text variant="subheading">Nuevo objetivo</Text>
@@ -156,10 +158,8 @@ function NewGoal({
         placeholder="Por ejemplo: apagar las pantallas una hora antes de dormir"
         value={title}
         onChangeText={setTitle}
-        onBlur={() => {
-          setTitleTouched(true);
-        }}
-        error={titleTouched ? titleError : undefined}
+        onBlur={fields.touch('title')}
+        error={fields.shown('title')}
         maxLength={120}
       />
       <ChipGroup label="¿Para quién?" options={options} value={about} onChange={setAbout} />
@@ -168,8 +168,7 @@ function NewGoal({
         label="Crear objetivo"
         loading={create.isPending}
         onPress={() => {
-          setTitleTouched(true);
-          if (titleError) return;
+          if (!fields.attempt()) return;
           create.mutate(
             {
               title: title.trim(),
@@ -181,7 +180,7 @@ function NewGoal({
             {
               onSuccess: () => {
                 setTitle('');
-                setTitleTouched(false);
+                fields.reset();
               },
             },
           );

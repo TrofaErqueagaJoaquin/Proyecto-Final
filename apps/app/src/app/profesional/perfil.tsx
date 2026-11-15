@@ -10,6 +10,7 @@ import {
   placeError,
   requiredError,
 } from '@/features/forms/validators';
+import { useFieldErrors } from '@/features/forms/useFieldErrors';
 import { VerificationBadge } from '@/features/professionals/components';
 import {
   CREDENTIAL_KIND_LABELS,
@@ -72,13 +73,6 @@ function ProfileForm({ initial }: { initial: ProfessionalProfile | null }) {
   const [listed, setListed] = useState(initial?.is_listed ?? true);
 
   // Cada campo muestra su error al salir de él; al guardar, se muestran todos.
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [attempted, setAttempted] = useState(false);
-  const touch = (field: string) => () => {
-    setTouched((t) => ({ ...t, [field]: true }));
-  };
-  const shown = (field: string, error: string | undefined) =>
-    attempted || touched[field] ? error : undefined;
 
   const yearsNumber = years.trim() === '' ? null : Number(years);
   const errors = {
@@ -94,7 +88,7 @@ function ProfileForm({ initial }: { initial: ProfessionalProfile | null }) {
     contact: contactError(contact),
     years: yearsNumber !== null && yearsNumber > 70 ? 'Un número entre 0 y 70.' : undefined,
   };
-  const hasErrors = Object.values(errors).some((e) => e !== undefined);
+  const { touch, shown, attempt, attempted, hasErrors } = useFieldErrors(errors);
 
   const input: ProfileInput = {
     display_name: name.trim(),
@@ -117,7 +111,7 @@ function ProfileForm({ initial }: { initial: ProfessionalProfile | null }) {
         value={name}
         onChangeText={setName}
         onBlur={touch('name')}
-        error={shown('name', errors.name)}
+        error={shown('name')}
         maxLength={80}
       />
       {specialties.data ? (
@@ -127,7 +121,7 @@ function ProfileForm({ initial }: { initial: ProfessionalProfile | null }) {
           options={specialties.data.map((s) => ({ value: s.code, label: s.label }))}
           value={chosen}
           onChange={setChosen}
-          error={attempted ? errors.specialties : undefined}
+          error={shown('specialties')}
         />
       ) : null}
       <ChipGroup
@@ -136,7 +130,7 @@ function ProfileForm({ initial }: { initial: ProfessionalProfile | null }) {
         options={MODALITY_OPTIONS}
         value={modalities}
         onChange={setModalities}
-        error={attempted ? errors.modalities : undefined}
+        error={shown('modalities')}
       />
       <TextField
         label="Sobre tu trabajo"
@@ -144,7 +138,7 @@ function ProfileForm({ initial }: { initial: ProfessionalProfile | null }) {
         value={bio}
         onChangeText={setBio}
         onBlur={touch('bio')}
-        error={shown('bio', errors.bio)}
+        error={shown('bio')}
         multiline
         maxLength={1200}
       />
@@ -153,7 +147,7 @@ function ProfileForm({ initial }: { initial: ProfessionalProfile | null }) {
         value={city}
         onChangeText={setCity}
         onBlur={touch('city')}
-        error={shown('city', errors.city)}
+        error={shown('city')}
         maxLength={80}
       />
       <TextField
@@ -161,7 +155,7 @@ function ProfileForm({ initial }: { initial: ProfessionalProfile | null }) {
         value={province}
         onChangeText={setProvince}
         onBlur={touch('province')}
-        error={shown('province', errors.province)}
+        error={shown('province')}
         maxLength={80}
       />
       <TextField
@@ -170,7 +164,7 @@ function ProfileForm({ initial }: { initial: ProfessionalProfile | null }) {
         value={contact}
         onChangeText={setContact}
         onBlur={touch('contact')}
-        error={shown('contact', errors.contact)}
+        error={shown('contact')}
         autoCapitalize="none"
         maxLength={160}
       />
@@ -181,7 +175,7 @@ function ProfileForm({ initial }: { initial: ProfessionalProfile | null }) {
         onBlur={touch('years')}
         inputMode="numeric"
         mask={digitsMask(2)}
-        error={shown('years', errors.years)}
+        error={shown('years')}
         maxLength={2}
       />
       <Checkbox
@@ -198,8 +192,7 @@ function ProfileForm({ initial }: { initial: ProfessionalProfile | null }) {
         label={initial ? 'Guardar cambios' : 'Crear mi perfil'}
         loading={save.isPending}
         onPress={() => {
-          setAttempted(true);
-          if (hasErrors) return;
+          if (!attempt()) return;
           save.mutate({ ...input, exists: initial !== null });
         }}
       />
@@ -215,13 +208,6 @@ function AddCredential() {
   const [number, setNumber] = useState('');
   const [issuer, setIssuer] = useState('');
   const [file, setFile] = useState<CredentialInput['file']>(null);
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [attempted, setAttempted] = useState(false);
-  const touch = (field: string) => () => {
-    setTouched((t) => ({ ...t, [field]: true }));
-  };
-  const shown = (field: string, error: string | undefined) =>
-    attempted || touched[field] ? error : undefined;
   const errors = {
     profession: requiredError(profession, 2, 'Escribí tu profesión, como figura en el título.'),
     jurisdiction: placeError(jurisdiction),
@@ -232,7 +218,7 @@ function AddCredential() {
     issuer:
       issuer.trim() !== '' && issuer.trim().length < 2 ? 'Escribí quién la emite.' : undefined,
   };
-  const hasErrors = Object.values(errors).some((e) => e !== undefined);
+  const { touch, shown, attempt, reset: resetErrors } = useFieldErrors(errors);
 
   const reset = () => {
     setProfession('');
@@ -252,7 +238,7 @@ function AddCredential() {
         value={profession}
         onChangeText={setProfession}
         onBlur={touch('profession')}
-        error={shown('profession', errors.profession)}
+        error={shown('profession')}
         maxLength={80}
       />
       <TextField
@@ -261,7 +247,7 @@ function AddCredential() {
         value={jurisdiction}
         onChangeText={setJurisdiction}
         onBlur={touch('jurisdiction')}
-        error={shown('jurisdiction', errors.jurisdiction)}
+        error={shown('jurisdiction')}
         maxLength={80}
       />
       <TextField
@@ -269,7 +255,7 @@ function AddCredential() {
         value={number}
         onChangeText={setNumber}
         onBlur={touch('number')}
-        error={shown('number', errors.number)}
+        error={shown('number')}
         autoCapitalize="characters"
         maxLength={40}
       />
@@ -279,7 +265,7 @@ function AddCredential() {
         value={issuer}
         onChangeText={setIssuer}
         onBlur={touch('issuer')}
-        error={shown('issuer', errors.issuer)}
+        error={shown('issuer')}
         maxLength={120}
       />
       <Button
@@ -311,8 +297,7 @@ function AddCredential() {
         label="Guardar credencial"
         loading={add.isPending}
         onPress={() => {
-          setAttempted(true);
-          if (hasErrors) return;
+          if (!attempt()) return;
           add.mutate(
             {
               kind,
@@ -325,8 +310,7 @@ function AddCredential() {
             {
               onSuccess: () => {
                 reset();
-                setTouched({});
-                setAttempted(false);
+                resetErrors();
               },
             },
           );

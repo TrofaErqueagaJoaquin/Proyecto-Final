@@ -260,11 +260,11 @@ function useUserId(): string | undefined {
   return auth.status === 'signedIn' ? auth.session.user.id : undefined;
 }
 
-export function useMyProfessionalProfile() {
+export function useMyProfessionalProfile({ enabled = true }: { enabled?: boolean } = {}) {
   const userId = useUserId();
   return useQuery({
     queryKey: proKeys.myProfile(userId ?? ''),
-    enabled: userId !== undefined,
+    enabled: enabled && userId !== undefined,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('professional_profiles')

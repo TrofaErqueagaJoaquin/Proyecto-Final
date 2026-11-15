@@ -13,7 +13,8 @@ import { makeStyles, Text, useTheme } from '@/ui';
 
 import { badges, bestStreak, currentStreak } from './logros';
 
-const SEEN_KEY = 'crecer.logros.vistos';
+// Por familia: en un teléfono compartido (o al cambiar de cuenta) no se mezclan los festejos.
+const seenKey = (familyId: string) => `crecer.logros.vistos.${familyId}`;
 
 /** Días con actividades y chequeos terminados de la familia (lo que alimenta rachas y logros). */
 export function useFamilyProgress(familyId: string | undefined) {
@@ -115,7 +116,7 @@ export function LogrosStrip({ familyId }: { familyId: string }) {
     if (!earnedIds) return;
     let cancelled = false;
     void storage
-      .getItem(SEEN_KEY)
+      .getItem(seenKey(familyId))
       .catch(() => null)
       .then((raw) => {
         if (cancelled) return;
@@ -125,12 +126,12 @@ export function LogrosStrip({ familyId }: { familyId: string }) {
           setFresh(newOne);
           feedback('achievement');
         }
-        void storage.setItem(SEEN_KEY, earnedIds).catch(() => undefined);
+        void storage.setItem(seenKey(familyId), earnedIds).catch(() => undefined);
       });
     return () => {
       cancelled = true;
     };
-  }, [earnedIds]);
+  }, [earnedIds, familyId]);
 
   if (!progress.data) return null;
   const freshBadge = list.find((b) => b.id === fresh);

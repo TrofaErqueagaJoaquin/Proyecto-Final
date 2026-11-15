@@ -1,5 +1,5 @@
 import { answersFromRows, visibleQuestions } from '@crecer/domain';
-import { Redirect, useLocalSearchParams } from 'expo-router';
+import { Link, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 
@@ -83,11 +83,21 @@ export default function CheckScreen() {
   if (questionnaire.isError || attempt.isError || version.isError || answers.isError) {
     return <ErrorState onRetry={() => void questionnaire.refetch()} />;
   }
-  if (start.isError) {
+  // Sin cuestionario (un tema que no existe) o sin poder empezar: se explica y se vuelve a Hoy, en
+  // lugar de quedar cargando para siempre.
+  const notFound = questionnaire.isSuccess && !questionnaire.data;
+  if (start.isError || notFound) {
     return (
       <Screen>
-        <Banner tone="danger">{friendlyError(start.error)}</Banner>
-        <Redirect href="/hoy" />
+        <BroteSays mood="pensando">
+          {notFound
+            ? 'No encontré ese chequeo. Probá desde Hoy.'
+            : 'No pude abrir el chequeo. Probá de nuevo en un rato.'}
+        </BroteSays>
+        {start.isError ? <Banner tone="danger">{friendlyError(start.error)}</Banner> : null}
+        <Link href="/hoy" asChild>
+          <Button label="Volver a Hoy" fullWidth />
+        </Link>
       </Screen>
     );
   }

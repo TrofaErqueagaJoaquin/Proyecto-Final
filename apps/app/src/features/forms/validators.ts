@@ -1,3 +1,5 @@
+import { EmailSchema } from '@crecer/shared';
+
 /**
  * Reglas de los campos que no usan un esquema de react-hook-form. Cada una devuelve el mensaje de
  * error (en el tono de la app) o `undefined` si el valor está bien. Los campos opcionales vacíos
@@ -6,7 +8,6 @@
 
 const LETTER = /[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/;
 const PLACE = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' .-]+$/;
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 /** Apodo de un integrante: obligatorio, con alguna letra, hasta 40 caracteres. */
 export function aliasError(value: string): string | undefined {
@@ -38,7 +39,9 @@ export function placeError(value: string): string | undefined {
 export function contactError(value: string): string | undefined {
   const v = value.trim();
   if (v === '') return undefined;
-  if (v.includes('@')) return EMAIL.test(v) ? undefined : 'Revisá el correo: no parece válido.';
+  // El correo se valida igual que en el registro (mismo esquema compartido).
+  if (v.includes('@'))
+    return EmailSchema.safeParse(v).success ? undefined : 'Revisá el correo: no parece válido.';
   const digits = v.replace(/\D/g, '');
   if (!/^[\d\s()+-]+$/.test(v) || digits.length < 8 || digits.length > 15) {
     return 'Escribí un correo o un teléfono con característica (8 a 15 números).';

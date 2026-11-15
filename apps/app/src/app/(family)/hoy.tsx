@@ -74,7 +74,8 @@ export default function TodayScreen() {
   const me = useMe();
   const family = me.data?.families[0];
   const progress = useFamilyProgress(family?.id);
-  const professional = useMyProfessionalProfile();
+  // Solo hace falta sin familia (para mandar a profesionales a su espacio).
+  const professional = useMyProfessionalProfile({ enabled: me.isSuccess && !family });
 
   if (me.isPending) {
     return (

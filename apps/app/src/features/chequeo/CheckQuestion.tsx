@@ -1,6 +1,6 @@
 import type { Question } from '@crecer/domain';
 import { Check, Minus, Plus } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, { FadeInRight } from 'react-native-reanimated';
 
@@ -83,6 +83,15 @@ export function CheckQuestion({
   const max = question.number?.max ?? 24;
   const step = question.number?.step ?? 1;
   const [value, setValue] = useState<number>(stored ?? Math.round((min + max) / 2));
+  // Un solo avance pendiente: tocar otra opción antes de que pase reemplaza al anterior (si no, dos
+  // toques rápidos saltaban una pregunta). Al desmontar se cancela.
+  const advance = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (advance.current) clearTimeout(advance.current);
+    },
+    [],
+  );
 
   return (
     <Animated.View entering={FadeInRight.duration(260)}>
@@ -145,7 +154,11 @@ export function CheckQuestion({
                   }
                   onAnswer({ questionId, optionIds: [id], value: null });
                   // Un respiro para ver la elección marcada antes de pasar a la siguiente.
-                  setTimeout(onNext, 280);
+                  if (advance.current) clearTimeout(advance.current);
+                  advance.current = setTimeout(() => {
+                    advance.current = null;
+                    onNext();
+                  }, 280);
                 }}
               >
                 <View style={[styles.mark, active && styles.markActive]}>
