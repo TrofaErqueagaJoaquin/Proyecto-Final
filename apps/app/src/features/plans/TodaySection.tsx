@@ -16,6 +16,7 @@ import { Banner, Button, Card, EmptyState, makeStyles, Skeleton, Text, useTheme 
 
 import { PlanItemCard } from './PlanItemCard';
 import { localDate, useGeneratePlan, useWeekPlans } from './queries';
+import { pickToday } from './today';
 
 const useStyles = makeStyles((t) => ({
   hero: {
@@ -43,18 +44,12 @@ export function TodaySection({ familyId, role }: { familyId: string; role: Famil
 
   if (plans.isPending) return <Skeleton height={180} />;
 
-  const entries = (plans.data ?? [])
-    .flatMap((plan) => plan.items.map((item) => ({ plan, item })))
-    .sort((a, b) => a.item.scheduled_for.localeCompare(b.item.scheduled_for));
-  const doneToday =
-    progress.data?.doneToday === true ||
-    entries.some((e) => e.item.scheduled_for === today && e.item.status === 'done');
-  // Si hoy no tiene nada asignado (el plan reparte de lunes a domingo), se propone la primera idea
-  // pendiente: quien recién se registra puede arrancar en el momento (rediseño de 2026).
-  const forToday =
-    entries.find((e) => e.item.scheduled_for === today && e.item.status === 'planned') ??
-    (doneToday ? undefined : entries.find((e) => e.item.status === 'planned'));
-  const next = entries.find((e) => e.item.scheduled_for > today && e.item.status === 'planned');
+  const entries = (plans.data ?? []).flatMap((plan) => plan.items.map((item) => ({ plan, item })));
+  const { forToday, doneToday, next } = pickToday(
+    entries,
+    today,
+    progress.data?.doneToday === true,
+  );
   const hasAssessment = (attempts.data ?? []).some((a) => a.status === 'submitted');
   const activeGoals = (goals.data ?? []).filter((g) => g.status === 'active').slice(0, 2);
 
