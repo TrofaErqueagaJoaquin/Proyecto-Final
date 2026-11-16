@@ -26,6 +26,9 @@ if (env.APP_ENV !== 'demo') {
 const BASE = (process.argv[2] ?? 'https://crecer-demo.vercel.app').replace(/\/$/, '');
 const OUT = process.argv[3] ?? 'docs/demo/capturas';
 const REF = new URL(env.SUPABASE_URL).hostname.split('.')[0];
+// SCREENS_ONLY=paula,movil saca solo esas carpetas (por ejemplo, para repetir una).
+const ONLY = new Set((process.env.SCREENS_ONLY ?? '').split(',').filter(Boolean));
+const want = (folder: string) => ONLY.size === 0 || ONLY.has(folder);
 
 const DESKTOP = { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1.5 };
 const MOBILE = {
@@ -148,7 +151,7 @@ const sofiCase = must(
   await service
     .from('care_assignments')
     .select('id')
-    .eq('family_id', demoId('family:pereyra'))
+    .eq('family_id', demoId('family:garcia'))
     .eq(
       'professional_id',
       must(
@@ -168,53 +171,61 @@ const sofiCase = must(
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 try {
   // Sin cuenta.
-  const pub = await openAs(browser, null, DESKTOP);
-  await shot(pub, 'publico', '01-inicio', '/');
-  await shot(pub, 'publico', '02-etapa-3-5', '/etapas/etapa-3-5');
-  await shot(pub, 'publico', '03-ficha-c', '/situaciones/ficha-c-reaccion-al-apagar');
-  await shot(pub, 'publico', '04-actividades', '/actividades');
-  await shot(pub, 'publico', '06-directorio', '/directorio');
-  await shot(pub, 'publico', '07-registrarse', '/registrarse');
-  await shot(pub, 'publico', '08-ingresar', '/ingresar');
+  if (want('publico')) {
+    const pub = await openAs(browser, null, DESKTOP);
+    await shot(pub, 'publico', '01-inicio', '/');
+    await shot(pub, 'publico', '02-etapa-3-5', '/etapas/etapa-3-5');
+    await shot(pub, 'publico', '03-ficha-c', '/situaciones/ficha-c-reaccion-al-apagar');
+    await shot(pub, 'publico', '04-actividades', '/actividades');
+    await shot(pub, 'publico', '06-directorio', '/directorio');
+    await shot(pub, 'publico', '07-registrarse', '/registrarse');
+    await shot(pub, 'publico', '08-ingresar', '/ingresar');
+  }
 
   // Laura, en la compu.
-  const laura = await openAs(browser, 'laura', DESKTOP);
-  await laura.goto(`${BASE}/hoy`, { waitUntil: 'domcontentloaded' });
-  await settle(laura);
-  const armar = laura.getByRole('button', { name: '¡Armá mi semana!' });
-  if (await armar.isVisible().catch(() => false)) {
-    await armar.click();
-    await laura.waitForTimeout(4000);
+  if (want('laura')) {
+    const laura = await openAs(browser, 'laura', DESKTOP);
+    await laura.goto(`${BASE}/hoy`, { waitUntil: 'domcontentloaded' });
+    await settle(laura);
+    const armar = laura.getByRole('button', { name: '¡Armá mi semana!' });
+    if (await armar.isVisible().catch(() => false)) {
+      await armar.click();
+      await laura.waitForTimeout(4000);
+    }
+    await shot(laura, 'laura', '01-hoy');
+    await shot(laura, 'laura', '02-plan', '/plan');
+    await shot(laura, 'laura', '03-familia', '/familia');
+    await shot(laura, 'laura', '04-evaluaciones', '/evaluaciones');
+    await shot(laura, 'laura', '05-resultado-tomi', `/evaluaciones/${lastAttempt}/resultado`);
+    await shot(laura, 'laura', '06-historial-tomi', `/evaluaciones/historial/${tomi}`);
+    await shot(laura, 'laura', '07-asistente', '/asistente');
+    await shot(laura, 'laura', '08-conversacion', `/asistente/${conversation}`);
+    await shot(laura, 'laura', '09-profesionales', '/profesionales');
+    await shot(laura, 'laura', '11-objetivos', '/objetivos');
+    await shot(laura, 'laura', '12-pausa', '/pausa');
+    await shot(laura, 'laura', '13-perfil', '/perfil');
   }
-  await shot(laura, 'laura', '01-hoy');
-  await shot(laura, 'laura', '02-plan', '/plan');
-  await shot(laura, 'laura', '03-familia', '/familia');
-  await shot(laura, 'laura', '04-evaluaciones', '/evaluaciones');
-  await shot(laura, 'laura', '05-resultado-tomi', `/evaluaciones/${lastAttempt}/resultado`);
-  await shot(laura, 'laura', '06-historial-tomi', `/evaluaciones/historial/${tomi}`);
-  await shot(laura, 'laura', '07-asistente', '/asistente');
-  await shot(laura, 'laura', '08-conversacion', `/asistente/${conversation}`);
-  await shot(laura, 'laura', '09-profesionales', '/profesionales');
-  await shot(laura, 'laura', '11-objetivos', '/objetivos');
-  await shot(laura, 'laura', '12-pausa', '/pausa');
-  await shot(laura, 'laura', '13-perfil', '/perfil');
 
   // Laura, en el celular: Hoy, el chequeo por tema (pregunta y resultado) y la pausa.
-  const movil = await openAs(browser, 'laura', MOBILE);
-  await shot(movil, 'movil', '01-hoy', '/hoy');
-  await movil.goto(`${BASE}/chequeo/${tomi}?tema=tema-sueno`, { waitUntil: 'domcontentloaded' });
-  await shot(movil, 'movil', '04-chequeo-pregunta');
-  await answerCheck(movil);
-  await movil.waitForTimeout(3500);
-  await shot(movil, 'movil', '05-chequeo-resultado');
-  await shot(movil, 'movil', '06-pausa', '/pausa');
-  await shot(movil, 'movil', '02-conversacion', `/asistente/${conversation}`);
-  await shot(movil, 'movil', '03-historial-tomi', `/evaluaciones/historial/${tomi}`);
+  if (want('movil')) {
+    const movil = await openAs(browser, 'laura', MOBILE);
+    await shot(movil, 'movil', '01-hoy', '/hoy');
+    await movil.goto(`${BASE}/chequeo/${tomi}?tema=tema-sueno`, { waitUntil: 'domcontentloaded' });
+    await shot(movil, 'movil', '04-chequeo-pregunta');
+    await answerCheck(movil);
+    await movil.waitForTimeout(3500);
+    await shot(movil, 'movil', '05-chequeo-resultado');
+    await shot(movil, 'movil', '06-pausa', '/pausa');
+    await shot(movil, 'movil', '02-conversacion', `/asistente/${conversation}`);
+    await shot(movil, 'movil', '03-historial-tomi', `/evaluaciones/historial/${tomi}`);
+  }
 
   // Paula, profesional.
-  const paula = await openAs(browser, 'paula', DESKTOP);
-  await shot(paula, 'paula', '01-casos', '/profesional');
-  await shot(paula, 'paula', '02-caso-sofi', `/profesional/casos/${sofiCase}/${sofi}`);
+  if (want('paula')) {
+    const paula = await openAs(browser, 'paula', DESKTOP);
+    await shot(paula, 'paula', '01-casos', '/profesional');
+    await shot(paula, 'paula', '02-caso-sofi', `/profesional/casos/${sofiCase}/${sofi}`);
+  }
 } finally {
   await browser.close();
 }
