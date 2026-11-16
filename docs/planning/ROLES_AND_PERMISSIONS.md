@@ -25,7 +25,7 @@ flowchart LR
 | `users.read`            | Ver la lista de usuarios (correo, fecha de alta, roles). **No** ve familias ni contenido |
 | `users.manage_roles`    | Asignar y quitar roles administrativos                                                   |
 | `users.suspend`         | Suspender o reactivar cuentas (P1)                                                       |
-| `content.edit`          | Crear y editar contenidos y actividades en borrador                                      |
+| `content.edit`          | Crear contenidos, actividades y fuentes (desde el panel, en borrador) y editarlos        |
 | `content.review`        | Marcar como revisado (requiere un perfil profesional verificado o un convenio)           |
 | `content.publish`       | Publicar y archivar contenidos y actividades                                             |
 | `questionnaires.manage` | Crear versiones y publicarlas                                                            |
@@ -51,7 +51,25 @@ flowchart LR
 1. **Ningún permiso administrativo da acceso** a conversaciones, respuestas de evaluaciones, observaciones profesionales ni datos de los integrantes. No existe un permiso "ver todo". El acceso de emergencia (_break-glass_) queda en P2 y, si se implementa, exigirá el registro de un motivo, la aprobación de dos personas y una notificación a la familia.
 2. Separación de funciones: quien **edita** contenido no lo **publica** si se le asigna solo `content_editor`, y quien **verifica** credenciales no gestiona roles.
 3. `users.manage_roles` no permite quitarse el último `platform_admin` (lo controla un trigger).
-4. Los administradores y verificadores deben tener **MFA (TOTP)** activo. RLS lo exige leyendo el nivel de autenticación de la sesión (`auth.jwt()->>'aal' = 'aal2'`) en las políticas de escritura administrativa **[A verificar el claim en la Fase 2]**.
+4. Los administradores y verificadores deben tener **MFA (TOTP)** activo. RLS lo exige leyendo el nivel de autenticación de la sesión (`auth.jwt()->>'aal' = 'aal2'`) en las políticas de escritura administrativa **[A verificar el claim en la Fase 2]**. La única excepción es la carga de contenido en la demo (§2.3).
+
+### 2.3 Excepción de la demo: cargar contenido sin segundo factor (ADR-036)
+
+En la demo de la Expotec, el profesor pidió cargar una actividad en vivo. Para que no tenga que activar un código en su teléfono, la base acepta **sin segundo factor** solo esto:
+
+| Condición                    | Cómo se comprueba                                                                                                                                                                                        |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| La base es la demo           | `is_demo_environment()`: `app_settings` tiene `app.environment = "demo"`. Se carga a mano en el SQL Editor; `admin_update_setting` acepta solo claves conocidas, así que **no se prende desde el panel** |
+| El permiso es de contenido   | `content.edit` o `content.publish`                                                                                                                                                                       |
+| La persona tiene ese permiso | `has_permission(code)`, igual que siempre: una familia o un profesional sin rol reciben `FORBIDDEN`                                                                                                      |
+
+- `admin_mfa_satisfied(code)` junta las dos primeras: devuelve verdadero si la sesión está en `aal2` **o** si el permiso es de contenido y la base es la demo. `has_admin_permission` y `require_admin_permission` la usan, así que la regla vale en todas las políticas y funciones administrativas.
+- **Sin segundo factor se publica o archiva solo lo cargado en el panel** (`origin = 'panel'`): lo que viene del repositorio y los cuestionarios piden segundo factor también en la demo.
+- **Siguen pidiendo segundo factor siempre, también en la demo:** usuarios y roles, verificaciones de profesionales, configuración, auditoría, uso de la IA, base de conocimiento (`kb.manage`) y cuestionarios en borrador (`questionnaires.manage`).
+- **En `dev` y `prod` no cambia nada:** ninguna migración crea la marca, y la demo es otro proyecto de Supabase con otras claves (ADR-002).
+- **En la app,** el layout de administración muestra **solo Contenidos** a una cuenta con permiso de contenido y sin segundo factor activado, cuando la base es la demo. Quien ya tiene segundo factor (`admin@…`, `verificador@…`) lo sigue usando.
+- **Cuentas de la demo** (`scripts/demo/scenario.ts`): `admin@…` (`platform_admin` + `content_publisher`), `verificador@…` (`credential_verifier` + `content_publisher`) y `profe@…` (solo `content_publisher`, sin segundo factor). Que administración y verificación también publiquen contenido es una elección **del escenario de la demo** (pedido del profesor: "que solo admins y verificadores puedan"), no un cambio de los roles: en otro entorno, cada rol se asigna por separado y se mantiene la separación de funciones del punto 2.
+- **Pruebas:** `supabase/tests/10_content_panel.test.sql` comprueba que fuera de la demo cargar contenido da `MFA_REQUIRED`, que en la demo la editora carga sin segundo factor y que, en la demo, archivar algo del repositorio, publicar cuestionarios y `admin_list_users` siguen dando `MFA_REQUIRED`.
 
 ## 3. Eje 2: roles dentro de la familia
 
@@ -64,7 +82,7 @@ flowchart LR
 | Cambiar roles o quitar adultos                     | ✅ (no puede quitar al último `owner`) | ❌                                      | ❌                                 |
 | Responder evaluaciones y ver resultados            | ✅                                     | ✅                                      | ❌                                 |
 | Ver y gestionar recomendaciones y objetivos        | ✅                                     | ✅                                      | 👁 solo los objetivos activos       |
-| Actividades: favoritos y planes                    | ✅                                     | ✅                                      | 👁 ver el plan                      |
+| Actividades: lista "Para hacer" y planes           | ✅                                     | ✅                                      | 👁 ver el plan                      |
 | Marcar actividades realizadas                      | ✅                                     | ✅                                      | ✅                                 |
 | Usar el asistente                                  | ✅                                     | ✅                                      | ❌ (P2: modo general sin contexto) |
 | Ver conversaciones con el asistente                | **Solo las propias**                   | **Solo las propias**                    | —                                  |
@@ -116,27 +134,28 @@ Que un profesional proponga trabajar con una familia que no lo pidió queda en *
 
 Leyenda: R = leer, C = crear, U = actualizar, D = borrar o archivar, — = sin acceso.
 
-| Recurso                                          | Visitante                | Adulto owner/guardian                                      | Caregiver             | Profesional (según alcance)             | Admin (según permiso)                                           |
-| ------------------------------------------------ | ------------------------ | ---------------------------------------------------------- | --------------------- | --------------------------------------- | --------------------------------------------------------------- |
-| Contenido `published` y actividades `published`  | R                        | R                                                          | R                     | R                                       | R (+CUD con `content.*`)                                        |
-| Contenido en borrador o revisión                 | —                        | —                                                          | —                     | — (P1: revisor convocado)               | R/CU con `content.edit`                                         |
-| `profiles` (propio)                              | —                        | RU                                                         | RU                    | RU                                      | RU                                                              |
-| `families`, `family_members`                     | —                        | CRUD                                                       | R                     | R (`member_profile`)                    | —                                                               |
-| `family_invitations`                             | —                        | CRD                                                        | —                     | —                                       | —                                                               |
-| `consents`                                       | —                        | CR + revocar                                               | —                     | R (los que respaldan sus permisos)      | —                                                               |
-| `assessment_attempts` y respuestas               | —                        | CRU (borrador)                                             | —                     | R (`assessments`)                       | —                                                               |
-| `assessment_dimension_scores`, `recommendations` | —                        | R (+U del estado de la recomendación)                      | —                     | R (`assessments`)                       | —                                                               |
-| `follow_up_goals` y avances                      | —                        | CRUD                                                       | R                     | CRU (`goals` o `family_goals`)          | —                                                               |
-| `family_plans`, `plan_items`, `activity_logs`    | —                        | CRUD                                                       | R + marcar como hecho | R (`activities` o `family_plans`)       | —                                                               |
-| `conversations`, `messages`                      | —                        | CRUD **las propias**                                       | —                     | —                                       | —                                                               |
-| `professional_profiles`                          | R (`verified` y listado) | R (`verified` y listado, más los asignados)                | —                     | CRU el propio                           | R (+U del estado con `professionals.verify`, mediante la API)   |
-| `professional_credentials` y archivo             | —                        | —                                                          | —                     | CRU las propias (sin cambiar el estado) | R con `professionals.verify`                                    |
-| `credential_verifications`                       | —                        | —                                                          | —                     | R las propias                           | C (mediante la API) con `professionals.verify`                  |
-| `care_assignments`, `access_grants`              | —                        | R + RPC                                                    | —                     | R + RPC (responder o finalizar)         | —                                                               |
-| `professional_observations`                      | —                        | R (`shared_family`)                                        | —                     | C/R/U las propias (`observations`)      | —                                                               |
-| `kb_documents`, `kb_chunks`                      | —                        | —                                                          | —                     | —                                       | CRUD con `kb.manage` (lectura para la búsqueda mediante la API) |
-| `audit_log`                                      | —                        | R los eventos de **su familia** (accesos de profesionales) | —                     | R los eventos propios                   | R con `audit.read`                                              |
-| `app_settings`                                   | —                        | —                                                          | —                     | —                                       | RU con `settings.manage`                                        |
+| Recurso                                          | Visitante                | Adulto owner/guardian                                      | Caregiver            | Profesional (según alcance)             | Admin (según permiso)                                           |
+| ------------------------------------------------ | ------------------------ | ---------------------------------------------------------- | -------------------- | --------------------------------------- | --------------------------------------------------------------- |
+| Contenido `published` y actividades `published`  | R                        | R                                                          | R                    | R                                       | R (+CUD con `content.*`)                                        |
+| Contenido en borrador o revisión                 | —                        | —                                                          | —                    | — (P1: revisor convocado)               | R/CU con `content.edit`                                         |
+| `sources` (fuentes)                              | R                        | R                                                          | R                    | R                                       | R (+C con `content.edit`, mediante `admin_create_source`)       |
+| `profiles` (propio)                              | —                        | RU                                                         | RU                   | RU                                      | RU                                                              |
+| `families`, `family_members`                     | —                        | CRUD                                                       | R                    | R (`member_profile`)                    | —                                                               |
+| `family_invitations`                             | —                        | CRD                                                        | —                    | —                                       | —                                                               |
+| `consents`                                       | —                        | CR + revocar                                               | —                    | R (los que respaldan sus permisos)      | —                                                               |
+| `assessment_attempts` y respuestas               | —                        | CRU (borrador)                                             | —                    | R (`assessments`)                       | —                                                               |
+| `assessment_dimension_scores`, `recommendations` | —                        | R (+U del estado de la recomendación)                      | —                    | R (`assessments`)                       | —                                                               |
+| `follow_up_goals` y avances                      | —                        | CRUD                                                       | R                    | CRU (`goals` o `family_goals`)          | —                                                               |
+| `family_plans`, `plan_items`, `activity_logs`    | —                        | CRUD                                                       | R + marcar realizada | R (`activities` o `family_plans`)       | —                                                               |
+| `conversations`, `messages`                      | —                        | CRUD **las propias**                                       | —                    | —                                       | —                                                               |
+| `professional_profiles`                          | R (`verified` y listado) | R (`verified` y listado, más los asignados)                | —                    | CRU el propio                           | R (+U del estado con `professionals.verify`, mediante la API)   |
+| `professional_credentials` y archivo             | —                        | —                                                          | —                    | CRU las propias (sin cambiar el estado) | R con `professionals.verify`                                    |
+| `credential_verifications`                       | —                        | —                                                          | —                    | R las propias                           | C (mediante la API) con `professionals.verify`                  |
+| `care_assignments`, `access_grants`              | —                        | R + RPC                                                    | —                    | R + RPC (responder o finalizar)         | —                                                               |
+| `professional_observations`                      | —                        | R (`shared_family`)                                        | —                    | C/R/U las propias (`observations`)      | —                                                               |
+| `kb_documents`, `kb_chunks`                      | —                        | —                                                          | —                    | —                                       | CRUD con `kb.manage` (lectura para la búsqueda mediante la API) |
+| `audit_log`                                      | —                        | R los eventos de **su familia** (accesos de profesionales) | —                    | R los eventos propios                   | R con `audit.read`                                              |
+| `app_settings`                                   | —                        | —                                                          | —                    | —                                       | RU con `settings.manage`                                        |
 
 ## 6. Implementación en RLS (patrones)
 
@@ -205,7 +224,7 @@ $$;
 - `care.requested`, `care.accepted`, `care.rejected`, `care.cancelled`, `care.ended`, `grant.revoked`.
 - `pro.read.member_overview` (cada acceso), `pro.observation.created`, `pro.observation.updated`.
 - `credential.submitted`, `credential.verified`, `credential.rejected`.
-- `content.published`, `content.archived`, `questionnaire.published`, `kb.document.ingested`, `kb.document.published`, `kb.document.retired`.
+- `content.created` (alta desde el panel de una actividad, ficha o fuente; ADR-036), `content.published`, `content.archived`, `questionnaire.published`, `kb.document.ingested`, `kb.document.published`, `kb.document.retired`.
 - `settings.updated`, `demo.reset` (en el entorno `demo`).
 
 **Qué guarda cada evento:**

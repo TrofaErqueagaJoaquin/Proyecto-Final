@@ -58,7 +58,7 @@ Los valores iniciales se validan con una herramienta de contraste en la Fase 3; 
 ### 2.3 Elementos propios (lo que evita el aspecto de plantilla)
 
 - **La "línea de crecimiento":** un trazo orgánico en `accent` que funciona como divisor de secciones, indicador de progreso del cuestionario y línea temporal del historial de evaluaciones.
-- **Tarjeta "Hoy":** al entrar, la familia ve **una** sugerencia concreta para el día (actividad del plan o paso de un objetivo) con "Hecho" y "Otra idea".
+- **Tarjeta "Hoy":** al entrar, la familia ve **una** sugerencia concreta para el día (actividad del plan o paso de un objetivo) con "Realizado" y "Otra idea".
 - **Fichas tipo cuaderno:** encabezado serif, margen izquierdo con la etiqueta de evidencia y bloques "En casa", "Evitar" y "Cuándo consultar" con jerarquía fija.
 - **Ilustraciones:** pocas, lineales y monocromáticas en `ink` y `accent`, con personas de distintas edades y configuraciones familiares. No se usan fotos de chicos (coherente con la minimización).
 - **Micro-interacciones sobrias:** confirmaciones con un trazo que se completa y un háptico leve en nativo. Respetan "reducir movimiento".

@@ -13,7 +13,7 @@ La app tiene tres tipos de usuario, cada uno con su propio espacio:
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Familia**        | Integrantes, evaluaciones, plan semanal, objetivos, asistente y profesionales. Dentro de la familia hay responsable principal, responsable y cuidador/a, con permisos distintos |
 | **Profesional**    | Su perfil y matrícula, solicitudes de familias, casos y observaciones                                                                                                           |
-| **Administración** | Verificar matrículas, roles de usuarios, contenidos, auditoría, uso de la IA y configuración (con verificación en dos pasos)                                                    |
+| **Administración** | Verificar matrículas, roles de usuarios, cargar y publicar contenidos, auditoría, uso de la IA y configuración (con verificación en dos pasos)                                  |
 
 Sin cuenta se puede leer toda la biblioteca pública.
 
@@ -22,7 +22,10 @@ Sin cuenta se puede leer toda la biblioteca pública.
 En el inicio, elegí **¿Qué edad tiene?** para ver qué necesita un chico a esa edad: movimiento,
 sueño, juego y pantallas. También están:
 
-- **Actividades:** ideas con poco tiempo, sin materiales y en espacios chicos, con filtros por edad.
+- **Actividades:** una grilla de tarjetas, cada una con un dibujo y su nombre, con buscador y
+  filtros por edad. Tocá una y se abre una ventana con una animación que muestra cómo se hace, los
+  datos con íconos (minutos, edad, dónde y cuánto cuesta) y los pasos numerados. Lo demás (para qué
+  sirve, materiales, variantes y fuentes) está plegado: tocá **Más información** o **Fuentes**.
 - **Situaciones difíciles:** qué hacer si se enoja al apagar, si necesita la pantalla para calmarse
   y más.
 - **Cuándo consultar:** señales para pedir ayuda profesional.
@@ -44,7 +47,8 @@ causa o propuesta del proyecto) y sus fuentes.
 La sesión queda guardada: al cerrar y volver a abrir la app seguís conectado. Para salir, andá a
 **Perfil → Cerrar sesión**.
 
-**Verificación en dos pasos (opcional para familias, obligatoria para administración):** en
+**Verificación en dos pasos (opcional para familias, obligatoria para administración salvo la carga
+de contenido en la demo):** en
 **Perfil → Activar la verificación en dos pasos**, escaneá el código QR con Google Authenticator (o
 una app parecida) y escribí el código de 6 dígitos. Desde ese momento, además de la contraseña, se
 pide un código del teléfono.
@@ -60,8 +64,9 @@ Brote, el personaje de la app, acompaña los primeros pasos:
    para guardar esos datos. Tocá **¡Empezar!**
 2. **Chequeo de 1 minuto:** 6 preguntas, una por pantalla (sueño, movimiento, pantallas, calma y
    acuerdos en casa). Se contesta tocando la opción y pasa sola a la siguiente.
-3. **Resultado al instante:** Brote festeja, te muestra una fortaleza, **por dónde empezar** y una
-   **actividad para hoy** (**¡Vamos!** la abre).
+3. **Resultado al instante:** Brote festeja en una ventana con **por dónde empezar**. **Empezar: …**
+   abre la actividad para hoy; **Ver el resultado** muestra una fortaleza, por dónde empezar y la
+   actividad para hoy (**¡Vamos!** la abre).
 
 ### Hoy
 
@@ -70,14 +75,34 @@ Brote, el personaje de la app, acompaña los primeros pasos:
 - **La tarjeta grande** propone personalizar: si falta el chequeo de 1 minuto, lo invita; si ya está,
   propone un **chequeo por tema** (sueño, calma, pantallas, movimiento o acuerdos) de menos de un
   minuto. No repite lo que ya contestaste.
-- **Para hoy:** la primera vez tocá **¡Armá mi semana!** y aparece la actividad del día. **Hecho**
-  la registra (quiénes participaron y cómo les fue), **Otra idea** la cambia y **Saltear** la deja
-  para otro día.
+- **Para hoy:** la primera vez tocá **¡Armá mi semana!** y aparece la actividad del día, con su
+  dibujo (tocalo para ver cómo se hace). **Realizado** la registra (ver "Actividades: Realizado y
+  Hacer más tarde"), **Otra idea** la cambia y **Saltear** la deja para otro día.
+- **Para hacer:** las actividades que dejaste para más tarde (se ven hasta 4; **Ver las …** muestra
+  todas).
 - **Pausa para vos:** un minuto para quien cuida. Elegís cómo estás hoy (no se guarda), hacés una
   respiración guiada de 5 ciclos y leés una frase amable. Si elegís **Al límite**, aparecen las
   líneas de ayuda y el acceso a profesionales.
 - **Tus logros:** primer chequeo, primera actividad, 3 y 7 días seguidos, 10 actividades y 3 chequeos
-  por tema. Cuando ganás uno nuevo, hay festejo.
+  por tema. Cuando ganás uno nuevo, aparece una ventana de festejo (**¡Genial!** la cierra).
+- **¡Qué bueno verte!** Si pasaron 3 días o más desde la última vez que abriste la app en ese
+  dispositivo, Brote te recibe (sin reproches) con una actividad de 10 minutos para retomar:
+  **¡Hagámosla!** la abre y **Ahora no** cierra la ventana.
+
+### Actividades: Realizado y Hacer más tarde
+
+1. Abrí una actividad: desde **Actividades → Explorar el catálogo**, el plan, **Hoy** o tu lista
+   **Para hacer**. Se abre en una ventana.
+2. **Realizado**, cuando la hicieron: elegí quiénes participaron (si hay más de un chico) y, si
+   querés, cómo les fue (**No funcionó**, **Más o menos** o **¡Nos encantó!**). Tocá **Listo**.
+3. Aparece la ventana **¡Realizado!** con **¿Seguimos con otra?** y la siguiente idea: lo que sigue
+   del plan; si no hay, algo de tu lista Para hacer; si tampoco, una de 10 minutos sin materiales.
+   **¡Vamos!** la abre y **Listo por hoy** cierra.
+4. **Hacer más tarde** la suma a tu lista **Para hacer** (en **Hoy** y en **Actividades**). El botón
+   pasa a decir **En tu lista para hacer**; tocándolo otra vez, la sacás.
+
+Las actividades realizadas se ven en **Actividades → Lo que hicieron**. La cuidadora puede marcar
+**Realizado**, pero no arma la lista Para hacer.
 
 Los sonidos y las vibraciones se apagan en **Perfil → Sonidos y vibraciones**. Con el teléfono en
 silencio no suenan.
@@ -158,27 +183,94 @@ Si dejan de darte un permiso, esa sección desaparece de tu vista.
 ## 5. Administración
 
 Requiere un rol administrativo y la **verificación en dos pasos** activa. Se entra desde **Perfil →
-Ir a la administración**. Cada rol ve solo sus secciones:
+Ir a la administración** (una cuenta sin familia entra directo). Cada rol ve solo sus secciones:
 
-| Sección            | Qué se hace                                                                                    |
-| ------------------ | ---------------------------------------------------------------------------------------------- |
-| **Resumen**        | Pendientes y gasto del mes                                                                     |
-| **Verificaciones** | Revisar matrículas con la lista de control y **aprobar**, **pedir información** o **rechazar** |
-| **Usuarios**       | Buscar cuentas y asignar o quitar roles                                                        |
-| **Contenidos**     | Publicar o archivar fichas, actividades y cuestionarios                                        |
-| **Auditoría**      | Quién hizo qué y cuándo, filtrado por acción y período, sin el contenido                       |
-| **Uso de la IA**   | Gasto del asistente en el mes y el tope                                                        |
-| **Configuración**  | Activar o pausar el asistente y ajustar sus límites                                            |
+| Sección            | Qué se hace                                                                                                        |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| **Resumen**        | Pendientes y gasto del mes                                                                                         |
+| **Verificaciones** | Revisar matrículas con la lista de control y **aprobar**, **pedir información** o **rechazar**                     |
+| **Usuarios**       | Buscar cuentas y asignar o quitar roles                                                                            |
+| **Contenidos**     | Cargar actividades, fichas y fuentes nuevas (sección 6), y publicar o archivar fichas, actividades y cuestionarios |
+| **Auditoría**      | Quién hizo qué y cuándo, filtrado por acción y período, sin el contenido                                           |
+| **Uso de la IA**   | Gasto del asistente en el mes y el tope                                                                            |
+| **Configuración**  | Activar o pausar el asistente y ajustar sus límites                                                                |
 
 Ningún rol de administración puede ver evaluaciones, conversaciones ni observaciones de las familias.
 
-## 6. Problemas frecuentes
+**El código del teléfono en la demo:** una cuenta que carga contenido y no tiene activada la
+verificación en dos pasos (la del profe) entra sin código, pero ve **solo Contenidos**. Todo lo
+demás de la administración sigue pidiendo el código.
 
-| Qué pasa                                 | Qué hacer                                                              |
-| ---------------------------------------- | ---------------------------------------------------------------------- |
-| "La sesión no es válida o venció"        | Volvé a ingresar                                                       |
-| No llega el correo de confirmación       | Revisá spam o pedí el enlace de nuevo desde **Ingresar**               |
-| "El asistente está en pausa"             | Se alcanzó el tope de gasto del mes; la biblioteca sigue disponible    |
-| "Llegaste al máximo de preguntas de hoy" | El asistente tiene un límite diario; al otro día podés seguir          |
-| No veo las evaluaciones                  | El rol cuidador/a no las ve; pedile a un responsable que cambie tu rol |
-| La administración pide un código         | Activá la verificación en dos pasos en **Perfil**                      |
+## 6. Cargar contenido (administración)
+
+Lo pueden hacer las cuentas con un rol de contenidos. Con el rol de **publicación**, lo que cargás
+se publica en el momento; con el de **edición**, queda en borrador hasta que alguien con permiso lo
+publique. En la demo publican `admin@…`, `verificador@…` y `profe@…`.
+
+### Cargar una actividad
+
+1. Ingresá y andá a **Perfil → Ir a la administración → Contenidos**. La cuenta del profe entra
+   directo a **Contenidos**.
+2. Tocá **Nueva actividad**.
+3. Completá lo obligatorio:
+   - **Nombre** (hasta 120 letras). Por ejemplo, "AAA" o "Rayuela en el pasillo".
+   - **De qué se trata:** una o dos frases.
+   - **Cómo se hace:** un paso en cada casillero. **Agregar un paso** suma otro (hasta 12) y
+     **Quitar** lo borra.
+   - **Categorías:** al menos una (hasta 4). La primera elige el dibujo animado.
+   - **¿Para qué edades?:** una o varias etapas.
+   - **¿Cuánto dura?**, **¿Dónde?** y **¿Cuánto cuesta?** ya vienen elegidos; cambialos si hace
+     falta.
+4. Si querés, abrí **Más detalles (opcional)** (qué necesitan, un material por renglón; para qué
+   sirve; cuidados y respaldo) y **Fuentes (opcional)** (buscá por autor o título, o tocá **Cargar
+   una fuente nueva** sin salir del formulario).
+5. Revisá la vista previa **Así la van a ver las familias** (al costado en la computadora, abajo en
+   el celular).
+6. Dejá marcado **Publicar ahora** para que la vean ya (si lo desmarcás, queda en borrador) y tocá
+   **Guardar actividad**.
+7. Aparece **¡Listo!**: **Verla en la app** la abre; también podés **Cargar otra actividad** o
+   **Volver a Contenidos**.
+
+Si falta algo, el formulario marca el campo y avisa "Revisá lo marcado arriba".
+
+**¿Dónde aparece?** En **Actividades**, que se ordena por nombre: "AAA" queda primera. Si otro
+dispositivo ya tenía la lista abierta, recargá la página o volvé a abrir la app.
+
+### Cargar una ficha
+
+1. **Contenidos → Nueva ficha**.
+2. Completá **Título**, **De qué se trata** (es lo que se ve en la lista) y **Contenido**. El
+   contenido admite títulos con `##`, listas con `-` y `**negrita**`; no admite HTML.
+3. Si querés, elegí edades, el respaldo y las fuentes.
+4. Dejá marcado **Publicar ahora** y tocá **Guardar ficha**. Aparece en **Biblioteca →
+   Situaciones**.
+
+### Cargar una fuente
+
+1. **Contenidos → Nueva fuente** (o **Cargar una fuente nueva** desde una actividad o una ficha).
+2. Escribí la **Cita** (autor, título y año) y, si querés, el **Enlace** (con `https://`), el
+   **Año**, el **Tipo** y la **Confianza**.
+3. Tocá **Guardar fuente**. Ya se puede citar; queda **Sin verificar** hasta que alguien la revise.
+
+### Publicar, archivar y la marca "Del panel"
+
+- En **Contenidos**, elegí la sección: **Actividades**, **Fichas**, **Fuentes** o **Cuestionarios**.
+- Lo cargado desde el panel lleva la marca **Del panel**. Lo del repositorio se carga con
+  `pnpm content:sync`, que no toca lo del panel.
+- Cada fila tiene los botones que corresponden a su estado: **Enviar a revisión**, **Volver a
+  borrador**, **Publicar** y **Archivar** (publicar y archivar, solo con permiso de publicación).
+  Archivar la saca de la vista de las familias.
+- Todavía no se puede editar lo ya cargado: si hay un error, archivalo y cargalo de nuevo.
+
+## 7. Problemas frecuentes
+
+| Qué pasa                                 | Qué hacer                                                                                   |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------- |
+| "La sesión no es válida o venció"        | Volvé a ingresar                                                                            |
+| No llega el correo de confirmación       | Revisá spam o pedí el enlace de nuevo desde **Ingresar**                                    |
+| "El asistente está en pausa"             | Se alcanzó el tope de gasto del mes; la biblioteca sigue disponible                         |
+| "Llegaste al máximo de preguntas de hoy" | El asistente tiene un límite diario; al otro día podés seguir                               |
+| No veo las evaluaciones                  | El rol cuidador/a no las ve; pedile a un responsable que cambie tu rol                      |
+| La administración pide un código         | Activá la verificación en dos pasos en **Perfil**                                           |
+| Cargué una actividad y no aparece        | Fijate en **Contenidos** que diga **Publicado** (no **Borrador**) y recargá **Actividades** |
+| No veo **Hacer más tarde**               | Lo usan los responsables de la familia; la cuidadora solo marca **Realizado**               |

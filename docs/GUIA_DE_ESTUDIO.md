@@ -6,7 +6,8 @@ seguí los enlaces a los documentos de `docs/planning/`.
 
 > **Cómo estudiar con esta guía:** leé una sección, hacé el ejercicio con la demo
 > (`crecer-demo.vercel.app`) y mirá en Supabase (**Table Editor**) qué filas aparecieron. Al final
-> hay 40 preguntas de práctica para decir en voz alta.
+> hay 40 preguntas de práctica para decir en voz alta, y después las preguntas probables sobre las
+> correcciones del profe.
 
 ## Índice
 
@@ -24,6 +25,7 @@ seguí los enlaces a los documentos de `docs/planning/`.
 12. [¿Dónde está…?](#12-dónde-está)
 13. [Ejercicios con la demo](#13-ejercicios-con-la-demo)
 14. [Preguntas de práctica](#14-preguntas-de-práctica)
+15. [Correcciones del profe: preguntas probables](#15-correcciones-del-profe-preguntas-probables)
 
 ---
 
@@ -31,12 +33,12 @@ seguí los enlaces a los documentos de `docs/planning/`.
 
 Crecer en Casa acompaña a familias que crían con pantallas. Tiene cuatro funciones:
 
-| Función         | Qué hace                                                           | Dónde se ve                 |
-| --------------- | ------------------------------------------------------------------ | --------------------------- |
-| **Comprender**  | Biblioteca pública por edad, con la evidencia etiquetada           | Inicio, etapas, fichas      |
-| **Identificar** | Chequeo de 1 minuto, chequeos por tema y evaluación completa       | Hoy → chequeo, Evaluaciones |
-| **Actuar**      | Plan semanal de actividades, "Hecho", rachas, logros y objetivos   | Hoy, Plan, Objetivos        |
-| **Acompañarse** | Asistente que cita fuentes y profesionales verificados con permiso | Asistente, Profesionales    |
+| Función         | Qué hace                                                             | Dónde se ve                 |
+| --------------- | -------------------------------------------------------------------- | --------------------------- |
+| **Comprender**  | Biblioteca pública por edad, con la evidencia etiquetada             | Inicio, etapas, fichas      |
+| **Identificar** | Chequeo de 1 minuto, chequeos por tema y evaluación completa         | Hoy → chequeo, Evaluaciones |
+| **Actuar**      | Plan semanal de actividades, "Realizado", rachas, logros y objetivos | Hoy, Plan, Objetivos        |
+| **Acompañarse** | Asistente que cita fuentes y profesionales verificados con permiso   | Asistente, Profesionales    |
 
 Lo que **no** es: no diagnostica, no vigila a los chicos y no reemplaza a un profesional.
 
@@ -162,7 +164,7 @@ erDiagram
   FAMILIES ||--o{ FAMILY_PLANS : "un plan por semana"
   FAMILY_PLANS ||--o{ PLAN_ITEMS : "5 a 7 ideas"
   ACTIVITIES ||--o{ PLAN_ITEMS : ""
-  PLAN_ITEMS ||--o| ACTIVITY_LOGS : "al marcar Hecho"
+  PLAN_ITEMS ||--o| ACTIVITY_LOGS : "al marcar Realizado"
   ACTIVITY_LOGS ||--o{ ACTIVITY_LOG_PARTICIPANTS : "quiénes participaron"
   FAMILIES ||--o{ FOLLOW_UP_GOALS : "objetivos"
   FOLLOW_UP_GOALS ||--o{ GOAL_PROGRESS_ENTRIES : "avances"
@@ -172,8 +174,11 @@ erDiagram
   recomendaciones y lo hecho en los últimos días, y el **generador**
   (`packages/domain/src/plans/generator.ts`) elige de 5 a 7 actividades. Siempre incluye una de 10
   minutos sin materiales. Se guarda con `save_week_plan`.
-- **"Hecho":** `complete_plan_item` crea un `activity_log` con su fecha (`done_on`) y los
-  participantes.
+- **"Realizado"** (antes "Hecho"): en el plan, `complete_plan_item` crea un `activity_log` con su
+  fecha (`done_on`) y los participantes; fuera del plan, la app inserta el `activity_log` directo
+  (RLS). Después, Brote propone "¿Seguimos con otra?" (`features/library/ActivityFlow.tsx`).
+- **"Hacer más tarde"** (antes "Guardar"): suma la actividad a la lista **Para hacer** de Hoy. Es la
+  misma tabla de siempre, `saved_activities`: no cambió la base.
 - **Rachas y logros** (rediseño) **no tienen tablas propias**: se calculan con `activity_logs` y
   los chequeos enviados (`apps/app/src/features/logros/logros.ts`).
 - **Objetivos:** `follow_up_goals` (por familia o por chico) con sus avances. Un profesional puede
@@ -264,16 +269,23 @@ ni datos de otras familias.
 - **`content_items`**: etapas por edad y fichas, con su **etiqueta de evidencia** (recomendación
   oficial, asociación que no prueba causa, propuesta del proyecto). Historial en
   `content_revisions`.
-- **`activities`**: 30 actividades con pasos, edades, duración, costo, espacio y fuentes.
+- **`activities`**: 30 actividades con pasos, edades, duración, costo, espacio y fuentes. Cada una
+  tiene su guía animada (`apps/app/src/features/animations/`).
 - **`kb_documents` y `kb_chunks`**: la misma biblioteca cortada en fragmentos para el asistente
   (`pnpm kb:ingest`).
-- Todo se escribe en `content/` (Markdown y YAML) y `pnpm content:check` lo valida antes de cargarlo.
+- Lo del repositorio se escribe en `content/` (Markdown y YAML) y `pnpm content:check` lo valida
+  antes de cargarlo. También se puede cargar desde el panel (sección 10). La columna `origin`
+  (`repo` o `panel`) dice de dónde vino cada fila.
 
 ## 10. Administración
 
 - Pantallas en `apps/app/src/app/admin/`, funciones `admin_*` en
   `supabase/migrations/20261028000400_admin.sql`.
-- Cada acción pide un **permiso** (`has_admin_permission`) y verificación en dos pasos.
+- Cada acción pide un **permiso** (`has_admin_permission`) y verificación en dos pasos. Única
+  excepción: cargar contenido en la demo (sección 15).
+- **Cargar contenido:** pantallas en `apps/app/src/app/admin/contenidos/` y funciones
+  `admin_create_activity`, `admin_create_content_item` y `admin_create_source` en
+  `supabase/migrations/20261116000100_content_panel.sql` (ADR-036).
 - **`audit_log`**: quién hizo qué y cuándo, **sin** el texto de mensajes u observaciones. Nadie
   puede modificarlo (`prevent_audit_log_changes`).
 - **`app_settings`**: configuración (por ejemplo, el tope de gasto de la IA).
@@ -301,7 +313,7 @@ esa persona.
 | Sin cuenta           | Biblioteca, actividades y directorio públicos                | Todo lo demás                           |
 
 Además: las operaciones delicadas son **funciones `security definer`** que validan todo adentro
-(`create_family`, `request_care`, `save_week_plan`…), y hay **231 pruebas pgTAP**
+(`create_family`, `request_care`, `save_week_plan`…), y hay **254 pruebas pgTAP**
 (`supabase/tests/`) que comprueban estas reglas en cada cambio. Ver también
 [DEFENSA_BASE_DE_DATOS.md](DEFENSA_BASE_DE_DATOS.md) y
 [ROLES_AND_PERMISSIONS.md](planning/ROLES_AND_PERMISSIONS.md).
@@ -315,6 +327,9 @@ Además: las operaciones delicadas son **funciones `security definer`** que vali
 | Componentes visuales (botones, etc.)  | `apps/app/src/ui/`                                                     |
 | Colores y tipografías                 | `apps/app/src/ui/tokens.ts`                                            |
 | Brote                                 | `apps/app/src/features/brote/Brote.tsx`                                |
+| Ventanas de Brote (popups)            | `apps/app/src/features/brote/GuidePopup.tsx`                           |
+| Animaciones de las actividades        | `apps/app/src/features/animations/` (galería en `/animaciones`)        |
+| Cargar contenido desde el panel       | `apps/app/src/app/admin/contenidos/`                                   |
 | Sonidos y vibraciones                 | `apps/app/src/features/feedback/feedback.ts`                           |
 | Rutas de la API                       | `apps/api/src/modules/<tema>/route.ts` (documentadas en `docs/API.md`) |
 | Cómo se llama a Claude                | `apps/api/src/ai/providers/anthropic.ts` y `apps/api/src/ai/prompts/`  |
@@ -324,7 +339,7 @@ Además: las operaciones delicadas son **funciones `security definer`** que vali
 | Tablas y reglas de seguridad          | `supabase/migrations/` (en orden: identidad, familias, contenido…)     |
 | Pruebas de seguridad de la base       | `supabase/tests/`                                                      |
 | Textos de la biblioteca y actividades | `content/`                                                             |
-| Decisiones y su porqué                | `docs/planning/DECISIONS.md` (ADR-001 a ADR-035)                       |
+| Decisiones y su porqué                | `docs/planning/DECISIONS.md` (ADR-001 a ADR-037)                       |
 
 Cada carpeta importante tiene su `README.md` con qué hay ahí y por dónde empezar.
 
@@ -334,7 +349,7 @@ Abrí la demo con una cuenta (las contraseñas están en tu archivo de cuentas) 
 Supabase → proyecto demo → **Table Editor**.
 
 1. **Entrá como Laura** y abrí Hoy. Buscá en `family_memberships` su fila: ¿qué rol tiene?
-2. **Marcá "Hecho"** en la actividad de hoy. Buscá la fila nueva en `activity_logs` y en
+2. **Marcá "Realizado"** en la actividad de hoy. Buscá la fila nueva en `activity_logs` y en
    `activity_log_participants`. ¿Qué `plan_item` cambió de estado?
 3. **Hacé un chequeo por tema.** Mirá `assessment_attempts` (estado `submitted`),
    `assessment_dimension_scores` y `recommendations`.
@@ -344,6 +359,8 @@ Supabase → proyecto demo → **Table Editor**.
 6. **Entrá como Paula** (profesional): abrí a Sofi y probá con Tomi. Buscá en `access_grants` qué
    permisos tiene y en `audit_log` el acceso que acabás de hacer.
 7. **Buscá en `profiles`** a todas las personas registradas. ¿Por qué no hay contraseñas ahí?
+8. **Entrá como el profe** y cargá una actividad "AAA". Buscala en `activities`: ¿qué dicen
+   `origin` y `created_by`? Buscá en `audit_log` la acción `content.created`. Después, archivala.
 
 ## 14. Preguntas de práctica
 
@@ -380,10 +397,10 @@ Respondé en voz alta y después compará.
 14. **¿Qué ve la administración?** Usuarios, roles, contenidos, credenciales, auditoría y costos.
     Nunca evaluaciones ni chats.
 15. **¿Cómo se protege la cuenta de administración?** Con roles separados, verificación en dos
-    pasos obligatoria y auditoría.
+    pasos obligatoria (salvo cargar contenido en la demo, sección 15) y auditoría.
 16. **¿Qué guarda la auditoría?** Quién, qué acción, sobre qué y cuándo; nunca el texto de
     mensajes u observaciones. Y no se puede modificar.
-17. **¿Cómo se prueba que las reglas funcionan?** Con 231 pruebas pgTAP que corren en cada cambio
+17. **¿Cómo se prueba que las reglas funcionan?** Con 254 pruebas pgTAP que corren en cada cambio
     en GitHub.
 18. **¿Por qué PostgreSQL y no MySQL?** Por RLS nativa, funciones `security definer`, búsqueda de
     texto en español y pgvector (ver `DEFENSA_BASE_DE_DATOS.md`).
@@ -422,8 +439,9 @@ Respondé en voz alta y después compará.
     verificado aparece en el directorio.
 34. **¿Puede un profesional ver a todos los chicos de una familia?** No: solo los que la familia
     eligió, en las secciones elegidas, y se puede revocar.
-35. **¿Cómo se publica un contenido nuevo?** Se escribe en `content/`, se valida con
-    `pnpm content:check` y se carga con `pnpm content:sync`.
+35. **¿Cómo se publica un contenido nuevo?** Dos caminos: se escribe en `content/`, se valida con
+    `pnpm content:check` y se carga con `pnpm content:sync`; o se carga desde **Administración →
+    Contenidos** con un formulario (ADR-036).
 
 **Proyecto y decisiones**
 
@@ -436,3 +454,51 @@ Respondé en voz alta y después compará.
     cambio, más el control de formato y tipos.
 40. **¿Qué falta para usarlo con familias reales?** Revisión profesional del contenido, dictamen
     legal sobre los datos de los chicos y un piloto con consentimiento.
+
+## 15. Correcciones del profe: preguntas probables
+
+En la revisión de noviembre de 2026, el profe pidió menos texto, guías visuales de las actividades,
+ventanas más seguidas, "Realizado" en lugar de "Hecho", "Hacer más tarde" en lugar de "Guardar",
+letra y globo de Brote más grandes, y poder cargar actividades y fuentes (quiso cargar "AAA" para
+verla primera y no había forma). Las decisiones están en ADR-036 (panel de contenidos) y ADR-037
+(tarjetas, animaciones y ventanas).
+
+41. **¿Por qué un motor propio de animaciones y no videos?** Porque 30 videos sumarían varios megas
+    a la APK o a los datos móviles y necesitan conexión; los dibujos son código (unos 160 KB en total
+    sin minificar), andan sin conexión, se adaptan al tema oscuro y a cualquier tamaño (son
+    vectores) y no tienen derechos de imagen ni chicos reales filmados. Además respetan "reducir
+    movimiento" (queda un cuadro fijo).
+42. **¿Cómo funciona el motor?** Cada escena es una lista de figuras de palito y objetos con
+    _keyframes_: en cada momento, el motor (`engine.ts`, lógica pura) calcula los ángulos de brazos,
+    piernas y torso interpolando entre poses, y `ActivityScene.tsx` lo dibuja con SVG a unos 30
+    cuadros por segundo. En la grilla queda quieto; se mueve al abrir la actividad.
+43. **¿Y una actividad nueva cargada desde el panel?** Usa la escena genérica de su primera
+    categoría (`sceneFor` en `features/animations/index.ts`): siempre tiene un dibujo, aunque nadie
+    le haya programado uno propio.
+44. **¿Por qué es segura la excepción de segundo factor de la demo?**
+    - La decide **la base**, no la app: `admin_mfa_satisfied` está dentro de `has_admin_permission`
+      y `require_admin_permission`. Aunque alguien modifique la app, la regla se aplica igual.
+    - Vale solo si la base tiene la marca `app.environment = "demo"`, que se carga **a mano** en el
+      SQL Editor. Desde el panel no se puede (`admin_update_setting` acepta solo claves conocidas) y
+      producción es otro proyecto de Supabase, con otras claves y sin esa marca.
+    - Vale solo para los permisos de **contenido**. Usuarios, roles, verificaciones, configuración y
+      auditoría siguen pidiendo el código también en la demo: lo comprueban las pruebas pgTAP.
+    - Igual hace falta tener el permiso, cada alta queda en la auditoría con quién la hizo, y la demo
+      tiene solo datos ficticios. Lo peor que puede pasar es una actividad de más, que se archiva.
+45. **¿Qué pasa con la sincronización del contenido?** Cada fila tiene `origin` (`repo` o `panel`).
+    `pnpm content:sync` marca lo suyo como `repo` y **solo archiva lo de ese origen** que ya no está
+    en `content/`, así que lo cargado en el panel no se archiva. Si `content/` trae el mismo
+    identificador que algo del panel, la sincronización se frena con un aviso en vez de pisarlo.
+    `demo:reset` tampoco lo borra, y el
+    asistente lo puede citar después del próximo `pnpm kb:ingest`.
+46. **¿Cómo se evita que una familia cargue contenido?** Las funciones `admin_create_*` piden el
+    permiso `content.edit`, que solo da un rol de plataforma (`user_roles`); una familia no tiene
+    ninguno y recibe `FORBIDDEN` (hay una prueba pgTAP para eso). Además, los clientes solo tienen
+    permiso de **lectura** sobre las tablas del catálogo, y los roles los asigna la administración
+    con segundo factor (o un script con la clave secreta, que nunca está en la app). Que la app
+    esconda el panel es comodidad; la protección está en la base.
+47. **¿"Hacer más tarde" cambió la base?** No: es la tabla `saved_activities` de siempre (los
+    "guardados"). Cambiaron el nombre del botón y dónde se muestra la lista (**Para hacer**, en Hoy).
+48. **¿Cómo elige la ventana "¿Seguimos con otra?" la siguiente actividad?** Con reglas, sin IA: la
+    próxima pendiente del plan; si no hay, una de la lista Para hacer; si tampoco, una de 10 minutos
+    sin materiales.

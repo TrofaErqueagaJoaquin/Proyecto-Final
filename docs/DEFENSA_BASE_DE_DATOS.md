@@ -42,7 +42,7 @@ Así se protege, por ejemplo:
 - que la cuidadora (la abuela) vea el plan pero no las evaluaciones;
 - que ningún rol de administración pueda leer conversaciones ni observaciones.
 
-**Está probado:** el proyecto tiene **231 pruebas automáticas de permisos** sobre la base (pgTAP, en
+**Está probado:** el proyecto tiene **254 pruebas automáticas de permisos** sobre la base (pgTAP, en
 `supabase/tests/`). Entran como cada tipo de usuario e intentan leer o modificar lo que no les
 corresponde, y corren en cada cambio que se sube a GitHub.
 
@@ -82,7 +82,7 @@ lugar de una: la API también verifica roles y permisos (middlewares), y la base
 verificar.
 
 **"¿Cómo sé que funciona?"**
-Con las 231 pruebas de permisos que corren en cada cambio. Por ejemplo, una prueba entra como una
+Con las 254 pruebas de permisos que corren en cada cambio. Por ejemplo, una prueba entra como una
 persona ajena a la familia e intenta leer sus integrantes: la base devuelve cero filas
 ("Una persona ajena no ve integrantes", en `supabase/tests/03_families.test.sql`).
 
