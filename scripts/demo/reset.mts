@@ -118,13 +118,24 @@ for (const script of ['scripts/content-sync.mts', 'scripts/kb-ingest.mts']) {
 
 // ── 3. Cuentas ──────────────────────────────────────────────────────────
 
+/**
+ * Contraseña al azar que cumple la política de Supabase Auth (mínimo 8, con letras y números):
+ * base64url puede no traer ningún dígito, así que se asegura uno de cada.
+ */
+function demoPassword(): string {
+  const base = randomBytes(12).toString('base64url');
+  const digit = String(randomBytes(1)[0]! % 10);
+  const letter = 'abcdefghijkmnpqrstuvwxyz'[randomBytes(1)[0]! % 24];
+  return `${base}${letter}${digit}`;
+}
+
 step('Creando cuentas');
 const ids: Record<string, string> = {};
 const passwords: [string, string][] = [];
 for (const user of USERS) {
   const address = email(user.key);
   const kept = existingStaff.get(address);
-  const password = randomBytes(12).toString('base64url');
+  const password = demoPassword();
   if (kept) {
     ids[user.key] = kept;
     // Se conserva para no perder su verificación en dos pasos. Si todavía no la activó (por
