@@ -39,6 +39,10 @@
       "destination": "/evaluaciones/%5BattemptId%5D/resultado"
     },
     {
+      "source": "/chequeo/:memberId",
+      "destination": "/chequeo/%5BmemberId%5D"
+    },
+    {
       "source": "/familia/integrante/:id",
       "destination": "/familia/integrante/%5Bid%5D"
     },

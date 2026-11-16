@@ -105,12 +105,18 @@ async function shot(page: Page, folder: string, name: string, path?: string) {
  * muestre "por dónde empezar" y una actividad para hoy; "Listo" en los números.
  */
 async function answerCheck(page: Page) {
-  for (let i = 0; i < 12; i += 1) {
-    await page.waitForTimeout(900);
+  for (let i = 0; i < 30; i += 1) {
+    await page.waitForTimeout(1500);
     const result = page.getByRole('button', { name: 'Ver mi resultado' });
     if (await result.isVisible().catch(() => false)) {
       await result.click();
       return;
+    }
+    // Varias respuestas: se marca la última y se confirma.
+    const box = page.getByRole('checkbox').last();
+    if (await box.isVisible().catch(() => false)) {
+      await box.click();
+      await page.waitForTimeout(500);
     }
     const listo = page.getByRole('button', { name: 'Listo' });
     if (await listo.isVisible().catch(() => false)) {
@@ -120,7 +126,8 @@ async function answerCheck(page: Page) {
     const option = page.getByRole('radio').last();
     if (await option.isVisible().catch(() => false)) await option.click();
   }
-  throw new Error('El chequeo no llegó al resultado');
+  await page.screenshot({ path: join(OUT, 'movil', 'error-chequeo.jpg'), type: 'jpeg' });
+  throw new Error('El chequeo no llegó al resultado (ver movil/error-chequeo.jpg)');
 }
 
 const tomi = demoId('member:tomi');
