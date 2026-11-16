@@ -15,13 +15,14 @@ asistente con IA que cita sus fuentes y con profesionales de matrícula verifica
   y administración (con verificación en dos pasos).
 - **Inicio de sesión:** correo y contraseña, Google, GitHub, Discord y verificación en dos pasos (TOTP).
 
-| Documento                                      | Para qué                                             |
-| ---------------------------------------------- | ---------------------------------------------------- |
-| [Guía de instalación](docs/INSTALACION.md)     | Instalar y configurar app, API, base de datos y APK  |
-| [Manual de usuario](docs/MANUAL_DE_USUARIO.md) | Cómo usar la app con cada rol                        |
-| [Documentación de la API](docs/API.md)         | Endpoints, parámetros, respuestas y códigos de error |
-| [Demo y publicación](docs/setup/DEMO.md)       | Entorno de demostración y despliegue en Vercel       |
-| [Plan y arquitectura](docs/planning/README.md) | Decisiones, base de datos, roles y seguridad         |
+| Documento                                      | Para qué                                                                     |
+| ---------------------------------------------- | ---------------------------------------------------------------------------- |
+| [Guía de estudio](docs/GUIA_DE_ESTUDIO.md)     | Cómo funciona todo: entidades, recorridos, seguridad y preguntas de práctica |
+| [Guía de instalación](docs/INSTALACION.md)     | Instalar y configurar app, API, base de datos y APK                          |
+| [Manual de usuario](docs/MANUAL_DE_USUARIO.md) | Cómo usar la app con cada rol                                                |
+| [Documentación de la API](docs/API.md)         | Endpoints, parámetros, respuestas y códigos de error                         |
+| [Demo y publicación](docs/setup/DEMO.md)       | Entorno de demostración y despliegue en Vercel                               |
+| [Plan y arquitectura](docs/planning/README.md) | Decisiones, base de datos, roles y seguridad                                 |
 
 ## Estructura
 
