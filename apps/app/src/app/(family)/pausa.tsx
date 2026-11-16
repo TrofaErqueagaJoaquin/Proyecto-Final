@@ -179,7 +179,7 @@ export default function PauseScreen() {
   return (
     <Screen>
       <Text variant="title">Pausa para vos</Text>
-      <BroteSays mood="calma" size={88}>
+      <BroteSays mood="calma" size={104}>
         {mood ? ANSWERS[mood] : 'Antes de seguir con los chicos… ¿cómo estás vos hoy?'}
       </BroteSays>
       <ChipGroup

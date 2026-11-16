@@ -1,4 +1,3 @@
-import { Link } from 'expo-router';
 import { CircleCheck, RefreshCw, SkipForward } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
@@ -11,7 +10,8 @@ import {
   useMembers,
   usePreferences,
 } from '@/features/families/queries';
-import { ActivityIcon } from '@/features/library/activityVisuals';
+import { ActivityScene, sceneFor } from '@/features/animations';
+import { useActivityFlow } from '@/features/library/ActivityFlow';
 import { useActivities } from '@/features/library/queries';
 import { Badge, Banner, Button, Card, ChipGroup, Text } from '@/ui';
 
@@ -38,7 +38,7 @@ export function dayLabel(isoDate: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-/** Una actividad del plan con "Hecho" (participantes y valoración), "Otra idea" y "Saltear". */
+/** Una actividad del plan con "Realizado" (participantes y valoración), "Otra idea" y "Saltear". */
 export function PlanItemCard({
   item,
   plan,
@@ -55,6 +55,7 @@ export function PlanItemCard({
   const complete = useCompleteItem();
   const replace = useReplaceItem();
   const skip = useSkipItem();
+  const flow = useActivityFlow();
   const [marking, setMarking] = useState(false);
   const [participants, setParticipants] = useState<string[]>(
     plan.member_id ? [plan.member_id] : [],
@@ -70,30 +71,38 @@ export function PlanItemCard({
 
   return (
     <Card>
-      <Link href={`/actividades/${item.activity.slug}`} asChild>
-        <Pressable
-          accessibilityRole="link"
-          accessibilityLabel={item.activity.title}
-          style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}
-        >
-          <ActivityIcon categories={item.activity.categories} />
-          <View style={{ flex: 1, gap: 2 }}>
-            {showDay ? (
-              <Text variant="small" tone="muted">
-                {dayLabel(item.scheduled_for)}
-              </Text>
-            ) : null}
-            <Text variant="subheading">{item.activity.title}</Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${item.activity.title}: ver cómo se hace`}
+        onPress={() => {
+          // Si sigue pendiente, "Realizado" en la ventana completa este ítem del plan.
+          flow.open(item.activity.slug, item.activity.title, {
+            planItemId: item.status === 'planned' && manage ? item.id : undefined,
+          });
+        }}
+        style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}
+      >
+        <ActivityScene
+          scene={sceneFor(item.activity.slug, item.activity.categories)}
+          width={104}
+          label=""
+        />
+        <View style={{ flex: 1, gap: 2 }}>
+          {showDay ? (
             <Text variant="small" tone="muted">
-              {`${String(item.activity.duration_min)} min · ${REASON_LABELS[item.reason]}`}
+              {dayLabel(item.scheduled_for)}
             </Text>
-          </View>
-        </Pressable>
-      </Link>
+          ) : null}
+          <Text variant="subheading">{item.activity.title}</Text>
+          <Text variant="small" tone="muted">
+            {`${String(item.activity.duration_min)} min · ${REASON_LABELS[item.reason]}`}
+          </Text>
+        </View>
+      </Pressable>
 
       {done ? (
         <Badge tone="primary" icon={CircleCheck}>
-          ¡Hecho!
+          ¡Realizado!
         </Badge>
       ) : skipped ? (
         <Badge>Salteada</Badge>
@@ -116,7 +125,7 @@ export function PlanItemCard({
           />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             <Button
-              label="Registrar"
+              label="Listo"
               loading={complete.isPending}
               onPress={() => {
                 complete.mutate(
@@ -127,9 +136,14 @@ export function PlanItemCard({
                   },
                   {
                     onSuccess: () => {
-                      // Festejo: sonido y vibración (se apagan en Perfil).
+                      // Festejo: sonido, vibración y la ventana "¿Seguimos con otra?".
                       feedback('done');
                       setMarking(false);
+                      flow.celebrate({
+                        id: item.activity.id,
+                        slug: item.activity.slug,
+                        title: item.activity.title,
+                      });
                     },
                   },
                 );
@@ -147,7 +161,7 @@ export function PlanItemCard({
       ) : (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           <Button
-            label="Hecho"
+            label="Realizado"
             icon={CircleCheck}
             onPress={() => {
               setMarking(true);

@@ -118,15 +118,18 @@ export const fonts = {
   bodyBold: 'AtkinsonHyperlegibleNext_700Bold',
 } as const;
 
-/** Escala modular 1,25 (base 16). */
+/**
+ * Escala tipográfica (base 18). Se agrandó en el rediseño: letra más grande y menos texto por
+ * pantalla, para leer de un vistazo (corrección del profesor, noviembre de 2026).
+ */
 export const typeScale = {
-  display: { fontSize: 40, lineHeight: 46 },
-  title: { fontSize: 31, lineHeight: 37 },
-  heading: { fontSize: 24, lineHeight: 30 },
-  subheading: { fontSize: 20, lineHeight: 26 },
-  body: { fontSize: 16, lineHeight: 24 },
-  small: { fontSize: 14, lineHeight: 20 },
-  caption: { fontSize: 12, lineHeight: 16 },
+  display: { fontSize: 42, lineHeight: 48 },
+  title: { fontSize: 33, lineHeight: 40 },
+  heading: { fontSize: 27, lineHeight: 33 },
+  subheading: { fontSize: 22, lineHeight: 28 },
+  body: { fontSize: 18, lineHeight: 27 },
+  small: { fontSize: 16, lineHeight: 23 },
+  caption: { fontSize: 13, lineHeight: 18 },
 } as const;
 
 export const breakpoints = { tablet: 600, desktop: 1024 } as const;

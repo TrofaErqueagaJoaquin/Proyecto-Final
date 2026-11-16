@@ -18,7 +18,7 @@ import { View } from 'react-native';
 import { useTheme } from '@/ui';
 import type { Palette as ThemePalette } from '@/ui/tokens';
 
-type Tone = 'primary' | 'info' | 'caution' | 'success' | 'accent';
+export type Tone = 'primary' | 'info' | 'caution' | 'success' | 'accent';
 
 /** Ícono y tono de cada tipo de actividad (`activity_categories.code`). */
 const CATEGORY_VISUALS: Record<string, { icon: LucideIcon; tone: Tone }> = {
@@ -38,7 +38,7 @@ export const SPACE_ICONS: Record<string, LucideIcon> = {
   outdoor: Trees,
 };
 
-function toneColors(colors: ThemePalette, tone: Tone): { fg: string; bg: string } {
+export function toneColors(colors: ThemePalette, tone: Tone): { fg: string; bg: string } {
   switch (tone) {
     case 'info':
       return { fg: colors.info, bg: colors.infoSoft };

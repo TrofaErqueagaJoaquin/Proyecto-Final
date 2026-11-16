@@ -492,6 +492,147 @@
   contraseña mínima de Supabase Auth tiene que bajar a 8 en el panel para coincidir con la app.
 - **Estado.** Aceptada.
 
+### ADR-036 · Cargar contenido desde el panel, con una excepción de segundo factor solo en la demo
+
+- **Contexto.** En la revisión de noviembre de 2026, el profesor quiso cargar una actividad "AAA"
+  para verla primera en Actividades y no había forma ni usuario: el catálogo (actividades, fichas y
+  fuentes) se cargaba solo desde `content/` con `pnpm content:sync` (ADR-014), el panel solo
+  cambiaba estados (ADR-033 dejó la edición para P1) y toda la administración exige segundo factor.
+  Pedirle que active un código en su teléfono para una prueba de un minuto no es razonable.
+- **Decisiones:**
+  1. **Alta con funciones de la base** (migración `20261116000100_content_panel.sql`):
+     `admin_create_activity`, `admin_create_content_item` y `admin_create_source`. Son
+     `security definer`, exigen `content.edit` (y `content.publish` para publicar en el momento; si
+     no, queda en borrador), validan textos, listas, categorías y fuentes, numeran el identificador
+     repetido (`-2`, `-3`…) y registran `content.created` en la auditoría. El cliente sigue sin
+     permiso de escritura sobre las tablas del catálogo.
+  2. **Cada fila recuerda de dónde vino:** columnas `origin` (`'repo'` | `'panel'`, por defecto
+     `'repo'`) y `created_by` en `sources`, `content_items` y `activities`. `content:sync` marca lo
+     suyo como `'repo'` y **solo archiva lo que vino del repositorio**: lo cargado en el panel no se
+     pisa ni se archiva.
+  3. **Pantallas** en `apps/app/src/app/admin/contenidos/`: la lista con **Nueva actividad**,
+     **Nueva ficha** y **Nueva fuente**, la pestaña Fuentes y la marca "Del panel"; formularios
+     cortos (lo obligatorio arriba, lo opcional plegado) con vista previa. La ficha se carga como
+     `situation_card` y aparece en Situaciones. Una actividad nueva usa el dibujo animado genérico
+     de su primera categoría (ADR-037).
+  4. **Excepción de segundo factor SOLO en la demo y SOLO para contenidos:**
+     - `is_demo_environment()` lee la marca `app.environment = "demo"` de `app_settings`, la misma
+       que ya exigía `demo:reset` (ADR-034). Se carga a mano en el SQL Editor: `admin_update_setting`
+       acepta solo claves conocidas, así que no se puede prender desde el panel.
+     - `admin_mfa_satisfied(code)`: la sesión cumple si está en `aal2`, o si el permiso es
+       `content.edit` o `content.publish` y la base es la demo.
+     - Sin segundo factor, publicar o archivar vale **solo para lo cargado en el panel**
+       (`admin_set_content_status` mira `origin`): el catálogo del repositorio y los cuestionarios
+       (`admin_publish_questionnaire`) lo siguen pidiendo, también en la demo.
+     - `has_admin_permission` y `require_admin_permission` se reescriben para usarla. Usuarios,
+       roles, verificaciones, configuración, auditoría, uso de la IA y base de conocimiento siguen
+       pidiendo segundo factor siempre. En `dev` y `prod` no cambia nada.
+     - El layout de administración (`app/admin/_layout.tsx`) muestra **solo Contenidos** a una cuenta
+       con permiso de contenido y sin segundo factor activado, en la demo. Quien ya tiene segundo
+       factor lo sigue usando.
+  5. **Cuentas de la demo** (`scripts/demo/scenario.ts`): `admin@…` y `verificador@…` suman
+     `content_publisher` (pedido: que solo administración y verificación carguen contenido), y hay
+     una cuenta nueva `profe@…` (`content_publisher`, sin segundo factor) que conserva su contraseña
+     entre reinicios. `pnpm demo:profe <archivo>` la crea o le pone una contraseña nueva y la escribe
+     **solo en ese archivo**, nunca en pantalla. No pide `RESET DEMO` porque no borra nada, pero
+     verifica que el destino es la demo (`enforceTarget`: las otras tres guardas). Se niega a
+     guardar la contraseña dentro del repositorio.
+  6. **Ajustes después de la revisión de código** (migración
+     `20261116000200_content_panel_fixes.sql`):
+     - Una fuente cargada en el panel **no es pública hasta que la cite algo publicado** (política
+       `sources_select`); quien edita contenido la ve siempre.
+     - Quien edita ve los borradores **completos**: políticas `*_select_admin` en pasos, categorías
+       y fuentes de actividades y fichas. Las consultas de la biblioteca piden `status =
+'published'`, para que un borrador no aparezca en la app de las familias aunque la cuenta
+       pueda leerlo.
+     - Los datos del formulario se validan por tipo y por opción antes de convertirlos
+       (`panel_int`, `panel_bool`, `panel_choice`): un dato mal formado da `VALIDATION_ERROR`, no
+       un error interno.
+- **Alternativas descartadas:**
+  - Políticas de INSERT sobre las tablas: la validación (pasos, categorías, fuentes, identificador
+    único) y la auditoría quedarían repartidas, y el alta de una actividad no sería atómica.
+  - Sacar el segundo factor de toda la administración en la demo: la demo dejaría de mostrar la
+    seguridad real.
+  - Decidir la excepción con una variable de la app o de Vercel: la tiene que decidir la base, no el
+    cliente, y una variable copiada por error a producción la abriría.
+  - Una columna `is_demo`: ya descartada en ADR-002.
+- **Consecuencias.**
+  - Hay dos orígenes de contenido. `content/` sigue siendo la fuente de verdad de lo del
+    repositorio; lo del panel vive solo en la base donde se cargó (no vuelve a `content/`).
+  - Si en `content/` aparece un identificador que ya usa el panel, `content:sync` **se frena** con
+    un mensaje antes de escribir nada: no pisa lo cargado a mano.
+  - `demo:reset` no borra lo cargado en el panel. Lo que se cargue en un ensayo hay que archivarlo
+    desde Contenidos (publicado, también puede entrar en el plan del próximo reinicio).
+  - El asistente puede citar lo cargado recién después del próximo `pnpm kb:ingest` (o
+    `demo:reset`).
+  - Editar lo ya cargado sigue en P1: hoy se cambia el estado (borrador, revisión, publicado,
+    archivado).
+- **Pruebas:** 23 verificaciones pgTAP (`supabase/tests/10_content_panel.test.sql`): la editora
+  carga en borrador, ve sus pasos y no publica; los datos mal formados dan `VALIDATION_ERROR`; la
+  publicadora publica y el identificador repetido se numera; una fuente del panel no es pública
+  hasta que la cite algo publicado; una familia recibe `FORBIDDEN`; fuera de la demo, cargar
+  contenido pide segundo factor; en la demo, no, pero archivar algo del repositorio, publicar
+  cuestionarios y usar usuarios y roles lo siguen pidiendo. Más los tests de `slugify` en la app.
+- **Aplicada** en `crecer-dev` y `crecer-demo`.
+- **Estado.** Aceptada.
+
+### ADR-037 · Menos texto: tarjetas con dibujo animado, ventanas de Brote y "Realizado"
+
+- **Contexto.** En la misma revisión, el profesor pidió simplificar: menos texto, una imagen o un
+  ícono con el título y la información en una ventana al tocar; animaciones o fotos que guíen cada
+  actividad; ventanas más seguidas (al terminar una actividad, pasar a la siguiente); "Hecho" →
+  "Realizado"; "Guardar" → "Hacer más tarde"; lo que dice Brote más grande, y la letra más grande.
+- **Decisiones:**
+  1. **Actividades en una grilla de tarjetas** (`features/library/ActivityTile.tsx`): solo el
+     dibujo y el nombre; 2 por fila en el celular, 3 en tablet y 4 en la computadora. Al tocar, se
+     abre una ventana (`ui/Sheet.tsx`) con el detalle (`features/library/ActivityDetail.tsx`): la
+     animación, el resumen, los datos con íconos (duración, edad, espacio, costo, "Sin
+     materiales"), **Realizado** / **Hacer más tarde** y los pasos numerados. Lo demás (para qué
+     sirve, materiales, variantes, adaptaciones, evidencia) y las fuentes quedan plegados
+     (`ui/Disclosure.tsx`). `/actividades/:slug` muestra el mismo detalle para los enlaces directos,
+     y el plan, Hoy y "Para hacer" usan las mismas tarjetas. La Biblioteca sigue el mismo criterio:
+     la portada y las etapas son tarjetas con ícono y título (`features/library/IconTile.tsx`), las
+     situaciones abren la ficha en una ventana, y en una etapa queda abierta la primera sección y
+     "Cuándo consultar" (información de seguridad); el resto se pliega.
+  - **Una ventana por vez** (`ui/OverlayQueue.tsx`): el detalle, los festejos de Brote, los logros
+    y la bienvenida piden turno; la siguiente espera a que la anterior termine de cerrarse. Dos
+    `Modal` a la vez se apilan en Android y web, y en iOS el segundo no llega a presentarse.
+  2. **Letra más grande:** la escala tipográfica pasa a base 18 (antes 16) en `ui/tokens.ts`. El
+     globo de Brote es más grande, con borde de color y el texto en 21 px.
+  3. **Guías animadas con un motor propio** (`features/animations/`): figuras de palito con poses
+     por keyframes y objetos simples, dibujadas con `react-native-svg` (ya estaba por Brote) a unos
+     30 cuadros por segundo. En la grilla el dibujo queda quieto y se mueve en el detalle; con
+     "reducir movimiento" se muestra un cuadro fijo. Hay una escena propia para cada una de las 30
+     actividades (`scenes/`) y una genérica por categoría (`generic.ts`) para las que se carguen
+     desde el panel: `sceneFor(slug, categorías)` elige. Galería en `/animaciones`.
+  4. **"Realizado" y "Hacer más tarde"** (`features/library/FamilyActivityActions.tsx` y
+     `features/plans/PlanItemCard.tsx`): "Realizado" pregunta quiénes participaron y cómo les fue
+     (opcional) y registra la actividad; "Hacer más tarde" la suma a la lista **Para hacer**, que
+     aparece en Hoy (hasta 4) y en Actividades. Usa `saved_activities` (los antiguos "guardados"):
+     **sin cambios en la base**.
+  5. **Ventanas de Brote** (`features/brote/GuidePopup.tsx`), grandes, cortas y con una acción
+     principal:
+     - Al marcar una actividad: "¡Realizado!" y "¿Seguimos con otra?" con la siguiente sugerida: lo
+       que sigue del plan; si no, la lista Para hacer; si no, una de 10 minutos sin materiales
+       (`features/library/ActivityFlow.tsx`).
+     - Al terminar un chequeo: por dónde empezar y la actividad para hoy
+       (`features/chequeo/CheckResult.tsx`).
+     - Al ganar un logro (`features/logros/LogrosStrip.tsx`).
+     - Al volver después de 3 días o más (en ese dispositivo): "¡Qué bueno verte!", sin reproches,
+       con una de 10 minutos (`features/plans/WelcomeBack.tsx`).
+- **Alternativas descartadas:**
+  - **Videos o GIF por actividad:** 30 videos sumarían varios megas a la APK o a los datos móviles,
+    necesitan conexión o espacio, no se adaptan al tema oscuro ni al tamaño de la pantalla, y
+    habría que grabarlos (con chicos reales) o licenciarlos.
+  - **Fotos:** los mismos problemas de derechos y de estilo, y no muestran el movimiento.
+- **Consecuencias.**
+  - Las escenas son código que se revisa como cualquier otro, pesan casi nada (el motor con las 38
+    escenas son unos 160 KB de código fuente sin minificar), funcionan sin conexión y se ven igual en
+    claro y oscuro. No hay dependencias nuevas.
+  - Una escena nueva hay que programarla: lo cargado desde el panel usa la genérica de su categoría.
+  - Con letra más grande entra menos por pantalla: por eso lo secundario va plegado.
+- **Estado.** Aceptada.
+
 ---
 
 ## Decisiones pendientes de validación externa

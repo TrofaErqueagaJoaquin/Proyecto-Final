@@ -119,9 +119,12 @@ export function useAdminContent() {
       const [content, activities, versions] = await Promise.all([
         supabase
           .from('content_items')
-          .select('id, slug, type, title, status, updated_at')
+          .select('id, slug, type, title, status, origin, updated_at')
           .order('title'),
-        supabase.from('activities').select('id, slug, title, status, updated_at').order('title'),
+        supabase
+          .from('activities')
+          .select('id, slug, title, status, origin, updated_at')
+          .order('title'),
         supabase
           .from('questionnaire_versions')
           .select('id, version, status, published_at, questionnaires (slug, title)')
@@ -134,6 +137,98 @@ export function useAdminContent() {
     },
   });
 }
+
+/** ¿Es la base de la demo? Ahí cargar contenido no pide segundo factor (ADR-036). */
+export function useIsDemo(enabled: boolean) {
+  return useQuery({
+    queryKey: ['admin', 'is-demo'],
+    enabled,
+    staleTime: Infinity,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('is_demo_environment');
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+/** Fuentes para elegir al cargar una actividad o una ficha (son públicas). */
+export function useAdminSources() {
+  return useQuery({
+    queryKey: ['admin', 'sources'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sources')
+        .select('id, slug, citation, year, origin, verification_status')
+        .order('citation');
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+const CreatedSchema = z.object({ id: z.string(), slug: z.string() });
+
+export type ActivityDraft = {
+  slug: string;
+  title: string;
+  summary: string;
+  objective: string;
+  steps: string[];
+  categories: string[];
+  age_min_months: number;
+  age_max_months: number;
+  duration_min: number;
+  space: string;
+  cost_level: string;
+  materials: string[];
+  safety_notes: string;
+  evidence_label: string;
+  source_ids: string[];
+  publish: boolean;
+};
+
+export type ContentDraft = {
+  slug: string;
+  type: string;
+  title: string;
+  summary: string;
+  body_md: string;
+  age_min_months: number | null;
+  age_max_months: number | null;
+  evidence_label: string;
+  source_ids: string[];
+  publish: boolean;
+};
+
+export type SourceDraft = {
+  slug: string;
+  citation: string;
+  study_type: string;
+  year: number | null;
+  url: string;
+  confidence: string;
+  notes: string;
+};
+
+/** Alta desde el panel: crea, valida en la base y refresca las listas (y la biblioteca). */
+function useCreate<T extends ActivityDraft | ContentDraft | SourceDraft>(
+  fn: 'admin_create_activity' | 'admin_create_content_item' | 'admin_create_source',
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: T) => {
+      const { data, error } = await supabase.rpc(fn, { p: input });
+      if (error) throw error;
+      return CreatedSchema.parse(data);
+    },
+    onSuccess: () => queryClient.invalidateQueries(),
+  });
+}
+
+export const useCreateActivity = () => useCreate<ActivityDraft>('admin_create_activity');
+export const useCreateContentItem = () => useCreate<ContentDraft>('admin_create_content_item');
+export const useCreateSource = () => useCreate<SourceDraft>('admin_create_source');
 
 export function useSetContentStatus() {
   const queryClient = useQueryClient();

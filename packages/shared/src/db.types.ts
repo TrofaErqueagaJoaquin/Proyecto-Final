@@ -86,11 +86,13 @@ export type Database = {
           age_min_months: number
           cost_level: string
           created_at: string
+          created_by: string | null
           duration_min: number
           evidence_label: string
           id: string
           materials: string[]
           objective: string
+          origin: string
           participants_max: number | null
           participants_min: number
           published_at: string | null
@@ -113,11 +115,13 @@ export type Database = {
           age_min_months: number
           cost_level: string
           created_at?: string
+          created_by?: string | null
           duration_min: number
           evidence_label: string
           id?: string
           materials?: string[]
           objective: string
+          origin?: string
           participants_max?: number | null
           participants_min?: number
           published_at?: string | null
@@ -140,11 +144,13 @@ export type Database = {
           age_min_months?: number
           cost_level?: string
           created_at?: string
+          created_by?: string | null
           duration_min?: number
           evidence_label?: string
           id?: string
           materials?: string[]
           objective?: string
+          origin?: string
           participants_max?: number | null
           participants_min?: number
           published_at?: string | null
@@ -162,6 +168,13 @@ export type Database = {
           variants?: string[]
         }
         Relationships: [
+          {
+            foreignKeyName: "activities_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "activities_reviewed_by_fkey"
             columns: ["reviewed_by"]
@@ -791,8 +804,10 @@ export type Database = {
           age_min_months: number | null
           body_md: string
           created_at: string
+          created_by: string | null
           evidence_label: string
           id: string
+          origin: string
           published_at: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -810,8 +825,10 @@ export type Database = {
           age_min_months?: number | null
           body_md: string
           created_at?: string
+          created_by?: string | null
           evidence_label: string
           id?: string
+          origin?: string
           published_at?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -829,8 +846,10 @@ export type Database = {
           age_min_months?: number | null
           body_md?: string
           created_at?: string
+          created_by?: string | null
           evidence_label?: string
           id?: string
+          origin?: string
           published_at?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -844,6 +863,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "content_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "content_items_reviewed_by_fkey"
             columns: ["reviewed_by"]
@@ -2232,10 +2258,12 @@ export type Database = {
           citation: string
           confidence: string
           created_at: string
+          created_by: string | null
           doi: string | null
           id: string
           last_checked_at: string | null
           notes: string | null
+          origin: string
           slug: string
           study_type: string
           updated_at: string
@@ -2247,10 +2275,12 @@ export type Database = {
           citation: string
           confidence: string
           created_at?: string
+          created_by?: string | null
           doi?: string | null
           id?: string
           last_checked_at?: string | null
           notes?: string | null
+          origin?: string
           slug: string
           study_type: string
           updated_at?: string
@@ -2262,10 +2292,12 @@ export type Database = {
           citation?: string
           confidence?: string
           created_at?: string
+          created_by?: string | null
           doi?: string | null
           id?: string
           last_checked_at?: string | null
           notes?: string | null
+          origin?: string
           slug?: string
           study_type?: string
           updated_at?: string
@@ -2273,7 +2305,15 @@ export type Database = {
           verification_status?: string
           year?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sources_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       specialties: {
         Row: {
@@ -2368,6 +2408,9 @@ export type Database = {
         }
         Returns: string
       }
+      admin_create_activity: { Args: { p: Json }; Returns: Json }
+      admin_create_content_item: { Args: { p: Json }; Returns: Json }
+      admin_create_source: { Args: { p: Json }; Returns: Json }
       admin_list_users: {
         Args: { p_search?: string }
         Returns: {
@@ -2379,6 +2422,7 @@ export type Database = {
           roles: string[]
         }[]
       }
+      admin_mfa_satisfied: { Args: { p_code: string }; Returns: boolean }
       admin_overview: { Args: never; Returns: Json }
       admin_publish_questionnaire: {
         Args: { p_version: string }
@@ -2451,6 +2495,7 @@ export type Database = {
       has_admin_permission: { Args: { p_code: string }; Returns: boolean }
       has_permission: { Args: { p_code: string }; Returns: boolean }
       is_assignment_party: { Args: { p_assignment: string }; Returns: boolean }
+      is_demo_environment: { Args: never; Returns: boolean }
       is_family_adult: {
         Args: { p_family_id: string; p_roles?: string[] }
         Returns: boolean
@@ -2491,6 +2536,25 @@ export type Database = {
           p_metadata?: Json
         }
         Returns: undefined
+      }
+      panel_bool: { Args: { p: Json; p_key: string }; Returns: boolean }
+      panel_choice: {
+        Args: { p: Json; p_default: string; p_key: string; p_options: string[] }
+        Returns: string
+      }
+      panel_int: {
+        Args: { p: Json; p_key: string; p_required: boolean }
+        Returns: number
+      }
+      panel_required_text: { Args: { p: Json; p_key: string }; Returns: string }
+      panel_source_ids: { Args: { p_value: Json }; Returns: string[] }
+      panel_text_list: {
+        Args: { p_max: number; p_value: Json }
+        Returns: string[]
+      }
+      panel_unique_slug: {
+        Args: { p_base: string; p_kind: string }
+        Returns: string
       }
       plan_family: { Args: { p_plan: string }; Returns: string }
       pro_cases: { Args: never; Returns: Json }
@@ -2550,6 +2614,7 @@ export type Database = {
         }
         Returns: string
       }
+      session_has_mfa: { Args: never; Returns: boolean }
       shares_family_with: { Args: { p_user_id: string }; Returns: boolean }
       start_assessment: {
         Args: { p_member_id: string; p_version_id: string }

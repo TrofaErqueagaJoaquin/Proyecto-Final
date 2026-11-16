@@ -29,7 +29,7 @@ const useStyles = makeStyles((t) => ({
 
 /**
  * Tarjeta "Hoy" (UX_AND_NAVIGATION.md §1.2): UNA sugerencia concreta para el día, del plan de
- * la semana, con "Hecho" y "Otra idea". Debajo, los objetivos en curso.
+ * la semana, con "Realizado" y "Otra idea". Debajo, los objetivos en curso.
  */
 export function TodaySection({ familyId, role }: { familyId: string; role: FamilyRole }) {
   const today = localDate();

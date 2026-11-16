@@ -191,6 +191,39 @@ async function sync(content: Awaited<ReturnType<typeof loadContent>>) {
   });
   const now = new Date().toISOString();
 
+  // Lo cargado en el panel (ADR-036) no se pisa: si content/ trae un identificador que ya usa algo
+  // del panel, se frena antes de escribir nada.
+  const [panelSources, panelContent, panelActivities] = await Promise.all([
+    db.from('sources').select('slug').eq('origin', 'panel'),
+    db.from('content_items').select('slug').eq('origin', 'panel'),
+    db.from('activities').select('slug').eq('origin', 'panel'),
+  ]);
+  const clash = (rows: { slug: string }[], slugs: string[], label: string) =>
+    rows.filter((r) => slugs.includes(r.slug)).map((r) => `${label} ${r.slug}`);
+  const clashes = [
+    ...clash(
+      must(panelSources, 'sources (panel)'),
+      content.sources.map((x) => x.slug),
+      'fuente',
+    ),
+    ...clash(
+      must(panelContent, 'content_items (panel)'),
+      content.library.map((x) => x.meta.slug),
+      'ficha',
+    ),
+    ...clash(
+      must(panelActivities, 'activities (panel)'),
+      content.activities.map((x) => x.slug),
+      'actividad',
+    ),
+  ];
+  if (clashes.length > 0) {
+    throw new Error(
+      `content/ usa identificadores que ya existen en el panel: ${clashes.join(', ')}. ` +
+        'Cambiá el slug en content/, o archivá y renombrá lo del panel.',
+    );
+  }
+
   // Fuentes
   const sourceRows = must(
     await db
@@ -206,6 +239,7 @@ async function sync(content: Awaited<ReturnType<typeof loadContent>>) {
           confidence: s.confidence,
           verification_status: s.verification_status,
           notes: s.notes ?? null,
+          origin: 'repo',
         })),
         { onConflict: 'slug' },
       )
@@ -216,7 +250,7 @@ async function sync(content: Awaited<ReturnType<typeof loadContent>>) {
 
   // Biblioteca
   const existingContent = must(
-    await db.from('content_items').select('id, slug, body_md, published_at'),
+    await db.from('content_items').select('id, slug, body_md, published_at, origin'),
     'content_items (lectura)',
   );
   const existingBySlug = new Map(existingContent.map((c) => [c.slug, c]));
@@ -238,6 +272,7 @@ async function sync(content: Awaited<ReturnType<typeof loadContent>>) {
             sort_order: meta.sort_order,
             status: 'published',
             published_at: previous?.published_at ?? now,
+            origin: 'repo',
           },
           { onConflict: 'slug' },
         )
@@ -280,7 +315,10 @@ async function sync(content: Awaited<ReturnType<typeof loadContent>>) {
     }
   }
   const librarySlugs = new Set(content.library.map((c) => c.meta.slug));
-  const toArchive = existingContent.filter((c) => !librarySlugs.has(c.slug)).map((c) => c.slug);
+  // Lo cargado desde el panel de administración no está en content/: no se archiva (ADR-036).
+  const toArchive = existingContent
+    .filter((c) => c.origin === 'repo' && !librarySlugs.has(c.slug))
+    .map((c) => c.slug);
   if (toArchive.length > 0) {
     must(
       await db
@@ -294,7 +332,7 @@ async function sync(content: Awaited<ReturnType<typeof loadContent>>) {
 
   // Actividades
   const existingActivities = must(
-    await db.from('activities').select('slug, published_at'),
+    await db.from('activities').select('slug, published_at, origin'),
     'activities (lectura)',
   );
   const publishedAt = new Map(existingActivities.map((a) => [a.slug, a.published_at]));
@@ -323,6 +361,7 @@ async function sync(content: Awaited<ReturnType<typeof loadContent>>) {
             sort_order: 0,
             status: 'published',
             published_at: publishedAt.get(activity.slug) ?? now,
+            origin: 'repo',
           },
           { onConflict: 'slug' },
         )
@@ -372,7 +411,7 @@ async function sync(content: Awaited<ReturnType<typeof loadContent>>) {
   }
   const activitySlugs = new Set(content.activities.map((a) => a.slug));
   const activitiesToArchive = existingActivities
-    .filter((a) => !activitySlugs.has(a.slug))
+    .filter((a) => a.origin === 'repo' && !activitySlugs.has(a.slug))
     .map((a) => a.slug);
   if (activitiesToArchive.length > 0) {
     must(

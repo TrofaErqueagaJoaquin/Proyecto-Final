@@ -1,5 +1,5 @@
-import { AGE_STAGES, COST_LABELS, SPACE_LABELS } from '@crecer/shared';
-import { Clock, PackageOpen, Puzzle, Wallet } from 'lucide-react-native';
+import { AGE_STAGES, SPACE_LABELS } from '@crecer/shared';
+import { Puzzle } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 
@@ -9,11 +9,9 @@ import {
   matchesFilters,
   type ActivityFilters,
 } from '@/features/library/filters';
-import { ActivityIcon, SPACE_ICONS } from '@/features/library/activityVisuals';
-import { LinkCard } from '@/features/library/LinkCard';
+import { ActivityGrid } from '@/features/library/ActivityTile';
 import { useActivities, useCategories } from '@/features/library/queries';
 import {
-  Badge,
   Button,
   Card,
   Checkbox,
@@ -55,9 +53,7 @@ export default function ActivitiesScreen() {
   return (
     <Screen edges={['bottom']} maxWidth={960}>
       <Text variant="title">Actividades</Text>
-      <Text tone="muted">
-        Ideas para hacer en casa o cerca, con poco tiempo y lo que tengan a mano.
-      </Text>
+      <Text tone="muted">Tocá una para ver cómo se hace.</Text>
 
       <TextField
         label="Buscar"
@@ -168,31 +164,7 @@ export default function ActivitiesScreen() {
           <Text variant="small" tone="muted" accessibilityLiveRegion="polite">
             {results.length === 1 ? '1 actividad' : `${String(results.length)} actividades`}
           </Text>
-          {results.map((activity) => (
-            <LinkCard
-              key={activity.id}
-              href={`/actividades/${activity.slug}`}
-              title={activity.title}
-              description={activity.summary}
-              leading={<ActivityIcon categories={activity.categories} />}
-              footer={
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                  <Badge icon={Clock}>{`${String(activity.duration_min)} min`}</Badge>
-                  <Badge icon={SPACE_ICONS[activity.space]}>
-                    {SPACE_LABELS[activity.space as keyof typeof SPACE_LABELS]}
-                  </Badge>
-                  <Badge icon={Wallet}>
-                    {COST_LABELS[activity.cost_level as keyof typeof COST_LABELS]}
-                  </Badge>
-                  {activity.materials.length === 0 ? (
-                    <Badge tone="primary" icon={PackageOpen}>
-                      Sin materiales
-                    </Badge>
-                  ) : null}
-                </View>
-              }
-            />
-          ))}
+          <ActivityGrid activities={results} maxContent={960} />
         </>
       )}
     </Screen>

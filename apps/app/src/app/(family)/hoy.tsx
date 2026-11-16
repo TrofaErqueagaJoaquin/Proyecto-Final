@@ -1,4 +1,4 @@
-import { Redirect, useRouter } from 'expo-router';
+import { Link, Redirect, useRouter } from 'expo-router';
 import { ChevronRight, Wind } from 'lucide-react-native';
 import { Pressable, View } from 'react-native';
 
@@ -6,10 +6,13 @@ import { useMe } from '@/features/auth/queries';
 import { BroteSays } from '@/features/brote/Brote';
 import { PersonalizeCard } from '@/features/chequeo/PersonalizeCard';
 import { canManage } from '@/features/families/queries';
+import { ActivityGrid } from '@/features/library/ActivityTile';
+import { useSavedActivities } from '@/features/library/queries';
 import { LogrosStrip, StreakChip, useFamilyProgress } from '@/features/logros/LogrosStrip';
 import { useMyProfessionalProfile } from '@/features/professionals/queries';
 import { TodaySection } from '@/features/plans/TodaySection';
-import { ErrorState, makeStyles, Screen, Skeleton, Text, useTheme } from '@/ui';
+import { WelcomeBack } from '@/features/plans/WelcomeBack';
+import { Button, ErrorState, makeStyles, Screen, Skeleton, Text, useTheme } from '@/ui';
 
 const useStyles = makeStyles((t) => ({
   pause: {
@@ -66,6 +69,34 @@ function PauseCard() {
   );
 }
 
+/** "Para hacer": las actividades que dejaron para más tarde (hasta 4), con acceso a la lista. */
+function ToDoStrip({ familyId }: { familyId: string }) {
+  const saved = useSavedActivities(familyId);
+  const list = (saved.data ?? []).flatMap((s) =>
+    s.activities
+      ? [
+          {
+            slug: s.activities.slug,
+            title: s.activities.title,
+            categories: s.activities.activity_category_links.map((l) => l.category_code),
+          },
+        ]
+      : [],
+  );
+  if (list.length === 0) return null;
+  return (
+    <View style={{ gap: 12 }}>
+      <Text variant="heading">Para hacer</Text>
+      <ActivityGrid activities={list.slice(0, 4)} maxContent={720} />
+      {list.length > 4 ? (
+        <Link href="/mis-actividades" asChild>
+          <Button label={`Ver las ${String(list.length)}`} variant="ghost" />
+        </Link>
+      ) : null}
+    </View>
+  );
+}
+
 /**
  * Hoy (rediseño de 2026): Brote saluda, la racha a la vista, UNA idea para hoy, la invitación en
  * grande a personalizar (chequeo o tema), una pausa para quien cuida y los logros.
@@ -109,7 +140,9 @@ export default function TodayScreen() {
       <StreakChip days={streak} />
       {manage ? <PersonalizeCard familyId={family.id} /> : null}
       <TodaySection familyId={family.id} role={family.role} />
+      <ToDoStrip familyId={family.id} />
       <PauseCard />
+      <WelcomeBack />
       <LogrosStrip familyId={family.id} />
     </Screen>
   );

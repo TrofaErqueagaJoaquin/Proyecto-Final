@@ -35,7 +35,7 @@ function sourceUrl(source: NonNullable<SourceRef['sources']>): string | null {
 }
 
 /** Fuentes citadas, con su estado de verificación a la vista (nunca se presentan como verificadas si no lo están). */
-export function SourceList({ refs }: { refs: SourceRef[] }) {
+export function SourceList({ refs, heading = true }: { refs: SourceRef[]; heading?: boolean }) {
   const styles = useStyles();
   const { colors } = useTheme();
   const sources = refs.filter(
@@ -44,7 +44,7 @@ export function SourceList({ refs }: { refs: SourceRef[] }) {
   if (sources.length === 0) return null;
   return (
     <View style={styles.list}>
-      <Text variant="subheading">Fuentes</Text>
+      {heading ? <Text variant="subheading">Fuentes</Text> : null}
       {sources.map(({ sources: source, locator }) => {
         const url = sourceUrl(source);
         return (

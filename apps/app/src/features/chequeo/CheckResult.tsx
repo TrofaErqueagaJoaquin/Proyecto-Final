@@ -1,13 +1,15 @@
 import type { QuestionnaireDefinition, ScoringSpec } from '@crecer/domain';
 import { Link } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 
 import { BAND_LABELS } from '@/features/assessments/labels';
 import { useAttemptResult } from '@/features/assessments/queries';
 import { BroteSays } from '@/features/brote/Brote';
+import { GuidePopup } from '@/features/brote/GuidePopup';
+import { useActivityFlow } from '@/features/library/ActivityFlow';
 import { feedback } from '@/features/feedback/feedback';
-import { Badge, Button, Card, ErrorState, makeStyles, Skeleton, Text } from '@/ui';
+import { Badge, Button, Card, ErrorState, Skeleton, Text, makeStyles, useOverlayTurn } from '@/ui';
 
 import { Confetti } from './Confetti';
 
@@ -41,6 +43,9 @@ export function CheckResult({
 }) {
   const styles = useStyles();
   const result = useAttemptResult(attemptId);
+  const flow = useActivityFlow();
+  const [popupClosed, setPopupClosed] = useState(false);
+  const popupVisible = useOverlayTurn('resultado', !popupClosed && result.data !== undefined);
   // Llega el resultado → saltito de Brote, confeti, sonido y vibración (una vez).
   const celebrate = result.data ? 1 : 0;
   useEffect(() => {
@@ -62,6 +67,38 @@ export function CheckResult({
 
   return (
     <View style={{ gap: 16 }}>
+      {/* Al terminar: lo principal en grande y el siguiente paso a un toque. */}
+      <GuidePopup
+        visible={popupVisible}
+        celebrate
+        title="¡Listo!"
+        message={
+          start
+            ? `Por dónde empezar con ${alias}: ${title(start.dimension_code)}.`
+            : `${alias} viene muy bien. ¡Sigan así!`
+        }
+        primary={
+          activity
+            ? {
+                label: `Empezar: ${activity.title}`,
+                onPress: () => {
+                  // El turno de ventanas abre el detalle cuando esta termina de cerrarse.
+                  setPopupClosed(true);
+                  flow.open(activity.slug, activity.title);
+                },
+              }
+            : undefined
+        }
+        secondary={{
+          label: 'Ver el resultado',
+          onPress: () => {
+            setPopupClosed(true);
+          },
+        }}
+        onClose={() => {
+          setPopupClosed(true);
+        }}
+      />
       <Confetti trigger={celebrate} />
       <BroteSays mood="feliz" size={104} celebrate={celebrate}>
         {`¡Listo! Ya conozco un poco más a ${alias}.`}
@@ -85,9 +122,13 @@ export function CheckResult({
         <View style={styles.today}>
           <Text variant="label">PARA HOY</Text>
           <Text variant="heading">{activity.title}</Text>
-          <Link href={`/actividades/${activity.slug}`} asChild>
-            <Button label="¡Vamos!" fullWidth />
-          </Link>
+          <Button
+            label="¡Vamos!"
+            fullWidth
+            onPress={() => {
+              flow.open(activity.slug, activity.title);
+            }}
+          />
         </View>
       ) : null}
 
