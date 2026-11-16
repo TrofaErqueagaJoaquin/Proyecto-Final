@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { friendlyError } from '@/copy/errors';
+import { feedback } from '@/features/feedback/feedback';
 import {
   canManage,
   useActiveFamily,
@@ -126,6 +127,8 @@ export function PlanItemCard({
                   },
                   {
                     onSuccess: () => {
+                      // Festejo: sonido y vibración (se apagan en Perfil).
+                      feedback('done');
                       setMarking(false);
                     },
                   },

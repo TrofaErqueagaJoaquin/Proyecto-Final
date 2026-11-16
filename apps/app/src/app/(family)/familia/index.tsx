@@ -238,7 +238,7 @@ export default function FamilyScreen() {
             title="Creá el espacio de tu familia"
             description="Si otra persona ya lo creó, pedile que te invite: vas a recibir un enlace."
             action={
-              <Link href="/familia/nueva" asChild>
+              <Link href="/bienvenida" asChild>
                 <Button label="Crear mi familia" />
               </Link>
             }

@@ -2,6 +2,7 @@ import { Eye, EyeOff } from 'lucide-react-native';
 import { useId, useState } from 'react';
 import { Pressable, TextInput, View, type TextInputProps } from 'react-native';
 
+import type { Mask } from './masks';
 import { Text } from './Text';
 import { makeStyles, useTheme } from './theme';
 import { minTouchTarget } from './tokens';
@@ -10,6 +11,8 @@ export interface TextFieldProps extends Omit<TextInputProps, 'style'> {
   label: string;
   hint?: string;
   error?: string | undefined;
+  /** Da formato mientras se escribe (por ejemplo, la barra de MM/AAAA). */
+  mask?: Mask;
 }
 
 const useStyles = makeStyles((t) => ({
@@ -47,7 +50,7 @@ const useStyles = makeStyles((t) => ({
  * Campo con etiqueta visible (nunca solo placeholder), ayuda y error asociados.
  * Con `secureTextEntry`, ofrece mostrar/ocultar la contraseña.
  */
-export function TextField({ label, hint, error, secureTextEntry, ...rest }: TextFieldProps) {
+export function TextField({ label, hint, error, secureTextEntry, mask, ...rest }: TextFieldProps) {
   const styles = useStyles();
   const { colors } = useTheme();
   const id = useId();
@@ -62,6 +65,7 @@ export function TextField({ label, hint, error, secureTextEntry, ...rest }: Text
       </Text>
       <View style={[styles.inputRow, focused && styles.focused, error ? styles.invalid : null]}>
         <TextInput
+          {...rest}
           accessibilityLabel={label}
           accessibilityLabelledBy={`${id}-label`}
           accessibilityHint={description || undefined}
@@ -77,7 +81,11 @@ export function TextField({ label, hint, error, secureTextEntry, ...rest }: Text
             setFocused(false);
             rest.onBlur?.(event);
           }}
-          {...rest}
+          onChangeText={
+            mask && rest.onChangeText
+              ? (text) => rest.onChangeText?.(mask(text, rest.value ?? ''))
+              : rest.onChangeText
+          }
         />
         {secureTextEntry === true && (
           <Pressable

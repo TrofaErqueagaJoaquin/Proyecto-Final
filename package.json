@@ -28,6 +28,7 @@
     "admin:grant": "tsx --env-file=apps/api/.env scripts/admin-grant.mts",
     "demo:reset": "tsx --env-file=apps/api/.env.demo scripts/demo/reset.mts",
     "demo:capture": "tsx --env-file=apps/api/.env.demo scripts/demo/capture.mts",
+    "demo:screens": "tsx --env-file=apps/api/.env.demo scripts/demo/screens.mts",
     "test:scripts": "tsx --test scripts/demo/guards.test.ts",
     "prepare": "husky"
   },
@@ -41,6 +42,7 @@
     "@supabase/supabase-js": "^2.118.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
+    "playwright-core": "1.57.0",
     "prettier": "^3.9.10",
     "supabase": "2.122.0",
     "tsx": "^4.23.15",

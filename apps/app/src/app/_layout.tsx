@@ -2,7 +2,8 @@ import '@/lib/polyfills';
 
 import { AtkinsonHyperlegibleNext_400Regular } from '@expo-google-fonts/atkinson-hyperlegible-next/400Regular';
 import { AtkinsonHyperlegibleNext_700Bold } from '@expo-google-fonts/atkinson-hyperlegible-next/700Bold';
-import { Fraunces_600SemiBold } from '@expo-google-fonts/fraunces/600SemiBold';
+import { Nunito_700Bold } from '@expo-google-fonts/nunito/700Bold';
+import { Nunito_800ExtraBold } from '@expo-google-fonts/nunito/800ExtraBold';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider as NavigationTheme } from 'expo-router';
@@ -45,7 +46,8 @@ function ThemedNavigation() {
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    Fraunces_600SemiBold,
+    Nunito_800ExtraBold,
+    Nunito_700Bold,
     AtkinsonHyperlegibleNext_400Regular,
     AtkinsonHyperlegibleNext_700Bold,
   });

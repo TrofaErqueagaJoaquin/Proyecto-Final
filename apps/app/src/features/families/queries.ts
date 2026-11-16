@@ -304,3 +304,78 @@ export function useAcceptInvitation() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: authKeys.me }),
   });
 }
+
+/**
+ * Bienvenida de un paso (rediseño de 2026): acepta los términos si falta, crea "Mi familia" y el
+ * primer integrante con su consentimiento, todo con un solo toque. Devuelve el id del integrante
+ * para seguir directo al chequeo de 1 minuto.
+ */
+export function useQuickStart() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      acceptTerms: boolean;
+      relationship: string;
+      alias: string;
+      birthMonth: string;
+    }) => {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) throw new Error('Sin sesión');
+      if (input.acceptTerms) {
+        const terms = await supabase.from('consents').insert({
+          purpose: 'terms_privacy',
+          granted_by: userId,
+          policy_version: CURRENT_POLICY_VERSION,
+        });
+        // 23505: ya estaba aceptada (doble toque).
+        if (terms.error && terms.error.code !== '23505') throw terms.error;
+      }
+      // Reintento seguro: si un intento anterior ya creó la familia (y falló después), se reusa en
+      // lugar de crear otra "Mi familia"; si el integrante también quedó creado, se devuelve ese.
+      const owned = await supabase
+        .from('family_memberships')
+        .select('family_id')
+        .eq('user_id', userId)
+        .eq('role', 'owner')
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (owned.error) throw owned.error;
+      let familyId = owned.data?.family_id;
+      if (familyId) {
+        const existing = await supabase
+          .from('family_members')
+          .select('id')
+          .eq('family_id', familyId)
+          .eq('alias', input.alias)
+          .is('archived_at', null)
+          .limit(1)
+          .maybeSingle();
+        if (existing.error) throw existing.error;
+        if (existing.data) return existing.data.id;
+      } else {
+        const family = await supabase.rpc('create_family', {
+          p_name: 'Mi familia',
+          p_relationship: input.relationship,
+        });
+        if (family.error) throw family.error;
+        familyId = family.data;
+      }
+      const member = await supabase.rpc('add_family_member', {
+        p_family_id: familyId,
+        p_alias: input.alias,
+        p_birth_month: input.birthMonth,
+        p_interests: [],
+        p_policy_version: CURRENT_POLICY_VERSION,
+        p_child_data_consent: true,
+      });
+      if (member.error) throw member.error;
+      return member.data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: authKeys.terms });
+      await queryClient.invalidateQueries({ queryKey: authKeys.me });
+    },
+  });
+}

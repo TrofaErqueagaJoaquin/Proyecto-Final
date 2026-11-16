@@ -73,12 +73,14 @@ export default function InviteScreen() {
   const invite = useCreateInvitation(family?.id);
   const { control, handleSubmit, getValues } = useForm<CreateInvitationInput>({
     resolver: zodResolver(CreateInvitationSchema),
+    // Valida cada campo al salir de él y después mientras se corrige.
+    mode: 'onTouched',
     defaultValues: { email: '', role: 'caregiver' },
   });
   const role = useController({ control, name: 'role' });
 
   if (isPending) return <Skeleton height={300} />;
-  if (!family) return <Redirect href="/familia/nueva" />;
+  if (!family) return <Redirect href="/bienvenida" />;
   if (!canManage(family.role)) return <Redirect href="/familia" />;
 
   const onSubmit = handleSubmit((values) => {

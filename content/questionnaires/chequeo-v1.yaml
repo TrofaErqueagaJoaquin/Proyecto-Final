@@ -1,0 +1,461 @@
+# Chequeo de 1 minuto (rediseño de 2026). Generado desde habitos-v1.yaml: mismas preguntas, opciones,
+# puntaje y reglas de recomendación. NO es un instrumento validado: es una propuesta del proyecto.
+# Una versión publicada no se edita: para cambiar algo, copiá el archivo y subí `version`.
+slug: chequeo
+title: Chequeo de 1 minuto
+description: Seis preguntas cortas, una por tema, para saber por dónde empezar hoy. Es una
+  orientación, no un diagnóstico.
+version: 1
+evidenceLabel: propuesta_proyecto
+estimatedMinutes: 1
+minAgeMonths: 0
+maxAgeMonths: 215
+sections:
+  - code: sueno
+    title: Sueño
+    description: Cuánto duerme y qué pasa antes de dormir.
+    questions:
+      - code: screens_before_bed
+        prompt: En la hora antes de dormir, ¿usa pantallas?
+        type: single
+        options:
+          - code: never
+            label: Casi nunca
+            value: 100
+          - code: sometimes
+            label: Algunos días (1 a 3 por semana)
+            value: 50
+          - code: most_days
+            label: La mayoría de los días
+            value: 0
+  - code: movimiento
+    title: Movimiento
+    description: Juego activo y tiempo quieto.
+    questions:
+      - code: floor_time
+        prompt: Despierto, ¿cuánto tiempo pasa por día en el piso, boca abajo o moviéndose libremente?
+        help: Sumá los ratos cortos de todo el día.
+        type: single
+        maxAgeMonths: 11
+        options:
+          - code: lt15
+            label: Menos de 15 minutos
+            value: 0
+          - code: m15_30
+            label: Entre 15 y 30 minutos
+            value: 50
+          - code: gt30
+            label: Más de 30 minutos
+            value: 100
+      - code: active_play
+        prompt:
+          En un día habitual, ¿cuánto tiempo de juego activo tiene (correr, saltar, trepar, bailar,
+          andar en bici)?
+        type: single
+        minAgeMonths: 12
+        options:
+          - code: lt30
+            label: Menos de 30 minutos
+            value: 0.25
+          - code: m30_60
+            label: Entre 30 minutos y 1 hora
+            value: 0.75
+          - code: h1_2
+            label: Entre 1 y 2 horas
+            value: 1.5
+          - code: h2_3
+            label: Entre 2 y 3 horas
+            value: 2.5
+          - code: gt3
+            label: Más de 3 horas
+            value: 3.5
+  - code: pantalla_tiempo
+    title: Tiempo de pantalla
+    description: Pantallas para entretenerse, sin contar la escuela ni las videollamadas.
+    questions:
+      - code: screen_weekday
+        prompt: En un día de semana, ¿cuánto tiempo usa pantallas para entretenerse (videos, juegos,
+          series)?
+        type: single
+        options:
+          - code: none
+            label: Nada
+            value: 0
+          - code: lt30
+            label: Menos de 30 minutos
+            value: 0.25
+          - code: m30_60
+            label: Entre 30 minutos y 1 hora
+            value: 0.75
+          - code: h1_2
+            label: Entre 1 y 2 horas
+            value: 1.5
+          - code: h2_3
+            label: Entre 2 y 3 horas
+            value: 2.5
+          - code: gt3
+            label: Más de 3 horas
+            value: 3.5
+  - code: pantalla_contexto
+    title: Cómo se usan las pantallas
+    description: Con quién, qué contenido y en qué momentos.
+    questions:
+      - code: background_tv
+        prompt: ¿Queda la TV prendida de fondo aunque nadie la esté mirando?
+        type: single
+        options:
+          - code: rarely
+            label: Casi nunca
+            value: 100
+          - code: sometimes
+            label: A veces
+            value: 50
+          - code: often
+            label: Casi todos los días
+            value: 0
+  - code: calma
+    title: Calma
+    description: Qué lo ayuda cuando está muy enojado o angustiado.
+    minAgeMonths: 12
+    maxAgeMonths: 155
+    questions:
+      - code: device_to_calm
+        prompt: Cuando está muy enojado o angustiado, ¿con qué frecuencia la pantalla es la forma de
+          calmarlo?
+        type: single
+        options:
+          - code: rarely
+            label: Casi nunca
+            value: 100
+          - code: sometimes
+            label: A veces
+            value: 60
+          - code: often
+            label: Seguido
+            value: 20
+          - code: almost_always
+            label: Casi siempre
+            value: 0
+  - code: acuerdos
+    title: Acuerdos en casa
+    description: Reglas sobre cuándo y dónde se usan las pantallas.
+    minAgeMonths: 36
+    questions:
+      - code: clear_rules
+        prompt: ¿Hay acuerdos claros sobre cuándo y dónde se usan las pantallas?
+        type: single
+        options:
+          - code: yes
+            label: Sí
+            value: 100
+          - code: partly
+            label: Más o menos
+            value: 50
+          - code: no
+            label: Todavía no
+            value: 0
+scoring:
+  engineVersion: 1.0.0
+  maxRecommendations: 3
+  dimensions:
+    - code: sueno
+      bands: &a1
+        - max: 39
+          band: priority
+        - max: 69
+          band: watch
+        - max: 100
+          band: strength
+      texts:
+        strength: Las horas de sueño y lo que pasa antes de dormir acompañan bien. Vale la pena sostenerlo.
+        watch:
+          Hay algo del sueño para mirar, como las horas o las pantallas antes de dormir. Un cambio
+          chico ayuda.
+        priority:
+          El sueño puede ser un buen lugar para empezar. Una rutina tranquila antes de dormir suele
+          ayudar a toda la casa.
+    - code: movimiento
+      bands: *a1
+      texts:
+        strength: Tiene buenos momentos para moverse durante el día. Es una base para todo lo demás.
+        watch: Podría sumar un poco más de movimiento o cortar los ratos largos quieto.
+        priority: Moverse más puede ser un buen primer paso. Alcanza con juegos cortos en casa o en la plaza.
+    - code: pantalla_tiempo
+      bands: *a1
+      texts:
+        strength: El tiempo de pantalla está cerca de lo que sugieren las guías para su edad.
+        watch: El tiempo de pantalla está un poco por encima de lo que sugieren las guías para su edad.
+        priority:
+          El tiempo de pantalla está bastante por encima de lo sugerido para su edad. Conviene
+          bajarlo de a poco.
+    - code: pantalla_contexto
+      bands: *a1
+      texts:
+        strength: Cómo se usan las pantallas en casa ayuda mucho, con compañía y contenido elegido.
+        watch: Hay detalles del uso para ajustar, como la TV de fondo o la reproducción automática.
+        priority:
+          Cambiar cómo se usan las pantallas puede ayudar más que contar minutos. Hay pasos simples
+          para empezar.
+    - code: calma
+      bands: *a1
+      texts:
+        strength: Tiene varias formas de calmarse además de la pantalla.
+        watch: La pantalla aparece seguido para calmarse. Sumar otras opciones de a poco ayuda.
+        priority:
+          Calmarse sin pantalla está costando. Es un buen momento para practicar otras formas, en
+          momentos tranquilos.
+    - code: acuerdos
+      bands: *a1
+      texts:
+        strength: Los acuerdos en casa están claros y los adultos también los cumplen.
+        watch: Hay acuerdos, pero se pueden ajustar o revisar juntos.
+        priority: Armar acuerdos simples sobre cuándo y dónde usar pantallas puede bajar las discusiones.
+  questionScoring:
+    screens_before_bed:
+      type: option_value
+    floor_time:
+      type: option_value
+    active_play:
+      type: age_range
+      ranges:
+        - ageMonths:
+            - 12
+            - 59
+          ideal:
+            - 3
+            - 24
+        - ageMonths:
+            - 60
+            - 215
+          ideal:
+            - 1
+            - 24
+      tolerance: 1
+    screen_weekday:
+      type: age_range
+      ranges:
+        - ageMonths:
+            - 0
+            - 23
+          ideal:
+            - 0
+            - 0
+        - ageMonths:
+            - 24
+            - 59
+          ideal:
+            - 0
+            - 1
+      tolerance: 1
+    background_tv:
+      type: option_value
+    device_to_calm:
+      type: option_value
+    clear_rules:
+      type: option_value
+  recommendations:
+    - code: baby_videos
+      when:
+        maxAgeMonths: 23
+        answer:
+          screen_weekday:
+            - lt30
+            - m30_60
+            - h1_2
+            - h2_3
+            - gt3
+      target:
+        contentSlug: ficha-a-bebe-videos
+      priority: 1
+      reason: Contaste que usa pantallas antes de los 2 años.
+    - code: calm_with_device
+      when:
+        minAgeMonths: 24
+        maxAgeMonths: 107
+        answer:
+          device_to_calm:
+            - often
+            - almost_always
+      target:
+        contentSlug: ficha-b-pantalla-para-calmarse
+      priority: 1
+      reason: La pantalla aparece seguido para calmarse.
+    - code: sleep_routine
+      when:
+        dimension: sueno
+        bandIn:
+          - priority
+          - watch
+        minAgeMonths: 12
+        maxAgeMonths: 144
+      target:
+        activitySlug: rutina-para-dormir
+      priority: 1
+      reason: El sueño apareció como algo para mirar.
+    - code: floor_time_baby
+      when:
+        minAgeMonths: 3
+        maxAgeMonths: 11
+        answer:
+          floor_time:
+            - lt15
+            - m15_30
+      target:
+        activitySlug: estacion-de-piso
+      priority: 1
+      reason: Puede sumar ratos de piso a lo largo del día.
+    - code: floor_time_newborn
+      when:
+        maxAgeMonths: 6
+        answer:
+          floor_time:
+            - lt15
+            - m15_30
+      target:
+        activitySlug: panza-al-piso-con-espejo
+      priority: 2
+      reason: Unos minutos boca abajo, varias veces al día, suman.
+    - code: screen_time_little
+      when:
+        dimension: pantalla_tiempo
+        bandIn:
+          - priority
+          - watch
+        minAgeMonths: 24
+        maxAgeMonths: 59
+      target:
+        contentSlug: ficha-d-pocas-actividades
+      priority: 2
+      reason: El tiempo de pantalla está por encima de lo sugerido para su edad.
+    - code: calm_box
+      when:
+        dimension: calma
+        bandIn:
+          - priority
+          - watch
+        minAgeMonths: 30
+        maxAgeMonths: 96
+      target:
+        activitySlug: caja-de-calma
+      priority: 2
+      reason: Sumar otras formas de calmarse, practicadas en momentos tranquilos.
+    - code: calm_breathing
+      when:
+        dimension: calma
+        bandIn:
+          - priority
+          - watch
+        minAgeMonths: 30
+        maxAgeMonths: 108
+      target:
+        activitySlug: respirar-soplando-velitas
+      priority: 3
+      reason: Respirar despacio es una forma de calmarse que se puede practicar jugando.
+    - code: family_agreement
+      when:
+        dimension: acuerdos
+        bandIn:
+          - priority
+          - watch
+        minAgeMonths: 72
+      target:
+        activitySlug: acuerdo-familiar-de-pantallas
+      priority: 2
+      reason: Los acuerdos en casa se pueden armar o revisar juntos.
+    - code: move_music
+      when:
+        dimension: movimiento
+        bandIn:
+          - priority
+          - watch
+        minAgeMonths: 18
+        maxAgeMonths: 23
+      target:
+        activitySlug: musica-y-movimiento
+      priority: 2
+      reason: Puede sumar momentos de movimiento en casa.
+    - code: move_circuit
+      when:
+        dimension: movimiento
+        bandIn:
+          - priority
+          - watch
+        minAgeMonths: 24
+        maxAgeMonths: 72
+      target:
+        activitySlug: circuito-en-el-living
+      priority: 2
+      reason: Puede sumar juego activo aunque el espacio sea chico.
+    - code: move_playground
+      when:
+        dimension: movimiento
+        bandIn:
+          - priority
+          - watch
+        minAgeMonths: 73
+        maxAgeMonths: 143
+      target:
+        activitySlug: juegos-de-patio-de-siempre
+      priority: 2
+      reason: Puede sumar juego activo con otros chicos.
+    - code: move_teen
+      when:
+        dimension: movimiento
+        bandIn:
+          - priority
+          - watch
+        minAgeMonths: 144
+      target:
+        activitySlug: caminata-o-bici-con-charla
+      priority: 2
+      reason: Moverse juntos también es un momento para conversar.
+    - code: context_reading
+      when:
+        dimension: pantalla_contexto
+        bandIn:
+          - priority
+          - watch
+        minAgeMonths: 24
+        maxAgeMonths: 96
+      target:
+        activitySlug: leer-con-preguntas
+      priority: 3
+      reason: Conversar sobre lo que ven y leen juntos ayuda más que contar minutos.
+    - code: stage_0_2
+      when:
+        maxAgeMonths: 35
+      target:
+        contentSlug: etapa-0-2
+      priority: 5
+      reason: Qué necesita a esta edad.
+    - code: stage_3_5
+      when:
+        minAgeMonths: 36
+        maxAgeMonths: 71
+      target:
+        contentSlug: etapa-3-5
+      priority: 5
+      reason: Qué necesita a esta edad.
+    - code: stage_6_8
+      when:
+        minAgeMonths: 72
+        maxAgeMonths: 107
+      target:
+        contentSlug: etapa-6-8
+      priority: 5
+      reason: Qué necesita a esta edad.
+    - code: stage_9_11
+      when:
+        minAgeMonths: 108
+        maxAgeMonths: 143
+      target:
+        contentSlug: etapa-9-11
+      priority: 5
+      reason: Qué necesita a esta edad.
+    - code: stage_12_17
+      when:
+        minAgeMonths: 144
+      target:
+        contentSlug: etapa-12-17
+      priority: 5
+      reason: Qué necesita a esta edad.

@@ -84,7 +84,7 @@ export default function PreferencesScreen() {
   const preferences = usePreferences(family?.id);
 
   if (isPending || preferences.isPending) return <Skeleton height={300} />;
-  if (!family) return <Redirect href="/familia/nueva" />;
+  if (!family) return <Redirect href="/bienvenida" />;
   if (!canManage(family.role)) return <Redirect href="/familia" />;
   if (preferences.isError) return <ErrorState onRetry={() => void preferences.refetch()} />;
 

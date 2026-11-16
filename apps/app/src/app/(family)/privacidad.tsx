@@ -31,7 +31,7 @@ export default function PrivacyScreen() {
   const revoke = useRevokeConsent(family?.id);
 
   if (isPending) return <Skeleton height={300} />;
-  if (!family) return <Redirect href="/familia/nueva" />;
+  if (!family) return <Redirect href="/bienvenida" />;
 
   return (
     <Screen>

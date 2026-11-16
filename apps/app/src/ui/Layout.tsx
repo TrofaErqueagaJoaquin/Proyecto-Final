@@ -1,9 +1,9 @@
-import { Sprout } from 'lucide-react-native';
 import type { ReactNode } from 'react';
-import { ScrollView, View, type ViewStyle } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, View, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
+import { BrandMark } from './BrandMark';
 import { Text } from './Text';
 import { makeStyles, useTheme } from './theme';
 
@@ -25,6 +25,12 @@ const useStyles = makeStyles((t) => ({
     borderRadius: t.radius.lg,
     padding: t.space.xl,
     gap: t.space.md,
+    // Sombra cálida y suave: las tarjetas "flotan" sobre el crema.
+    shadowColor: '#B8452A',
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
   logo: { flexDirection: 'row', alignItems: 'center', gap: t.space.sm },
 }));
@@ -47,15 +53,29 @@ export function Screen({
   const content = (
     <View style={[styles.content, { maxWidth }, !scroll && styles.fill]}>{children}</View>
   );
+  // Teclado: en iOS el ScrollView corre el contenido para que el campo activo quede a la vista; en
+  // Android (y en las pantallas sin desplazamiento, como el chat) la pantalla se achica.
+  const ios = Platform.OS === 'ios';
   return (
     <SafeAreaView style={styles.safe} edges={edges}>
-      {scroll ? (
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          {content}
-        </ScrollView>
-      ) : (
-        content
-      )}
+      <KeyboardAvoidingView
+        style={styles.fill}
+        behavior={ios ? (scroll ? undefined : 'padding') : 'height'}
+        enabled={Platform.OS !== 'web'}
+      >
+        {scroll ? (
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={ios ? 'interactive' : 'on-drag'}
+            automaticallyAdjustKeyboardInsets={ios}
+          >
+            {content}
+          </ScrollView>
+        ) : (
+          content
+        )}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -65,22 +85,35 @@ export function Card({ children, style }: { children: ReactNode; style?: ViewSty
   return <View style={[styles.card, style]}>{children}</View>;
 }
 
+/** Logotipo: isotipo (casa con brote) + "Crecer en Casa". `lg` para la entrada a la app. */
 export function Logo({ size = 'md' }: { size?: 'md' | 'lg' }) {
   const styles = useStyles();
   const { colors } = useTheme();
+  const large = size === 'lg';
   return (
-    <View style={styles.logo}>
-      <Sprout color={colors.primary} size={size === 'lg' ? 32 : 24} aria-hidden />
+    <View style={styles.logo} accessibilityRole="image" accessibilityLabel="Crecer en Casa">
+      <BrandMark size={large ? 64 : 32} />
       <Text
         // Marca, no encabezado: usa la tipografía de títulos sin rol de heading.
         variant="bodyStrong"
         style={{
-          fontFamily: 'Fraunces_600SemiBold',
-          fontSize: size === 'lg' ? 31 : 20,
-          lineHeight: size === 'lg' ? 38 : 26,
+          fontFamily: 'Nunito_800ExtraBold',
+          fontSize: large ? 30 : 20,
+          lineHeight: large ? 34 : 26,
         }}
       >
-        Crecer en Casa
+        {large ? 'Crecer\n' : 'Crecer '}
+        <Text
+          variant="bodyStrong"
+          style={{
+            fontFamily: 'Nunito_800ExtraBold',
+            fontSize: large ? 30 : 20,
+            lineHeight: large ? 34 : 26,
+            color: colors.primary,
+          }}
+        >
+          en Casa
+        </Text>
       </Text>
     </View>
   );

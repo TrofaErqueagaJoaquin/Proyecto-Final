@@ -1,10 +1,11 @@
 import { z } from 'zod';
 
 // Reglas alineadas con supabase/config.toml y con el panel (docs/setup/SUPABASE.md §3):
-// mínimo 10 caracteres, con letras y números.
+// mínimo 8 caracteres, con letras y números (el rediseño de 2026 bajó de 10 a 8 para no frenar
+// el registro).
 export const PasswordSchema = z
   .string()
-  .min(10, 'Usá al menos 10 caracteres.')
+  .min(8, 'Usá al menos 8 caracteres.')
   .max(72, 'Usá como máximo 72 caracteres.')
   .regex(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/, 'Incluí al menos una letra.')
   .regex(/\d/, 'Incluí al menos un número.');
@@ -21,17 +22,13 @@ export const SignInSchema = z.object({
 });
 export type SignInInput = z.infer<typeof SignInSchema>;
 
+/**
+ * Registro mínimo: correo y contraseña. El nombre sale del correo (se cambia en Perfil) y los
+ * términos se aceptan en la bienvenida, junto con los datos del primer integrante.
+ */
 export const SignUpSchema = z.object({
-  displayName: z
-    .string()
-    .trim()
-    .min(1, 'Contanos cómo querés que te llamemos.')
-    .max(80, 'Usá como máximo 80 caracteres.'),
   email: EmailSchema,
   password: PasswordSchema,
-  acceptTerms: z.literal(true, {
-    error: 'Necesitamos que aceptes los términos y la política de privacidad.',
-  }),
 });
 export type SignUpInput = z.infer<typeof SignUpSchema>;
 

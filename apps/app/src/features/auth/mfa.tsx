@@ -5,7 +5,7 @@ import { Image, View } from 'react-native';
 
 import { friendlyError } from '@/copy/errors';
 import { supabase } from '@/lib/supabase';
-import { Banner, Button, Card, ConfirmAction, Text, TextField } from '@/ui';
+import { Banner, Button, Card, ConfirmAction, digitsMask, Text, TextField } from '@/ui';
 
 import { authKeys } from './queries';
 
@@ -63,7 +63,9 @@ export function MfaChallenge({ factorId }: { factorId: string }) {
         label="Código"
         value={code}
         onChangeText={setCode}
+        hint="Son 6 números; se renuevan cada 30 segundos."
         inputMode="numeric"
+        mask={digitsMask(6)}
         maxLength={6}
         autoComplete="one-time-code"
       />
@@ -164,7 +166,9 @@ export function MfaSettingsCard() {
             label="Código"
             value={code}
             onChangeText={setCode}
+            hint="Son 6 números; se renuevan cada 30 segundos."
             inputMode="numeric"
+            mask={digitsMask(6)}
             maxLength={6}
             autoComplete="one-time-code"
           />

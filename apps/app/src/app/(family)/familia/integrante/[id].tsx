@@ -36,7 +36,7 @@ export default function MemberScreen() {
   const remove = useDeleteMember(family?.id);
 
   if (isPending || members.isPending) return <Skeleton height={300} />;
-  if (!family) return <Redirect href="/familia/nueva" />;
+  if (!family) return <Redirect href="/bienvenida" />;
   if (members.isError) return <ErrorState onRetry={() => void members.refetch()} />;
 
   const member = members.data.find((m) => m.id === id);

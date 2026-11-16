@@ -1,7 +1,7 @@
 import { ErrorResponseSchema, type ErrorCode } from '@crecer/shared';
 import type { z } from 'zod';
 
-import { publicEnv } from './env';
+import { apiBaseUrl } from './env';
 import { supabase } from './supabase';
 
 /** Error de la API propia con su código estable (packages/shared/src/errors.ts). */
@@ -33,7 +33,7 @@ export async function apiFetch<T>(
 
   let response: Response;
   try {
-    response = await fetch(`${publicEnv.EXPO_PUBLIC_API_URL}${path}`, { ...init, headers });
+    response = await fetch(`${apiBaseUrl}${path}`, { ...init, headers });
   } catch {
     throw new ApiError(0, 'SERVICE_UNAVAILABLE', 'No pudimos conectarnos. Revisá tu conexión.');
   }

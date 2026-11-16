@@ -19,7 +19,7 @@ const config: ExpoConfig = {
   android: {
     package: BUNDLE_ID,
     adaptiveIcon: {
-      backgroundColor: '#FBF7F1',
+      backgroundColor: '#FFF8F0',
       foregroundImage: './assets/images/android-icon-foreground.png',
       backgroundImage: './assets/images/android-icon-background.png',
       monochromeImage: './assets/images/android-icon-monochrome.png',
@@ -36,12 +36,13 @@ const config: ExpoConfig = {
   },
   plugins: [
     'expo-router',
+    'expo-audio',
     [
       'expo-splash-screen',
       {
-        backgroundColor: '#FBF7F1',
+        backgroundColor: '#FFF8F0',
         image: './assets/images/splash-icon.png',
-        imageWidth: 76,
+        imageWidth: 160,
       },
     ],
   ],

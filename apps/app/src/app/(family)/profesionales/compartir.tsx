@@ -57,7 +57,7 @@ export default function ShareScreen() {
   if (isPending || (pro !== undefined && professional.isPending) || members.isPending) {
     return <Skeleton height={300} />;
   }
-  if (!family) return <Redirect href="/familia/nueva" />;
+  if (!family) return <Redirect href="/bienvenida" />;
   if (!canManage(family.role)) return <Redirect href="/familia" />;
   if (pro !== undefined && professional.isError)
     return <ErrorState onRetry={() => void professional.refetch()} />;

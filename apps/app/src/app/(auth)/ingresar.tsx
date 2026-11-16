@@ -19,6 +19,8 @@ export default function SignInScreen() {
   const [error, setError] = useState<string | null>(null);
   const { control, handleSubmit, formState } = useForm<SignInInput>({
     resolver: zodResolver(SignInSchema),
+    // Valida cada campo al salir de él y después mientras se corrige.
+    mode: 'onTouched',
     defaultValues: { email: '', password: '' },
   });
 
@@ -37,7 +39,7 @@ export default function SignInScreen() {
   return (
     <AuthScreen
       title="Ingresar"
-      subtitle="Tu espacio para acompañar el crecimiento en casa."
+      greeting="¡Qué bueno verte de nuevo!"
       footer={
         <View style={{ alignItems: 'center', gap: 8 }}>
           <Text>
@@ -47,6 +49,7 @@ export default function SignInScreen() {
         </View>
       }
     >
+      <OAuthButtons leading />
       <FormTextField
         control={control}
         name="email"
@@ -67,8 +70,12 @@ export default function SignInScreen() {
         onSubmitEditing={() => void onSubmit()}
       />
       {error ? <Banner tone="danger">{error}</Banner> : null}
-      <Button label="Ingresar" loading={formState.isSubmitting} onPress={() => void onSubmit()} />
-      <OAuthButtons />
+      <Button
+        label="Ingresar"
+        variant="secondary"
+        loading={formState.isSubmitting}
+        onPress={() => void onSubmit()}
+      />
     </AuthScreen>
   );
 }

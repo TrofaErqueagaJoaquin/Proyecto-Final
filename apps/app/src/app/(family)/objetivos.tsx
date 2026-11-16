@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { View } from 'react-native';
 
 import { friendlyError } from '@/copy/errors';
+import { useFieldErrors } from '@/features/forms/useFieldErrors';
 import { canManage, useActiveFamily, useMembers } from '@/features/families/queries';
 import {
   latestProgress,
@@ -143,6 +144,12 @@ function NewGoal({
   const create = useCreateGoal(familyId);
   const [title, setTitle] = useState('');
   const [about, setAbout] = useState(FAMILY);
+  const fields = useFieldErrors({
+    title:
+      title.trim().length < 3
+        ? 'Contá en pocas palabras qué quieren lograr (al menos 3 letras).'
+        : undefined,
+  });
   return (
     <Card>
       <Text variant="subheading">Nuevo objetivo</Text>
@@ -151,15 +158,17 @@ function NewGoal({
         placeholder="Por ejemplo: apagar las pantallas una hora antes de dormir"
         value={title}
         onChangeText={setTitle}
+        onBlur={fields.touch('title')}
+        error={fields.shown('title')}
         maxLength={120}
       />
       <ChipGroup label="¿Para quién?" options={options} value={about} onChange={setAbout} />
       {create.error ? <Banner tone="danger">{friendlyError(create.error)}</Banner> : null}
       <Button
         label="Crear objetivo"
-        disabled={title.trim().length < 3}
         loading={create.isPending}
         onPress={() => {
+          if (!fields.attempt()) return;
           create.mutate(
             {
               title: title.trim(),
@@ -171,6 +180,7 @@ function NewGoal({
             {
               onSuccess: () => {
                 setTitle('');
+                fields.reset();
               },
             },
           );
@@ -187,7 +197,7 @@ export default function GoalsScreen() {
   const goals = useGoals(family?.id);
 
   if (isPending) return <Skeleton height={300} />;
-  if (!family) return <Redirect href="/familia/nueva" />;
+  if (!family) return <Redirect href="/bienvenida" />;
 
   const manage = canManage(family.role);
   const options = [

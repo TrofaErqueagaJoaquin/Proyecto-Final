@@ -17,23 +17,32 @@ export interface ButtonProps extends Omit<PressableProps, 'children' | 'style'> 
 
 const useStyles = makeStyles((t) => ({
   base: {
-    minHeight: minTouchTarget + 4,
+    minHeight: minTouchTarget + 8,
     // Nunca más ancho que su contenedor: un texto largo pasa a dos líneas en vez de salirse.
     maxWidth: '100%',
     paddingHorizontal: t.space.xl,
-    paddingVertical: t.space.xs,
-    borderRadius: t.radius.sm,
+    paddingVertical: t.space.sm,
+    borderRadius: t.radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
     gap: t.space.sm,
-    borderWidth: 1.5,
+    borderWidth: 2,
   },
-  primary: { backgroundColor: t.colors.primary, borderColor: t.colors.primary },
+  // Coral vivo con texto oscuro: llamativo y con contraste AA (tokens.test.ts).
+  primary: {
+    backgroundColor: t.colors.brand,
+    borderColor: t.colors.brand,
+    shadowColor: t.colors.brand,
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
   secondary: { backgroundColor: t.colors.surface, borderColor: t.colors.borderStrong },
   ghost: { backgroundColor: 'transparent', borderColor: 'transparent' },
   danger: { backgroundColor: t.colors.danger, borderColor: t.colors.danger },
-  pressed: { opacity: 0.85 },
+  pressed: { opacity: 0.9, transform: [{ scale: 0.97 }] },
   hovered: { opacity: 0.92 },
   focused: {
     outlineColor: t.colors.focus,
@@ -44,7 +53,7 @@ const useStyles = makeStyles((t) => ({
   disabled: { opacity: 0.5 },
   fullWidth: { alignSelf: 'stretch' },
   content: { flexDirection: 'row', alignItems: 'center', gap: t.space.sm, flexShrink: 1 },
-  label: { flexShrink: 1, textAlign: 'center' },
+  label: { flexShrink: 1, textAlign: 'center', fontFamily: t.fonts.round, fontSize: 17 },
 }));
 
 export function Button({
@@ -61,7 +70,7 @@ export function Button({
   const isDisabled = disabled === true || loading;
   const foreground =
     variant === 'primary'
-      ? colors.onPrimary
+      ? colors.onBrand
       : variant === 'danger'
         ? colors.surface
         : variant === 'ghost'
