@@ -9,6 +9,9 @@ const PublicEnvSchema = z.object({
   EXPO_PUBLIC_SUPABASE_URL: z.url(),
   // Clave publicable de Supabase: pública por diseño (los datos los protege RLS).
   EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
+  // Web pública (por ejemplo https://crecer-demo.vercel.app). En el teléfono, los correos de
+  // confirmación vuelven ahí: un enlace a la app (crecerencasa://) no abre desde el mail.
+  EXPO_PUBLIC_WEB_URL: z.url().optional(),
 });
 
 // Expo solo inyecta las variables EXPO_PUBLIC_* cuando se leen de forma estática
@@ -18,6 +21,7 @@ export const publicEnv = PublicEnvSchema.parse({
   EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
   EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL,
   EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  EXPO_PUBLIC_WEB_URL: process.env.EXPO_PUBLIC_WEB_URL || undefined,
 });
 
 /**

@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { friendlyError } from '@/copy/errors';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { AuthScreen, OAuthButtons, TextLink } from '@/features/auth/components';
-import { authRedirectUrl } from '@/features/auth/redirect';
+import { emailRedirectUrl } from '@/features/auth/redirect';
 import { BroteSays } from '@/features/brote/Brote';
 import { supabase } from '@/lib/supabase';
 import { Banner, Button, FormTextField, Text } from '@/ui';
@@ -35,7 +35,7 @@ export default function SignUpScreen() {
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: authRedirectUrl('/callback') },
+      options: { emailRedirectTo: emailRedirectUrl('/callback?tipo=confirmacion') },
     });
     if (signUpError) {
       setError(friendlyError(signUpError));
