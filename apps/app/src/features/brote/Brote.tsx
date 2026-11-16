@@ -27,7 +27,7 @@ export function Brote({
 }: {
   mood?: BroteMood;
   size?: number;
-  /** Cambiar este número hace que Brote dé un saltito (por ejemplo, al marcar "Hecho"). */
+  /** Cambiar este número hace que Brote dé un saltito (por ejemplo, al marcar "Realizado"). */
   celebrate?: number;
 }) {
   const reduced = useReducedMotion();
@@ -144,24 +144,26 @@ function BroteDrawing({ mood, size }: { mood: BroteMood; size: number }) {
 
 const useStyles = makeStyles((t) => ({
   row: { flexDirection: 'row', alignItems: 'flex-end', gap: t.space.md },
+  // Lo que dice Brote es lo más importante de la pantalla: globo con borde de color y letra grande.
   bubble: {
     flexShrink: 1,
     backgroundColor: t.colors.surface,
     borderRadius: t.radius.lg,
     borderBottomLeftRadius: 6,
-    paddingVertical: t.space.md,
+    paddingVertical: t.space.lg,
     paddingHorizontal: t.space.lg,
-    borderWidth: 2,
-    borderColor: t.colors.border,
+    borderWidth: 3,
+    borderColor: t.colors.brand,
     marginBottom: t.space.xl,
   },
+  says: { fontFamily: t.fonts.display, fontSize: 21, lineHeight: 28, color: t.colors.ink },
 }));
 
 /** Brote con un globo de diálogo: la forma de "hablarle" a la familia en los momentos clave. */
 export function BroteSays({
   children,
   mood = 'hola',
-  size = 96,
+  size = 112,
   celebrate,
 }: {
   children: string;
@@ -174,7 +176,7 @@ export function BroteSays({
     <View style={styles.row}>
       <Brote mood={mood} size={size} celebrate={celebrate} />
       <View style={styles.bubble} accessibilityLiveRegion="polite">
-        <Text variant="bodyStrong">{children}</Text>
+        <Text style={styles.says}>{children}</Text>
       </View>
     </View>
   );

@@ -37,7 +37,7 @@ export function AuthScreen({
       <View style={styles.header}>
         <Logo size="lg" />
       </View>
-      {greeting ? <BroteSays size={84}>{greeting}</BroteSays> : null}
+      {greeting ? <BroteSays size={104}>{greeting}</BroteSays> : null}
       <Card>
         <Text variant="heading">{title}</Text>
         {subtitle ? <Text tone="muted">{subtitle}</Text> : null}

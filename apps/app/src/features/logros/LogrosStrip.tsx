@@ -3,13 +3,12 @@ import { Flame } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 
-import { BroteSays } from '@/features/brote/Brote';
-import { Confetti } from '@/features/chequeo/Confetti';
+import { GuidePopup } from '@/features/brote/GuidePopup';
 import { feedback } from '@/features/feedback/feedback';
 import { localDate } from '@/features/plans/queries';
 import { storage } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
-import { makeStyles, Text, useTheme } from '@/ui';
+import { Text, makeStyles, useOverlayTurn, useTheme } from '@/ui';
 
 import { badges, bestStreak, currentStreak } from './logros';
 
@@ -105,7 +104,10 @@ export function LogrosStrip({ familyId }: { familyId: string }) {
   const { colors } = useTheme();
   const progress = useFamilyProgress(familyId);
   const [fresh, setFresh] = useState<string | null>(null);
+  const [showing, setShowing] = useState(false);
   const list = progress.data ? badges(progress.data) : [];
+  const freshBadge = list.find((b) => b.id === fresh);
+  const popupVisible = useOverlayTurn('logro', showing && freshBadge !== undefined);
   const earnedIds = list
     .filter((b) => b.earned)
     .map((b) => b.id)
@@ -124,6 +126,7 @@ export function LogrosStrip({ familyId }: { familyId: string }) {
         const newOne = earnedIds.split(',').find((id) => !seen.has(id));
         if (raw !== null && newOne) {
           setFresh(newOne);
+          setShowing(true);
           feedback('achievement');
         }
         void storage.setItem(seenKey(familyId), earnedIds).catch(() => undefined);
@@ -134,18 +137,25 @@ export function LogrosStrip({ familyId }: { familyId: string }) {
   }, [earnedIds, familyId]);
 
   if (!progress.data) return null;
-  const freshBadge = list.find((b) => b.id === fresh);
 
   return (
     <View style={{ gap: 12 }}>
-      {freshBadge ? (
-        <>
-          <Confetti trigger={1} />
-          <BroteSays mood="feliz" celebrate={1}>
-            {`¡Nuevo logro: ${freshBadge.title}! ${freshBadge.description}.`}
-          </BroteSays>
-        </>
-      ) : null}
+      {/* Logro nuevo: ventana grande con Brote festejando. */}
+      <GuidePopup
+        visible={popupVisible}
+        celebrate
+        title={freshBadge ? `¡Nuevo logro!` : ''}
+        message={freshBadge ? `${freshBadge.title}: ${freshBadge.description}.` : undefined}
+        secondary={{
+          label: '¡Genial!',
+          onPress: () => {
+            setShowing(false);
+          },
+        }}
+        onClose={() => {
+          setShowing(false);
+        }}
+      />
       <Text variant="heading">Tus logros</Text>
       <ScrollView
         horizontal

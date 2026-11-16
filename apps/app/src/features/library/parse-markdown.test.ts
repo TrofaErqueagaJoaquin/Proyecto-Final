@@ -1,4 +1,4 @@
-import { parseInline, parseMarkdown } from './parse-markdown';
+import { parseInline, parseMarkdown, splitSections } from './parse-markdown';
 
 describe('parseMarkdown', () => {
   it('reconoce títulos, párrafos y listas', () => {
@@ -45,5 +45,30 @@ describe('parseMarkdown', () => {
 describe('parseInline', () => {
   it('deja como texto los asteriscos sin cerrar', () => {
     expect(parseInline('a **b')).toEqual([{ text: 'a **b', bold: false }]);
+  });
+});
+
+describe('splitSections', () => {
+  it('corta por títulos ## y deja los ### adentro', () => {
+    const source = [
+      'Intro.',
+      '',
+      '## Lo que **más** necesita',
+      '- Jugar.',
+      '### Detalle',
+      'Texto.',
+      '',
+      '## Pantallas',
+      '- Poco.',
+    ].join('\n');
+    expect(splitSections(source)).toEqual([
+      { title: null, body: 'Intro.' },
+      { title: 'Lo que más necesita', body: '- Jugar.\n### Detalle\nTexto.' },
+      { title: 'Pantallas', body: '- Poco.' },
+    ]);
+  });
+
+  it('sin títulos devuelve todo junto', () => {
+    expect(splitSections('Solo texto.')).toEqual([{ title: null, body: 'Solo texto.' }]);
   });
 });

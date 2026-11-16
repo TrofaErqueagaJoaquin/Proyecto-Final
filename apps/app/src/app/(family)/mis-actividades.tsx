@@ -3,20 +3,10 @@ import { Bookmark, CalendarDays, CircleCheck, Clock, Puzzle, Target } from 'luci
 import { View } from 'react-native';
 
 import { useActiveFamily } from '@/features/families/queries';
-import { ActivityIcon } from '@/features/library/activityVisuals';
+import { ActivityGrid } from '@/features/library/ActivityTile';
 import { LinkCard } from '@/features/library/LinkCard';
 import { useActivityLogs, useSavedActivities } from '@/features/library/queries';
-import {
-  Badge,
-  Button,
-  Card,
-  EmptyState,
-  ErrorState,
-  Screen,
-  Skeleton,
-  Text,
-  useTheme,
-} from '@/ui';
+import { Button, Card, EmptyState, ErrorState, Screen, Skeleton, Text, useTheme } from '@/ui';
 
 export default function MyActivitiesScreen() {
   const { isPending, family } = useActiveFamily();
@@ -53,7 +43,7 @@ export default function MyActivitiesScreen() {
         <Card>
           <EmptyState
             icon={Bookmark}
-            title="Creá tu familia para guardar actividades"
+            title="Creá tu familia para armar tu lista"
             action={
               <Link href="/bienvenida" asChild>
                 <Button label="Crear mi familia" variant="secondary" />
@@ -63,7 +53,7 @@ export default function MyActivitiesScreen() {
         </Card>
       ) : (
         <>
-          <Text variant="heading">Guardadas</Text>
+          <Text variant="heading">Para hacer</Text>
           {saved.isPending ? (
             <Skeleton height={120} />
           ) : saved.isError ? (
@@ -71,28 +61,28 @@ export default function MyActivitiesScreen() {
           ) : saved.data.length === 0 ? (
             <Card>
               <EmptyState
-                icon={Bookmark}
-                title="Todavía no guardaron actividades"
-                description="Tocá Guardar en una actividad para tenerla a mano."
+                icon={Clock}
+                title="Tu lista está vacía"
+                description="En una actividad, tocá Hacer más tarde."
               />
             </Card>
           ) : (
-            saved.data.map((s) =>
-              s.activities ? (
-                <LinkCard
-                  key={s.activity_id}
-                  href={`/actividades/${s.activities.slug}`}
-                  title={s.activities.title}
-                  description={s.activities.summary}
-                  leading={
-                    <ActivityIcon
-                      categories={s.activities.activity_category_links.map((l) => l.category_code)}
-                    />
-                  }
-                  footer={<Badge icon={Clock}>{`${String(s.activities.duration_min)} min`}</Badge>}
-                />
-              ) : null,
-            )
+            <ActivityGrid
+              activities={saved.data.flatMap((s) =>
+                s.activities
+                  ? [
+                      {
+                        slug: s.activities.slug,
+                        title: s.activities.title,
+                        categories: s.activities.activity_category_links.map(
+                          (l) => l.category_code,
+                        ),
+                      },
+                    ]
+                  : [],
+              )}
+              maxContent={720}
+            />
           )}
 
           <Text variant="heading">Lo que hicieron</Text>
@@ -105,7 +95,7 @@ export default function MyActivitiesScreen() {
               <EmptyState
                 icon={CircleCheck}
                 title="Todavía no registraron actividades"
-                description="Cuando hagan una, tocá La hicimos para llevar la cuenta."
+                description="Cuando hagan una, tocá Realizado."
               />
             </Card>
           ) : (

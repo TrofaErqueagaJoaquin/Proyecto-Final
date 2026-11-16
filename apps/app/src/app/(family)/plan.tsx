@@ -31,7 +31,7 @@ function weekRange(weekStart: string): string {
   return `Del ${RANGE.format(start)} al ${RANGE.format(end)}`;
 }
 
-/** Plan de la semana: 5 a 7 ideas posibles, con "Hecho" y "Otra idea" (F7). */
+/** Plan de la semana: 5 a 7 ideas posibles, con "Realizado" y "Otra idea" (F7). */
 export default function PlanScreen() {
   const { isPending, family } = useActiveFamily();
   const members = useMembers(family?.id);

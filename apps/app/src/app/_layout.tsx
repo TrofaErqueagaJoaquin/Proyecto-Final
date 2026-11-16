@@ -13,6 +13,8 @@ import { useEffect } from 'react';
 import { View } from 'react-native';
 
 import { AuthProvider } from '@/features/auth/AuthProvider';
+import { ActivityFlowProvider } from '@/features/library/ActivityFlow';
+import { OverlayQueueProvider } from '@/ui/OverlayQueue';
 import { DemoBanner } from '@/features/demo/DemoBanner';
 import { queryClient } from '@/lib/query';
 import { ThemeProvider, useTheme } from '@/ui';
@@ -64,10 +66,15 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <View style={{ flex: 1 }}>
-            <DemoBanner />
-            <ThemedNavigation />
-          </View>
+          {/* Detalle de actividades y festejo de "Realizado", disponibles en toda la app. */}
+          <OverlayQueueProvider>
+            <ActivityFlowProvider>
+              <View style={{ flex: 1 }}>
+                <DemoBanner />
+                <ThemedNavigation />
+              </View>
+            </ActivityFlowProvider>
+          </OverlayQueueProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

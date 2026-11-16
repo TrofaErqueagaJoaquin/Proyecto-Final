@@ -28,6 +28,36 @@ export function parseInline(text: string): Inline[] {
   return parts;
 }
 
+export interface Section {
+  /** Texto del título `##` (sin los `**`), o `null` para lo que va antes del primero. */
+  title: string | null;
+  /** Markdown de la sección, sin su título. */
+  body: string;
+}
+
+/** Corta el Markdown en secciones, una por cada título `##` (los `###` quedan adentro). */
+export function splitSections(source: string): Section[] {
+  const sections: Section[] = [];
+  let title: string | null = null;
+  let lines: string[] = [];
+  const flush = () => {
+    const body = lines.join('\n').trim();
+    if (title !== null || body !== '') sections.push({ title, body });
+  };
+  for (const line of source.split(/\r?\n/)) {
+    const heading = /^##\s+(.*)$/.exec(line.trim());
+    if (heading?.[1] !== undefined) {
+      flush();
+      title = heading[1].replace(/\*\*/g, '').trim();
+      lines = [];
+    } else {
+      lines.push(line);
+    }
+  }
+  flush();
+  return sections;
+}
+
 export function parseMarkdown(source: string): Block[] {
   const blocks: Block[] = [];
   let paragraph: string[] = [];

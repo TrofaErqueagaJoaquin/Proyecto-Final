@@ -25,6 +25,7 @@ export function useContentList(type: 'age_stage' | 'situation_card' | 'guide') {
         .from('content_items')
         .select('slug, title, summary, evidence_label, age_min_months, age_max_months')
         .eq('type', type)
+        .eq('status', 'published')
         .order('sort_order');
       if (error) throw error;
       return data;
@@ -44,6 +45,7 @@ export function useContentItem(slug: string | undefined) {
           'slug, type, title, summary, body_md, evidence_label, reviewed_at, updated_at, content_sources (locator, sources (slug, citation, url, doi, verification_status))',
         )
         .eq('slug', slug ?? '')
+        .eq('status', 'published')
         .maybeSingle();
       if (error) throw error;
       return data;
@@ -76,6 +78,8 @@ export function useActivities() {
         .select(
           'id, slug, title, summary, objective, age_min_months, age_max_months, duration_min, cost_level, space, materials, evidence_label, activity_category_links (category_code)',
         )
+        // Solo lo publicado: con permiso de contenido, la base también deja leer borradores.
+        .eq('status', 'published')
         .order('title');
       if (error) throw error;
       return data
@@ -118,6 +122,7 @@ export function useActivity(slug: string | undefined) {
           '*, activity_steps (position, body), activity_category_links (activity_categories (code, label)), activity_sources (locator, sources (slug, citation, url, doi, verification_status))',
         )
         .eq('slug', slug ?? '')
+        .eq('status', 'published')
         .maybeSingle();
       if (error) throw error;
       if (!data) return null;
@@ -222,6 +227,11 @@ export function useLogActivity(familyId: string | undefined) {
         if (participants.error) throw participants.error;
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: libraryKeys.logs(familyId ?? '') }),
+    // Registros, racha y logros de la familia, y el plan (por si la actividad estaba planificada).
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['family'] }),
+        queryClient.invalidateQueries({ queryKey: ['plans'] }),
+      ]),
   });
 }
