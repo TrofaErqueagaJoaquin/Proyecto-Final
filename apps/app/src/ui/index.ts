@@ -3,6 +3,7 @@ export { Checkbox } from './Checkbox';
 export { Badge, ChipGroup, ConfirmAction } from './Choice';
 export { EvidenceChip } from './EvidenceChip';
 export { Banner, EmptyState, ErrorState, Skeleton } from './Feedback';
+export { BrandMark } from './BrandMark';
 export { Card, GrowthLine, Logo, Screen } from './Layout';
 export { Text, type TextTone, type TextVariant } from './Text';
 export { FormTextField } from './FormTextField';

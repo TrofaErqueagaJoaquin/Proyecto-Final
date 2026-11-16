@@ -1,9 +1,9 @@
-import { Sprout } from 'lucide-react-native';
 import type { ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
+import { BrandMark } from './BrandMark';
 import { Text } from './Text';
 import { makeStyles, useTheme } from './theme';
 
@@ -85,22 +85,35 @@ export function Card({ children, style }: { children: ReactNode; style?: ViewSty
   return <View style={[styles.card, style]}>{children}</View>;
 }
 
+/** Logotipo: isotipo (casa con brote) + "Crecer en Casa". `lg` para la entrada a la app. */
 export function Logo({ size = 'md' }: { size?: 'md' | 'lg' }) {
   const styles = useStyles();
   const { colors } = useTheme();
+  const large = size === 'lg';
   return (
-    <View style={styles.logo}>
-      <Sprout color={colors.primary} size={size === 'lg' ? 32 : 24} aria-hidden />
+    <View style={styles.logo} accessibilityRole="image" accessibilityLabel="Crecer en Casa">
+      <BrandMark size={large ? 64 : 32} />
       <Text
         // Marca, no encabezado: usa la tipografía de títulos sin rol de heading.
         variant="bodyStrong"
         style={{
           fontFamily: 'Nunito_800ExtraBold',
-          fontSize: size === 'lg' ? 31 : 20,
-          lineHeight: size === 'lg' ? 38 : 26,
+          fontSize: large ? 30 : 20,
+          lineHeight: large ? 34 : 26,
         }}
       >
-        Crecer en Casa
+        {large ? 'Crecer\n' : 'Crecer '}
+        <Text
+          variant="bodyStrong"
+          style={{
+            fontFamily: 'Nunito_800ExtraBold',
+            fontSize: large ? 30 : 20,
+            lineHeight: large ? 34 : 26,
+            color: colors.primary,
+          }}
+        >
+          en Casa
+        </Text>
       </Text>
     </View>
   );

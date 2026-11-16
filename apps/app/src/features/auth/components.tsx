@@ -35,7 +35,7 @@ export function AuthScreen({
   return (
     <Screen maxWidth={480}>
       <View style={styles.header}>
-        <Logo />
+        <Logo size="lg" />
       </View>
       {greeting ? <BroteSays size={84}>{greeting}</BroteSays> : null}
       <Card>
