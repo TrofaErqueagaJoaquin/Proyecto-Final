@@ -29,6 +29,7 @@
     "demo:reset": "tsx --env-file=apps/api/.env.demo scripts/demo/reset.mts",
     "demo:capture": "tsx --env-file=apps/api/.env.demo scripts/demo/capture.mts",
     "demo:screens": "tsx --env-file=apps/api/.env.demo scripts/demo/screens.mts",
+    "demo:profe": "tsx --env-file=apps/api/.env.demo scripts/demo/profe.mts",
     "test:scripts": "tsx --test scripts/demo/guards.test.ts scripts/vercel-rewrites.test.ts",
     "prepare": "husky"
   },

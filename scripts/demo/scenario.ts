@@ -8,8 +8,13 @@ export const email = (user: string) => `${user}@${DEMO_EMAIL_DOMAIN}`;
 export interface DemoUser {
   key: string;
   name: string;
-  /** Cuentas de administración: sobreviven al reinicio para conservar su MFA. */
-  staff?: 'platform_admin' | 'credential_verifier';
+  /** Roles de administración. Estas cuentas sobreviven al reinicio para conservar su MFA. */
+  staff?: ('platform_admin' | 'credential_verifier' | 'content_publisher')[];
+  /**
+   * Cuenta sin segundo factor que conserva su contraseña entre reinicios: la del profe, que carga
+   * contenido en la demo (ADR-036). La crea `pnpm demo:profe`.
+   */
+  keepPassword?: boolean;
 }
 
 export const USERS: DemoUser[] = [
@@ -20,8 +25,14 @@ export const USERS: DemoUser[] = [
   { key: 'paula', name: 'Lic. Paula Ríos' },
   { key: 'martin', name: 'Dr. Martín Suárez' },
   { key: 'ana', name: 'Lic. Ana Benítez' },
-  { key: 'verificador', name: 'Verificación (demo)', staff: 'credential_verifier' },
-  { key: 'admin', name: 'Administración (demo)', staff: 'platform_admin' },
+  // Administración y verificación también cargan contenido (pedido del profe, ADR-036).
+  {
+    key: 'verificador',
+    name: 'Verificación (demo)',
+    staff: ['credential_verifier', 'content_publisher'],
+  },
+  { key: 'admin', name: 'Administración (demo)', staff: ['platform_admin', 'content_publisher'] },
+  { key: 'profe', name: 'Profe (demo)', staff: ['content_publisher'], keepPassword: true },
 ];
 
 export interface DemoProfessional {

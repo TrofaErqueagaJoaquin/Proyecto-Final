@@ -6,7 +6,6 @@
 // cuentas se generan en cada reinicio y se muestran SOLO en esta terminal: guardalas en tu gestor.
 
 import { spawnSync } from 'node:child_process';
-import { randomBytes } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 
 import {
@@ -26,7 +25,16 @@ import { CURRENT_POLICY_VERSION, type Json } from '@crecer/shared';
 
 import { ConversationFixtureSchema } from './fixtures.ts';
 import { DEMO_EMAIL_DOMAIN } from './guards.ts';
-import { demoId, enforceGuards, must, ok, service, sessionFor, type Db } from './lib.ts';
+import {
+  demoId,
+  demoPassword,
+  enforceGuards,
+  must,
+  ok,
+  service,
+  sessionFor,
+  type Db,
+} from './lib.ts';
 import {
   email,
   OBSERVATIONS,
@@ -63,7 +71,7 @@ await enforceGuards(
 
 // Los catálogos de roles y permisos vienen de supabase/seed.sql, que `db push` no aplica.
 const roles = must(await service.from('roles').select('code'), 'roles');
-const missingRoles = USERS.flatMap((u) => (u.staff ? [u.staff] : [])).filter(
+const missingRoles = [...new Set(USERS.flatMap((u) => u.staff ?? []))].filter(
   (code) => !roles.some((r) => r.code === code),
 );
 if (missingRoles.length > 0) {
@@ -118,17 +126,6 @@ for (const script of ['scripts/content-sync.mts', 'scripts/kb-ingest.mts']) {
 
 // ── 3. Cuentas ──────────────────────────────────────────────────────────
 
-/**
- * Contraseña al azar que cumple la política de Supabase Auth (mínimo 8, con letras y números):
- * base64url puede no traer ningún dígito, así que se asegura uno de cada.
- */
-function demoPassword(): string {
-  const base = randomBytes(12).toString('base64url');
-  const digit = String(randomBytes(1)[0]! % 10);
-  const letter = 'abcdefghijkmnpqrstuvwxyz'[randomBytes(1)[0]! % 24];
-  return `${base}${letter}${digit}`;
-}
-
 step('Creando cuentas');
 const ids: Record<string, string> = {};
 const passwords: [string, string][] = [];
@@ -142,7 +139,9 @@ for (const user of USERS) {
     // ejemplo, si un reinicio anterior se cortó antes de mostrar la contraseña), recibe una nueva.
     const factors = await service.auth.admin.mfa.listFactors({ userId: kept });
     if (factors.error) throw new Error(`Factores de ${address}: ${factors.error.message}`);
-    if (factors.data.factors.some((f) => f.status === 'verified')) {
+    if (user.keepPassword === true) {
+      passwords.push([address, '(sin cambios)']);
+    } else if (factors.data.factors.some((f) => f.status === 'verified')) {
       passwords.push([address, '(sin cambios: tiene verificación en dos pasos)']);
     } else {
       ok(await service.auth.admin.updateUserById(kept, { password }), `Contraseña de ${address}`);
@@ -167,13 +166,15 @@ const id = (key: string) => {
   return value;
 };
 
-for (const user of USERS.filter((u) => u.staff)) {
-  ok(
-    await service
-      .from('user_roles')
-      .upsert({ user_id: id(user.key), role_code: user.staff ?? '' }, { ignoreDuplicates: true }),
-    'user_roles',
-  );
+for (const user of USERS) {
+  for (const role of user.staff ?? []) {
+    ok(
+      await service
+        .from('user_roles')
+        .upsert({ user_id: id(user.key), role_code: role }, { ignoreDuplicates: true }),
+      'user_roles',
+    );
+  }
 }
 const accepted = new Set(
   must(

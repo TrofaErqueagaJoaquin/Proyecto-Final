@@ -1,6 +1,6 @@
 // Utilidades compartidas por demo:reset y demo:capture.
 
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { createInterface } from 'node:readline/promises';
 
 import { type Database } from '@crecer/shared';
@@ -87,4 +87,34 @@ export async function enforceGuards(action: string): Promise<void> {
     // Sin process.exit: en Windows, salir con la terminal todavía abierta corta con un error de libuv.
     throw new Error(`No se hace nada:\n- ${problems.join('\n- ')}`);
   }
+}
+
+/**
+ * Las mismas guardas, sin pedir la frase: para scripts que no borran nada (demo:profe). Igual
+ * tienen que apuntar al proyecto demo marcado como tal.
+ */
+export async function enforceTarget(): Promise<void> {
+  const setting = await service
+    .from('app_settings')
+    .select('value')
+    .eq('key', ENVIRONMENT_SETTING_KEY)
+    .maybeSingle();
+  const problems = checkGuards({
+    appEnv: env.APP_ENV,
+    supabaseUrl: env.SUPABASE_URL,
+    confirmation: CONFIRMATION_PHRASE,
+    environmentSetting: setting.data?.value ?? null,
+  });
+  if (problems.length > 0) throw new Error(`No se hace nada:\n- ${problems.join('\n- ')}`);
+}
+
+/**
+ * Contraseña al azar que cumple la política de Supabase Auth (mínimo 8, con letras y números):
+ * base64url puede no traer ningún dígito, así que se asegura uno de cada.
+ */
+export function demoPassword(): string {
+  const base = randomBytes(12).toString('base64url');
+  const digit = String(randomBytes(1)[0]! % 10);
+  const letter = 'abcdefghijkmnpqrstuvwxyz'[randomBytes(1)[0]! % 24];
+  return `${base}${letter}${digit}`;
 }
