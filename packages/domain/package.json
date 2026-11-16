@@ -18,7 +18,7 @@
   "devDependencies": {
     "@crecer/config": "workspace:*",
     "eslint": "^10.13.0",
-    "typescript": "~6.0.3",
+    "typescript": "~7.0.2",
     "vitest": "^5.0.5",
     "yaml": "^2.9.1"
   }
