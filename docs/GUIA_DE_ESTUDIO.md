@@ -7,7 +7,7 @@ seguí los enlaces a los documentos de `docs/planning/`.
 > **Cómo estudiar con esta guía:** leé una sección, hacé el ejercicio con la demo
 > (`crecer-demo.vercel.app`) y mirá en Supabase (**Table Editor**) qué filas aparecieron. Al final
 > hay 40 preguntas de práctica para decir en voz alta, y después las preguntas probables sobre las
-> correcciones del profe.
+> correcciones del profe y sobre las mejoras de experiencia.
 
 ## Índice
 
@@ -26,6 +26,7 @@ seguí los enlaces a los documentos de `docs/planning/`.
 13. [Ejercicios con la demo](#13-ejercicios-con-la-demo)
 14. [Preguntas de práctica](#14-preguntas-de-práctica)
 15. [Correcciones del profe: preguntas probables](#15-correcciones-del-profe-preguntas-probables)
+16. [Mejoras de experiencia: preguntas probables](#16-mejoras-de-experiencia-preguntas-probables)
 
 ---
 
@@ -33,12 +34,12 @@ seguí los enlaces a los documentos de `docs/planning/`.
 
 Crecer en Casa acompaña a familias que crían con pantallas. Tiene cuatro funciones:
 
-| Función         | Qué hace                                                             | Dónde se ve                 |
-| --------------- | -------------------------------------------------------------------- | --------------------------- |
-| **Comprender**  | Biblioteca pública por edad, con la evidencia etiquetada             | Inicio, etapas, fichas      |
-| **Identificar** | Chequeo de 1 minuto, chequeos por tema y evaluación completa         | Hoy → chequeo, Evaluaciones |
-| **Actuar**      | Plan semanal de actividades, "Realizado", rachas, logros y objetivos | Hoy, Plan, Objetivos        |
-| **Acompañarse** | Asistente que cita fuentes y profesionales verificados con permiso   | Asistente, Profesionales    |
+| Función         | Qué hace                                                             | Dónde se ve              |
+| --------------- | -------------------------------------------------------------------- | ------------------------ |
+| **Comprender**  | Biblioteca pública por edad, con la evidencia etiquetada             | Inicio, etapas, fichas   |
+| **Identificar** | Chequeo de 1 minuto, chequeos por tema y evaluación completa         | Hoy → chequeo, Chequeos  |
+| **Actuar**      | Plan semanal de actividades, "Realizado", rachas, logros y objetivos | Hoy, Plan, Objetivos     |
+| **Acompañarse** | Asistente que cita fuentes y profesionales verificados con permiso   | Asistente, Profesionales |
 
 Lo que **no** es: no diagnostica, no vigila a los chicos y no reemplaza a un profesional.
 
@@ -313,7 +314,7 @@ esa persona.
 | Sin cuenta           | Biblioteca, actividades y directorio públicos                | Todo lo demás                           |
 
 Además: las operaciones delicadas son **funciones `security definer`** que validan todo adentro
-(`create_family`, `request_care`, `save_week_plan`…), y hay **254 pruebas pgTAP**
+(`create_family`, `request_care`, `save_week_plan`…), y hay **269 pruebas pgTAP**
 (`supabase/tests/`) que comprueban estas reglas en cada cambio. Ver también
 [DEFENSA_BASE_DE_DATOS.md](DEFENSA_BASE_DE_DATOS.md) y
 [ROLES_AND_PERMISSIONS.md](planning/ROLES_AND_PERMISSIONS.md).
@@ -339,7 +340,7 @@ Además: las operaciones delicadas son **funciones `security definer`** que vali
 | Tablas y reglas de seguridad          | `supabase/migrations/` (en orden: identidad, familias, contenido…)     |
 | Pruebas de seguridad de la base       | `supabase/tests/`                                                      |
 | Textos de la biblioteca y actividades | `content/`                                                             |
-| Decisiones y su porqué                | `docs/planning/DECISIONS.md` (ADR-001 a ADR-037)                       |
+| Decisiones y su porqué                | `docs/planning/DECISIONS.md` (ADR-001 a ADR-038)                       |
 
 Cada carpeta importante tiene su `README.md` con qué hay ahí y por dónde empezar.
 
@@ -400,7 +401,7 @@ Respondé en voz alta y después compará.
     pasos obligatoria (salvo cargar contenido en la demo, sección 15) y auditoría.
 16. **¿Qué guarda la auditoría?** Quién, qué acción, sobre qué y cuándo; nunca el texto de
     mensajes u observaciones. Y no se puede modificar.
-17. **¿Cómo se prueba que las reglas funcionan?** Con 254 pruebas pgTAP que corren en cada cambio
+17. **¿Cómo se prueba que las reglas funcionan?** Con 269 pruebas pgTAP que corren en cada cambio
     en GitHub.
 18. **¿Por qué PostgreSQL y no MySQL?** Por RLS nativa, funciones `security definer`, búsqueda de
     texto en español y pgvector (ver `DEFENSA_BASE_DE_DATOS.md`).
@@ -502,3 +503,47 @@ verla primera y no había forma). Las decisiones están en ADR-036 (panel de con
 48. **¿Cómo elige la ventana "¿Seguimos con otra?" la siguiente actividad?** Con reglas, sin IA: la
     próxima pendiente del plan; si no hay, una de la lista Para hacer; si tampoco, una de 10 minutos
     sin materiales.
+
+## 16. Mejoras de experiencia: preguntas probables
+
+Después de la Expotec se revisó toda la app con el criterio del profe: **una persona cansada y sin
+intuición tecnológica**. Salió un backlog de 75 tareas (`docs/planning/BACKLOG.md`), hecho en cuatro
+tandas (PR #13 a #16, más el #17). Las decisiones están en ADR-038.
+
+49. **¿Cómo se organizó el trabajo?** Primero, tres auditorías de solo lectura con agentes
+    (familia, profesional y administración, y estética): 110 hallazgos que quedaron en 75 tareas con
+    prioridad. Después, cuatro tandas; cada una partida en carriles que trabajan en paralelo y
+    **nunca tocan el mismo archivo**. Al cerrar cada tanda: lint, tipos, pruebas y una revisión
+    independiente del diff antes de unir.
+50. **¿Desde dónde se cierra sesión?** Desde cualquier espacio: **Mi cuenta** está siempre en la
+    barra (familia, profesional y administración), y arriba tiene "Ir a:" (los otros espacios) y
+    **Cerrar sesión**, con confirmación. Las pantallas sin barra (segundo factor, error) tienen
+    "Volver a mi cuenta" y "Cerrar sesión". Era lo que el profe había marcado.
+51. **¿Qué pasa si se corta internet?** El aviso dice "Parece que no hay internet…" y trae
+    **Reintentar** (`ErrorBanner`, `ErrorState`, en `ui/Feedback.tsx`). Si la sesión venció, el
+    botón es "Ingresar de nuevo". Nunca queda un "error inesperado" sin salida.
+52. **¿Cómo se validan los formularios?** Con una sola regla (`useFieldErrors`): el error aparece al
+    **salir del campo** o al intentar guardar, no mientras se escribe, y se va apenas se corrige.
+    Al guardar con errores, el foco va al primero.
+53. **¿Por qué nunca hay dos ventanas a la vez?** Porque en iOS la segunda no llega a aparecer y en
+    Android se apilan. Cada ventana pide turno (`useOverlayTurn`), y una confirmación adentro de una
+    ventana pregunta **en el mismo lugar**, reemplazando al botón.
+54. **¿Qué pasa si salgo de un formulario a medio cargar?** Pregunta "¿Salir sin guardar?"
+    (`useUnsavedGuard`), tanto con "Volver" como con la barra o el gesto del celular.
+55. **¿Cómo se arregló que se perdiera la invitación?** El destino viaja en la dirección (`next`)
+    por registrarse, el correo y la bienvenida, y además se guarda en el dispositivo por 7 días
+    (`pendingInvitation.ts`). Si se corta el `next`, la bienvenida la retoma y no arma una familia
+    vacía.
+56. **¿Qué cambió en la base?** Una sola migración: `20261117000100_credential_review_notes.sql`.
+    `verify_credential` exige una **nota** para rechazar o pedir información, y pedir información
+    devuelve la credencial a `declared` para que el profesional la corrija. La nota **no** va a la
+    auditoría (solo `with_note: true`). Tiene 15 pruebas pgTAP propias.
+57. **¿Por qué una 404 propia y cómo funciona en Vercel?** Antes aparecía "Unmatched Route", en
+    inglés. Ahora `+not-found.tsx` muestra a Brote y un solo botón. Como la web es estática, el build
+    copia `+not-found.html` a `404.html` y Vercel la sirve para cualquier dirección que no existe.
+58. **¿Por qué "Chequeos" y no "Evaluaciones"?** Eran dos nombres y dos estilos para lo mismo. Ahora
+    hay uno solo, con la misma pantalla de una pregunta por vez. En la base siguen siendo
+    `assessment_attempts`: cambió el texto, no el modelo.
+59. **¿Cómo se sabe que no se rompió nada?** Las pruebas de dominio, API, app y base corren en cada
+    cambio (269 de ellas son pgTAP), y cada tanda tuvo su revisión. Lo único que falta es la pasada
+    por el celular que está anotada al final del backlog.

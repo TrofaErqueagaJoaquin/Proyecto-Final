@@ -3,6 +3,7 @@ import { View } from 'react-native';
 
 import { useAuth } from '@/features/auth/AuthProvider';
 import { Brote } from '@/features/brote/Brote';
+import { useHydrated } from '@/lib/useHydrated';
 import { Button, makeStyles, Screen, Text } from '@/ui';
 
 const useStyles = makeStyles((t) => ({
@@ -16,7 +17,9 @@ const useStyles = makeStyles((t) => ({
 /** Página propia para direcciones que no existen (en vez de "Unmatched Route"). */
 export default function NotFoundScreen() {
   const styles = useStyles();
-  const signedIn = useAuth().status === 'signedIn';
+  const auth = useAuth();
+  // Hasta hidratar, igual que el HTML estático (que se genera sin sesión).
+  const signedIn = useHydrated() && auth.status === 'signedIn';
   return (
     <Screen>
       <Stack.Screen options={{ title: 'Página no encontrada' }} />

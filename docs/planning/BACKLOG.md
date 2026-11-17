@@ -1,5 +1,7 @@
 # Backlog de experiencia de usuario (nov 2026)
 
+> **Estado (2026-11-17): todo hecho.** Las 75 tareas están en `main` (PR #13 a #16, una tanda cada uno, y el #17 con lo visto al recorrer la demo). Decisiones en ADR-038 (`DECISIONS.md`). Falta solo la pasada por el celular ("A verificar en el celular", al final).
+
 Sale de unir tres auditorías de solo lectura sobre `main` (`ec25fb7`): familia (`F-xx`), profesional y administración (`P-xx`) y estética (`E-xx`). Son 110 hallazgos que quedan en 75 tareas (`B-01` a `B-75`).
 
 **Criterios (los del profe):** lo corrige una persona cansada, con problemas y sin intuición tecnológica. Cada pantalla tiene que tener poco texto (un título y como mucho una línea), una forma visible de **volver** y de **cerrar sesión**, **un** paso siguiente claro y validación amable (el error aparece al salir del campo y se va mientras se corrige). Ya marcó como error que desde lo profesional no se podía volver al perfil personal ni cerrar sesión, y sigue pasando (P-01).

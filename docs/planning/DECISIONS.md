@@ -633,6 +633,79 @@
   - Con letra más grande entra menos por pantalla: por eso lo secundario va plegado.
 - **Estado.** Aceptada.
 
+### ADR-038 · Mejoras de experiencia después de la Expotec: salir, volver, paso siguiente y errores amables
+
+- **Fecha.** 17/11/2026 (PR #13 a #17).
+- **Contexto.** El profe pidió pensar cada pantalla para **una persona cansada, con problemas y sin
+  intuición tecnológica**: poco texto (un título y como mucho una línea), una forma visible de
+  **volver** y de **cerrar sesión** desde cualquier lado, **un** paso siguiente claro y validación
+  amable (el error aparece al salir del campo y se va mientras se corrige). Ya había marcado que
+  desde lo profesional no se podía volver a la cuenta personal ni cerrar sesión.
+- **Forma de trabajo:**
+  1. **Auditoría con agentes**, de solo lectura sobre `main`: familia, profesional y
+     administración, y estética. Salieron 110 hallazgos.
+  2. **Backlog** (`BACKLOG.md`): los hallazgos unidos en 75 tareas (B-01 a B-75) con prioridad y
+     esfuerzo, más una lista de lo que funciona y **no se toca**.
+  3. **Cuatro tandas**, cada una partida en **carriles paralelos que nunca comparten archivos** (si
+     un carril trae piezas comunes, se une primero). Así varios agentes trabajan a la vez sin pisarse.
+  4. **Revisión independiente por tanda**: al cerrar, `pnpm lint`, `pnpm typecheck` y `pnpm test`,
+     una revisión independiente del diff y un commit con sus arreglos antes del PR (tanda 1 →
+     #13, 2 → #14, 3 → #15, 4 → #16). El #17 suma lo visto al recorrer la demo.
+- **Decisiones de diseño:**
+  1. **"Mi cuenta" y cerrar sesión desde todo espacio.** Familia, profesional y administración
+     tienen el ítem fijo **Mi cuenta** (`/perfil`), que arriba muestra "Ir a: Familia · Profesional
+     · Administración" (solo los que correspondan) y **Cerrar sesión** con confirmación
+     (`features/auth/signOut.tsx`). Al salir se va a la portada con "Cerraste sesión. ¡Hasta
+     pronto!". En la computadora, la barra dice "Espacio: …" y al tocarla ofrece los otros espacios
+     y cerrar sesión. Las pantallas sin barra (segundo factor, error, sin acceso) tienen "Volver a mi
+     cuenta" y "Cerrar sesión" (`SpaceExits`), y la bienvenida, "No soy yo · Cerrar sesión".
+  2. **Errores con "Reintentar"** (`ui/Feedback.tsx`): `ErrorBanner` (aviso en contexto con
+     botón), `ErrorState` (error de carga con "Reintentar" y una segunda salida) y
+     `LoadingScreen`/`ErrorScreen` (con márgenes y área segura). `friendlyError` reconoce la falta
+     de internet y la sesión vencida ("Ingresar de nuevo"). Si falla la carga del plan, no se
+     muestra "sin plan" (invitaría a armar otro).
+  3. **Una ventana por vez** (`useOverlayTurn`, en `ui/OverlayQueue.tsx`): todas las ventanas piden
+     turno. **Confirmar dentro de una ventana** (`ConfirmAction` adentro de un `Sheet`) pregunta en
+     el mismo lugar, reemplazando al botón, en vez de abrir otra ventana encima (en iOS la segunda no
+     llega a aparecer). Suelto en una pantalla, abre su ventana con turno.
+  4. **Paso a paso y validación al salir del campo.** `ui/StepNav.tsx`: siempre "Atrás" a la
+     izquierda y el principal a la derecha, con `Screen scrollKey` para volver arriba al cambiar de
+     paso (chequeos, compartir con un profesional, ficha profesional). `useFieldErrors` es la regla
+     única: el error aparece al salir del campo o al intentar guardar, se va apenas se corrige, el
+     foco va al primero con error y Enter pasa al campo siguiente.
+  5. **"¿Salir sin guardar?"** (`useUnsavedGuard`): un formulario con cambios pregunta ("Seguir
+     cargando" / "Salir") antes de irse por "Volver", la barra del espacio o la navegación del
+     sistema. Se usa en el panel de contenidos, la ficha profesional y compartir con un profesional.
+  6. **La invitación no se pierde** (`features/auth/pendingInvitation.ts`): quien abre una
+     invitación sin cuenta pasa por registrarse, confirmar el correo (o Google) y la bienvenida. El
+     destino viaja en `next` y, como respaldo, se guarda en el dispositivo por 7 días (lo que dura
+     una invitación). Así no termina armando una familia vacía. Se borra al cerrar sesión.
+  7. **Nota obligatoria al rechazar o pedir información** (migración
+     `20261117000100_credential_review_notes.sql`): `verify_credential` exige una nota para
+     `rejected` y `needs_info`; pedir información devuelve la credencial a `declared` para que el
+     profesional la corrija y la reenvíe. El profesional ve la nota en Mi ficha ("Te pidieron:" o
+     "No la aprobamos. Motivo:") con "Corregir y reenviar". La firma de la función no cambia.
+  8. **Página 404 propia** (`app/+not-found.tsx`): Brote, "No encontramos esta página" y un solo
+     botón ("Ir a mi espacio" o "Ir al inicio"). En Vercel, el build copia `+not-found.html` a
+     `404.html` (`apps/app/vercel.json`) para que también la muestre una dirección inexistente.
+  9. **Menos texto y un nombre por cosa:** "Chequeos" en vez de "Evaluaciones"; Familia, Objetivos y
+     resultados en tarjetas que abren una ventana; permisos con interruptores; glosario sin jerga
+     ("quitar el permiso" en vez de "revocar").
+- **Alternativas descartadas:**
+  - **Rehacer las pantallas de cero:** se perdía lo que el profe ya aprobó (tarjetas, animaciones,
+    ventanas de Brote). Se extendió lo que funcionaba.
+  - **Carriles que tocan cualquier archivo:** en paralelo, dos carriles sobre el mismo archivo
+    terminan en conflictos. Por eso cada archivo tiene un solo dueño por tanda, y las piezas comunes
+    se unen antes.
+- **Consecuencias.**
+  - Ninguna pantalla queda sin salida y cualquier error ofrece qué hacer.
+  - La única migración nueva es la de las notas de verificación, con 15 pruebas pgTAP
+    (`supabase/tests/11_credential_review_notes.test.sql`): la nota es obligatoria, la credencial
+    vuelve al profesional, el texto de la nota no va a la auditoría (solo `with_note`) y nadie más
+    lee las notas.
+  - Queda probar en el celular lo anotado en "A verificar en el celular" del backlog.
+- **Estado.** Aceptada.
+
 ---
 
 ## Decisiones pendientes de validación externa

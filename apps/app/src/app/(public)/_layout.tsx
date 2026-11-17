@@ -4,6 +4,7 @@ import { useWindowDimensions, View } from 'react-native';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { publicFallback } from '@/features/shell/backTargets';
 import { ScreenHeader } from '@/features/shell/ScreenHeader';
+import { useHydrated } from '@/lib/useHydrated';
 import { BrandMark, Button, Logo, makeStyles } from '@/ui';
 
 const useStyles = makeStyles((t) => ({
@@ -19,10 +20,13 @@ export default function PublicLayout() {
   const auth = useAuth();
   const pathname = usePathname();
   const { width } = useWindowDimensions();
-  const signedIn = auth.status === 'signedIn';
+  // El HTML estático se genera sin ventana (ancho 0) y sin sesión: hasta hidratar se muestra
+  // igual que ahí, para que React no encuentre diferencias (error #418 en la consola).
+  const hydrated = useHydrated();
+  const signedIn = hydrated && auth.status === 'signedIn';
   const home = pathname === '/';
   // En el teléfono, flecha + logo completo + botón no entran en un renglón.
-  const compact = !home && width < COMPACT_WIDTH;
+  const compact = !home && (!hydrated || width < COMPACT_WIDTH);
   return (
     <View style={styles.root}>
       <ScreenHeader

@@ -104,30 +104,30 @@ async function shot(page: Page, folder: string, name: string, path?: string) {
 }
 
 /**
- * Contesta el chequeo abierto con la última opción (la que más pide trabajar) para que el resultado
- * muestre "por dónde empezar" y una actividad para hoy; "Listo" en los números.
+ * Contesta el chequeo abierto (una pregunta por pantalla) con la última opción, la que más pide
+ * trabajar, para que el resultado muestre "por dónde empezar" y una actividad para hoy. En los
+ * números toca "Más" y sigue.
  */
 async function answerCheck(page: Page) {
-  for (let i = 0; i < 30; i += 1) {
-    await page.waitForTimeout(1500);
+  for (let i = 0; i < 40; i += 1) {
+    await page.waitForTimeout(1200);
     const result = page.getByRole('button', { name: 'Ver mi resultado' });
     if (await result.isVisible().catch(() => false)) {
       await result.click();
       return;
     }
-    // Varias respuestas: se marca la última y se confirma.
-    const box = page.getByRole('checkbox').last();
-    if (await box.isVisible().catch(() => false)) {
-      await box.click();
-      await page.waitForTimeout(500);
+    const more = page.getByRole('button', { name: 'Más', exact: true });
+    if (await more.isVisible().catch(() => false)) {
+      await more.click();
+    } else {
+      const box = page.getByRole('checkbox').last();
+      const option = page.getByRole('radio').last();
+      if (await box.isVisible().catch(() => false)) await box.click();
+      else if (await option.isVisible().catch(() => false)) await option.click();
     }
-    const listo = page.getByRole('button', { name: 'Listo' });
-    if (await listo.isVisible().catch(() => false)) {
-      await listo.click();
-      continue;
-    }
-    const option = page.getByRole('radio').last();
-    if (await option.isVisible().catch(() => false)) await option.click();
+    await page.waitForTimeout(400);
+    const next = page.getByRole('button', { name: 'Siguiente', exact: true });
+    if (await next.isVisible().catch(() => false)) await next.click();
   }
   await page.screenshot({ path: join(OUT, 'movil', 'error-chequeo.jpg'), type: 'jpeg' });
   throw new Error('El chequeo no llegó al resultado (ver movil/error-chequeo.jpg)');
