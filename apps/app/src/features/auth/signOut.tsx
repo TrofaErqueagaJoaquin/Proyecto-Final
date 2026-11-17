@@ -4,6 +4,7 @@ import { CircleUserRound, LogOut } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
 
+import { clearPendingInvitation } from '@/features/auth/pendingInvitation';
 import { supabase } from '@/lib/supabase';
 import { Button, ErrorBanner, makeStyles, Text } from '@/ui';
 
@@ -25,6 +26,8 @@ export function useSignOut() {
     mutationFn: async (scope: SignOutScope) => {
       requestedAt = Date.now();
       const { error } = await supabase.auth.signOut({ scope });
+      // Una invitación guardada no tiene que seguir a la próxima cuenta que ingrese acá.
+      void clearPendingInvitation();
       if (error) throw error;
     },
     onError: async () => {

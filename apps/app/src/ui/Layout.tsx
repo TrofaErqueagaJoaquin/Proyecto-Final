@@ -1,5 +1,12 @@
-import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, View, type ViewStyle } from 'react-native';
+import { useEffect, useRef, type ReactNode } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  View,
+  type ScrollViewInstance,
+  type ViewStyle,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
@@ -41,13 +48,26 @@ export function Screen({
   maxWidth = 720,
   scroll = true,
   edges = ['top', 'bottom'],
+  scrollKey,
 }: {
   children: ReactNode;
   maxWidth?: number;
   scroll?: boolean;
   edges?: ('top' | 'bottom' | 'left' | 'right')[];
+  /**
+   * Al cambiar (el número de paso o de página), la pantalla vuelve arriba: así el paso nuevo se
+   * ve desde el principio y no desde donde estaba el botón "Siguiente".
+   */
+  scrollKey?: string | number;
 }) {
   const styles = useStyles();
+  const scrollRef = useRef<ScrollViewInstance>(null);
+  const firstKey = useRef(scrollKey);
+  useEffect(() => {
+    if (scrollKey === firstKey.current) return;
+    firstKey.current = scrollKey;
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [scrollKey]);
   // Sin desplazamiento propio (chat), el contenido ocupa el alto disponible y su ScrollView interno
   // es el que se desplaza; si no, crece con los mensajes y lo de abajo queda fuera de la pantalla.
   const content = (
@@ -65,6 +85,7 @@ export function Screen({
       >
         {scroll ? (
           <ScrollView
+            ref={scrollRef}
             contentContainerStyle={styles.scroll}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode={ios ? 'interactive' : 'on-drag'}

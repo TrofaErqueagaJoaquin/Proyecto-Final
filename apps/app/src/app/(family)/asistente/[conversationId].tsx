@@ -4,8 +4,14 @@ import { RISK_RESPONSES, type HighRiskCategory } from '@crecer/domain';
 import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Clock, MessageCircle, Send } from 'lucide-react-native';
-import { useRef, useState } from 'react';
-import { ScrollView, View, type ScrollViewInstance } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Platform,
+  ScrollView,
+  View,
+  type ScrollViewInstance,
+  type TextInputKeyPressEvent,
+} from 'react-native';
 
 import {
   AssistantBubble,
@@ -20,6 +26,7 @@ import {
   useDeleteConversation,
   type StoredMessage,
 } from '@/features/assistant/queries';
+import { BroteSays } from '@/features/brote/Brote';
 import {
   Button,
   ConfirmAction,
@@ -40,6 +47,17 @@ function storedRiskCategory(message: StoredMessage): HighRiskCategory | null {
     ([, response]) => message.body.startsWith(response.title),
   );
   return entry?.[0] ?? null;
+}
+
+/** La primera pregunta llega desde la pantalla del asistente por la caché (ver `asistente/index`). */
+const firstQuestionKey = (conversationId: string) => ['asistente-primera-pregunta', conversationId];
+
+/** En la web, Enter envía y Shift+Enter baja de renglón: ¿hay que enviar con esta tecla? */
+function isEnterToSend(event: TextInputKeyPressEvent): boolean {
+  const native = event.nativeEvent as { key: string; shiftKey?: boolean };
+  if (native.key !== 'Enter' || native.shiftKey === true) return false;
+  event.preventDefault();
+  return true;
 }
 
 function retentionLabel(expiresAt: string): string {
@@ -83,9 +101,58 @@ export default function ConversationScreen() {
   const { colors } = useTheme();
   const scroll = useRef<ScrollViewInstance>(null);
   const [question, setQuestion] = useState('');
-  const [pending, setPending] = useState<{ question: string; answer: string } | null>(null);
+  // Si se llegó preguntando desde el asistente, la primera pregunta ya se muestra enviándose.
+  const [first] = useState(() =>
+    queryClient.getQueryData<string>(firstQuestionKey(conversationId)),
+  );
+  const [pending, setPending] = useState<{ question: string; answer: string } | null>(
+    first ? { question: first, answer: '' } : null,
+  );
+  const firstSent = useRef(false);
   // El error del envío guarda la pregunta que falló: "Reintentar" la manda igual.
   const [failed, setFailed] = useState<{ error: unknown; text: string } | null>(null);
+
+  // Manda la pregunta y va mostrando la respuesta (los cambios de estado llegan después).
+  const stream = useCallback(
+    (text: string) => {
+      void sendQuestion(conversationId, text, (event) => {
+        if (event.type === 'delta') {
+          setPending((p) => (p ? { ...p, answer: p.answer + event.text } : p));
+          scroll.current?.scrollToEnd({ animated: true });
+        }
+      })
+        .catch((e: unknown) => {
+          setFailed({ error: e, text });
+          setQuestion(text);
+        })
+        .finally(() => {
+          void queryClient
+            .invalidateQueries({ queryKey: assistantKeys.conversation(conversationId) })
+            .then(() => {
+              setPending(null);
+              void queryClient.invalidateQueries({ queryKey: ['assistant'] });
+            });
+        });
+    },
+    [conversationId, queryClient],
+  );
+  const send = (retryText?: string) => {
+    const text = (retryText ?? question).trim();
+    if (!text || pending) return;
+    setQuestion('');
+    setFailed(null);
+    setPending({ question: text, answer: '' });
+    stream(text);
+  };
+
+  // La pregunta que llegó desde el asistente sale sola, una sola vez.
+  const empty = conversation.data?.messages.length === 0;
+  useEffect(() => {
+    if (!first || !empty || firstSent.current) return;
+    firstSent.current = true;
+    queryClient.removeQueries({ queryKey: firstQuestionKey(conversationId), exact: true });
+    stream(first);
+  }, [first, empty, conversationId, queryClient, stream]);
 
   if (conversation.isPending) return <LoadingScreen />;
   if (conversation.isError) {
@@ -110,31 +177,6 @@ export default function ConversationScreen() {
   }
 
   const c = conversation.data;
-  const send = (retryText?: string) => {
-    const text = (retryText ?? question).trim();
-    if (!text || pending) return;
-    setQuestion('');
-    setFailed(null);
-    setPending({ question: text, answer: '' });
-    void sendQuestion(conversationId, text, (event) => {
-      if (event.type === 'delta') {
-        setPending((p) => (p ? { ...p, answer: p.answer + event.text } : p));
-        scroll.current?.scrollToEnd({ animated: true });
-      }
-    })
-      .catch((e: unknown) => {
-        setFailed({ error: e, text });
-        setQuestion(text);
-      })
-      .finally(() => {
-        void queryClient
-          .invalidateQueries({ queryKey: assistantKeys.conversation(conversationId) })
-          .then(() => {
-            setPending(null);
-            void queryClient.invalidateQueries({ queryKey: ['assistant'] });
-          });
-      });
-  };
 
   return (
     <Screen scroll={false}>
@@ -170,10 +212,7 @@ export default function ConversationScreen() {
           />
         </View>
         {c.messages.length === 0 && !pending ? (
-          <Text tone="muted">
-            Preguntá lo que necesites sobre pantallas, sueño, juego o rutinas. Por ejemplo: “Se pone
-            muy mal cuando le apago la tablet, ¿qué hago?”.
-          </Text>
+          <BroteSays size={88}>¿Qué te preocupa? Contámelo con tus palabras.</BroteSays>
         ) : null}
         {c.messages.map((m) => (
           <Message
@@ -203,18 +242,25 @@ export default function ConversationScreen() {
           if (failed) send(failed.text);
         }}
       />
-      <TextField
-        label="Tu pregunta"
-        value={question}
-        onChangeText={setQuestion}
-        multiline
-        maxLength={ASSISTANT_QUESTION_MAX}
-        editable={!pending}
-        onSubmitEditing={() => {
-          send();
-        }}
-      />
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
+      {/* El botón queda pegado al campo para enviar sin buscarlo. */}
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+        <View style={{ flex: 1 }}>
+          <TextField
+            label="Tu pregunta"
+            value={question}
+            onChangeText={setQuestion}
+            multiline
+            maxLength={ASSISTANT_QUESTION_MAX}
+            editable={!pending}
+            onKeyPress={
+              Platform.OS === 'web'
+                ? (event) => {
+                    if (isEnterToSend(event)) send();
+                  }
+                : undefined
+            }
+          />
+        </View>
         <Button
           label="Enviar"
           icon={Send}
@@ -224,10 +270,10 @@ export default function ConversationScreen() {
             send();
           }}
         />
-        <Text variant="small" tone="muted" style={{ flexShrink: 1, flexBasis: 160, flexGrow: 1 }}>
-          Orienta, no diagnostica. Si hay riesgo inmediato, llamá al 911.
-        </Text>
       </View>
+      <Text variant="small" tone="muted">
+        Orienta, no diagnostica. Si hay riesgo inmediato, llamá al 911.
+      </Text>
     </Screen>
   );
 }

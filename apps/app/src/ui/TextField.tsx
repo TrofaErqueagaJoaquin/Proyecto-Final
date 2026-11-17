@@ -1,6 +1,12 @@
 import { Eye, EyeOff } from 'lucide-react-native';
-import { useId, useState } from 'react';
-import { Pressable, TextInput, View, type TextInputProps } from 'react-native';
+import { useId, useState, type Ref } from 'react';
+import {
+  Pressable,
+  TextInput,
+  View,
+  type TextInputInstance,
+  type TextInputProps,
+} from 'react-native';
 
 import type { Mask } from './masks';
 import { Text } from './Text';
@@ -13,6 +19,8 @@ export interface TextFieldProps extends Omit<TextInputProps, 'style'> {
   error?: string | undefined;
   /** Da formato mientras se escribe (por ejemplo, la barra de MM/AAAA). */
   mask?: Mask;
+  /** Para mover el foco a este campo (Enter en el anterior, o el primer error al guardar). */
+  ref?: Ref<TextInputInstance> | undefined;
 }
 
 const useStyles = makeStyles((t) => ({
@@ -48,9 +56,18 @@ const useStyles = makeStyles((t) => ({
 
 /**
  * Campo con etiqueta visible (nunca solo placeholder), ayuda y error asociados.
- * Con `secureTextEntry`, ofrece mostrar/ocultar la contraseña.
+ * Con `secureTextEntry`, ofrece mostrar/ocultar la contraseña. Con `returnKeyType="next"`, Enter
+ * pasa al campo siguiente sin cerrar el teclado (ver `useFieldErrors().field`).
  */
-export function TextField({ label, hint, error, secureTextEntry, mask, ...rest }: TextFieldProps) {
+export function TextField({
+  label,
+  hint,
+  error,
+  secureTextEntry,
+  mask,
+  ref,
+  ...rest
+}: TextFieldProps) {
   const styles = useStyles();
   const { colors } = useTheme();
   const id = useId();
@@ -65,7 +82,12 @@ export function TextField({ label, hint, error, secureTextEntry, mask, ...rest }
       </Text>
       <View style={[styles.inputRow, focused && styles.focused, error ? styles.invalid : null]}>
         <TextInput
+          // Pasar al siguiente sin que el teclado se cierre y se vuelva a abrir.
+          submitBehavior={
+            rest.returnKeyType === 'next' && rest.multiline !== true ? 'submit' : undefined
+          }
           {...rest}
+          ref={ref}
           accessibilityLabel={label}
           accessibilityLabelledBy={`${id}-label`}
           accessibilityHint={description || undefined}

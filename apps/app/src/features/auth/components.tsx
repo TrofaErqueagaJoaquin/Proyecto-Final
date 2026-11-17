@@ -7,6 +7,7 @@ import { BroteSays } from '@/features/brote/Brote';
 import { Banner, Button, Card, makeStyles, Screen, Text } from '@/ui';
 
 import { signInWithProvider, type OAuthProvider } from './oauth';
+import { isInvitationPath } from './pendingInvitation';
 
 /** Alto mínimo de un enlace suelto: el área táctil recomendada (48 px). */
 const LINK_MIN_HEIGHT = 48;
@@ -36,8 +37,9 @@ const useStyles = makeStyles((t) => ({
 }));
 
 /**
- * Marco común de las pantallas de acceso: Brote, tarjeta centrada y pie. El logo va en la barra de
- * `app/(auth)/_layout.tsx`, así que acá no se repite.
+ * Marco común de las pantallas de acceso: Brote (chico, para que el formulario quede a la vista en
+ * el celular), tarjeta centrada y pie. El logo va en la barra de `app/(auth)/_layout.tsx`, así que
+ * acá no se repite.
  */
 export function AuthScreen({
   title,
@@ -56,7 +58,7 @@ export function AuthScreen({
   const styles = useStyles();
   return (
     <Screen maxWidth={480}>
-      {greeting ? <BroteSays size={104}>{greeting}</BroteSays> : null}
+      {greeting ? <BroteSays size={72}>{greeting}</BroteSays> : null}
       <Card>
         <Text variant="heading">{title}</Text>
         {subtitle ? <Text tone="muted">{subtitle}</Text> : null}
@@ -64,6 +66,19 @@ export function AuthScreen({
       </Card>
       {footer ? <View style={styles.footer}>{footer}</View> : null}
     </Screen>
+  );
+}
+
+/**
+ * Aviso para quien llega desde el enlace de una invitación: explica por qué tiene que entrar y que
+ * después se suma a la familia. No muestra nada si `next` no es una invitación.
+ */
+export function InvitationNotice({ next, children }: { next: unknown; children: string }) {
+  if (!isInvitationPath(next)) return null;
+  return (
+    <Banner tone="info" title="Te invitaron a una familia">
+      {children}
+    </Banner>
   );
 }
 
@@ -155,19 +170,22 @@ export function ActionLink({
 }
 
 /**
- * Ingreso con redes sociales. `leading`: van primero (es el camino más rápido) y el separador
- * "o con tu correo" queda debajo.
+ * Ingreso con redes sociales: Google a la vista y GitHub y Discord dentro de "Otras opciones" (no
+ * le dicen nada a la mayoría de las familias). Los botones son secundarios: el principal de la
+ * pantalla es el del correo. `leading`: van antes del formulario y el separador "o con tu correo"
+ * queda debajo. `next`: adónde seguir después de entrar (por ejemplo, una invitación).
  */
-export function OAuthButtons({ leading = false }: { leading?: boolean }) {
+export function OAuthButtons({ leading = false, next }: { leading?: boolean; next?: string }) {
   const styles = useStyles();
   const [pending, setPending] = useState<OAuthProvider | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [more, setMore] = useState(false);
 
   async function start(provider: OAuthProvider) {
     setError(null);
     setPending(provider);
     try {
-      await signInWithProvider(provider);
+      await signInWithProvider(provider, next);
     } catch (cause) {
       setError(friendlyError(cause));
     } finally {
@@ -190,25 +208,37 @@ export function OAuthButtons({ leading = false }: { leading?: boolean }) {
       {leading ? null : divider}
       <Button
         label="Continuar con Google"
-        variant={leading ? 'primary' : 'secondary'}
+        variant="secondary"
         loading={pending === 'google'}
         disabled={pending !== null}
         onPress={() => void start('google')}
       />
-      <Button
-        label="Continuar con GitHub"
-        variant="secondary"
-        loading={pending === 'github'}
-        disabled={pending !== null}
-        onPress={() => void start('github')}
-      />
-      <Button
-        label="Continuar con Discord"
-        variant="secondary"
-        loading={pending === 'discord'}
-        disabled={pending !== null}
-        onPress={() => void start('discord')}
-      />
+      {more ? (
+        <>
+          <Button
+            label="Continuar con GitHub"
+            variant="secondary"
+            loading={pending === 'github'}
+            disabled={pending !== null}
+            onPress={() => void start('github')}
+          />
+          <Button
+            label="Continuar con Discord"
+            variant="secondary"
+            loading={pending === 'discord'}
+            disabled={pending !== null}
+            onPress={() => void start('discord')}
+          />
+        </>
+      ) : (
+        <ActionLink
+          onPress={() => {
+            setMore(true);
+          }}
+        >
+          Otras opciones
+        </ActionLink>
+      )}
       {error ? <Banner tone="danger">{error}</Banner> : null}
       {leading ? divider : null}
     </View>

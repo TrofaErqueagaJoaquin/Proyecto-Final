@@ -1,4 +1,4 @@
-import { EVIDENCE_LABELS, type EvidenceLabel } from '@crecer/shared';
+import { type EvidenceLabel } from '@crecer/shared';
 import { Save } from 'lucide-react-native';
 import { useState } from 'react';
 import { useWindowDimensions } from 'react-native';
@@ -8,19 +8,46 @@ import {
   AGE_STAGE_OPTIONS,
   agesFromStages,
   CreatedView,
+  EvidencePicker,
   FormWithPreview,
   PublishChoice,
   SourcePicker,
 } from '@/features/admin/ContentFormParts';
 import { useCreateContentItem, usePermissions } from '@/features/admin/queries';
 import { slugify } from '@/features/admin/slug';
+import { useFieldErrors } from '@/features/forms/useFieldErrors';
 import { Markdown } from '@/features/library/Markdown';
 import { Banner, Button, Card, ChipGroup, Disclosure, Screen, Text, TextField } from '@/ui';
 
-const EVIDENCE = Object.entries(EVIDENCE_LABELS).map(([value, { label }]) => ({
-  value: value as EvidenceLabel,
-  label,
-}));
+// Los mismos topes que la tabla content_items.
+const MAX_TITLE = 160;
+const MAX_SUMMARY = 400;
+
+/** Qué falta o sobra en cada campo (`undefined` = está bien). */
+function cardErrors(input: { title: string; summary: string; body: string }) {
+  const title = input.title.trim();
+  const summary = input.summary.trim();
+  return {
+    title:
+      title === ''
+        ? 'Poné un título.'
+        : title.length > MAX_TITLE
+          ? `Hasta ${String(MAX_TITLE)} letras.`
+          : undefined,
+    summary:
+      summary === ''
+        ? 'Contá en una frase de qué se trata.'
+        : summary.length > MAX_SUMMARY
+          ? `Hasta ${String(MAX_SUMMARY)} letras.`
+          : undefined,
+    body:
+      input.body.trim() === ''
+        ? 'Escribí el contenido.'
+        : /<\/?[a-z][^>]*>/i.test(input.body)
+          ? 'Sacá las etiquetas entre < y >.'
+          : undefined,
+  };
+}
 
 /**
  * Cargar una ficha de situación (aparece en Biblioteca → Situaciones). El texto admite el formato
@@ -40,12 +67,12 @@ export default function NewContentScreen() {
   const [evidence, setEvidence] = useState<EvidenceLabel>('propuesta_proyecto');
   const [sources, setSources] = useState<string[]>([]);
   const [publish, setPublish] = useState(true);
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [created, setCreated] = useState<{
     slug: string;
     title: string;
     published: boolean;
   } | null>(null);
+  const fields = useFieldErrors(cardErrors({ title, summary, body }));
 
   if (created) {
     return (
@@ -61,7 +88,7 @@ export default function NewContentScreen() {
             setBody('');
             setStages([]);
             setSources([]);
-            setErrors({});
+            fields.reset();
             setCreated(null);
           }}
         />
@@ -70,15 +97,7 @@ export default function NewContentScreen() {
   }
 
   const submit = () => {
-    const next: Record<string, string> = {};
-    if (title.trim() === '') next.title = 'Poné un título.';
-    if (title.trim().length > 160) next.title = 'Hasta 160 letras.';
-    if (summary.trim() === '') next.summary = 'Contá en una frase de qué se trata.';
-    if (summary.trim().length > 400) next.summary = 'Hasta 400 letras.';
-    if (body.trim() === '') next.body = 'Escribí el contenido.';
-    if (/<\/?[a-z][^>]*>/i.test(body)) next.body = 'El texto no puede tener HTML.';
-    setErrors(next);
-    if (Object.keys(next).length > 0) return;
+    if (!fields.attempt()) return;
     const ages = agesFromStages(stages);
     const willPublish = canPublish && publish;
     create.mutate(
@@ -109,24 +128,27 @@ export default function NewContentScreen() {
         hint="Ej.: Cuando no quiere irse a dormir."
         value={title}
         onChangeText={setTitle}
-        error={errors.title}
-        maxLength={160}
+        onBlur={fields.touch('title')}
+        error={fields.shown('title')}
+        maxLength={MAX_TITLE}
       />
       <TextField
         label="De qué se trata"
         hint="Una o dos frases: es lo que se ve en la lista."
         value={summary}
         onChangeText={setSummary}
-        error={errors.summary}
+        onBlur={fields.touch('summary')}
+        error={fields.shown('summary')}
         multiline
-        maxLength={400}
+        maxLength={MAX_SUMMARY}
       />
       <TextField
         label="Contenido"
         hint="Títulos con ##, listas con - y **negrita**."
         value={body}
         onChangeText={setBody}
-        error={errors.body}
+        onBlur={fields.touch('body')}
+        error={fields.shown('body')}
         multiline
         numberOfLines={10}
       />
@@ -137,15 +159,22 @@ export default function NewContentScreen() {
         value={stages}
         onChange={setStages}
       />
-      <ChipGroup label="Respaldo" options={EVIDENCE} value={evidence} onChange={setEvidence} />
+      <Disclosure title="Más detalles (opcional)">
+        <EvidencePicker value={evidence} onChange={setEvidence} />
+      </Disclosure>
       <Disclosure
         title={sources.length > 0 ? `Fuentes (${String(sources.length)})` : 'Fuentes (opcional)'}
       >
         <SourcePicker value={sources} onChange={setSources} />
       </Disclosure>
+    </>
+  );
+
+  const footer = (
+    <>
       <PublishChoice canPublish={canPublish} value={publish} onChange={setPublish} />
       {create.error ? <Banner tone="danger">{friendlyError(create.error)}</Banner> : null}
-      {Object.keys(errors).length > 0 ? (
+      {fields.attempted && fields.hasErrors ? (
         <Banner tone="caution">Revisá lo marcado arriba.</Banner>
       ) : null}
       <Button
@@ -165,6 +194,7 @@ export default function NewContentScreen() {
       <FormWithPreview
         wide={wide}
         form={form}
+        footer={footer}
         preview={
           <Card style={{ gap: 12 }}>
             <Text variant="label" tone="muted">

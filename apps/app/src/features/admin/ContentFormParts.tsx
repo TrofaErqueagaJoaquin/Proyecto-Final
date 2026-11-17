@@ -1,11 +1,23 @@
-import { AGE_STAGES } from '@crecer/shared';
+import { AGE_STAGES, EVIDENCE_LABELS, type EvidenceLabel } from '@crecer/shared';
 import { Link } from 'expo-router';
-import { CircleCheck, Plus } from 'lucide-react-native';
+import { CircleCheck, Eye, Plus, type LucideIcon } from 'lucide-react-native';
 import { useState, type ReactNode } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { Brote } from '@/features/brote/Brote';
-import { Button, Card, Checkbox, Sheet, Text, TextField } from '@/ui';
+import {
+  Button,
+  Card,
+  Checkbox,
+  ChipGroup,
+  Disclosure,
+  makeStyles,
+  Sheet,
+  Text,
+  TextField,
+  useTheme,
+} from '@/ui';
+import { minTouchTarget } from '@/ui/tokens';
 
 import { useAdminSources } from './queries';
 import { SourceForm } from './SourceForm';
@@ -20,6 +32,86 @@ export function agesFromStages(slugs: string[]): { min: number; max: number } | 
     min: Math.min(...chosen.map((s) => s.minMonths)),
     max: Math.max(...chosen.map((s) => s.maxMonths)),
   };
+}
+
+const EVIDENCE_OPTIONS = Object.entries(EVIDENCE_LABELS).map(([value, { label }]) => ({
+  value: value as EvidenceLabel,
+  label,
+}));
+
+/** En qué se basa lo cargado. Va dentro de "Más detalles": por defecto, propuesta del proyecto. */
+export function EvidencePicker({
+  value,
+  onChange,
+}: {
+  value: EvidenceLabel;
+  onChange: (value: EvidenceLabel) => void;
+}) {
+  return (
+    <ChipGroup
+      label="¿En qué se basa?"
+      options={EVIDENCE_OPTIONS}
+      value={value}
+      onChange={onChange}
+    />
+  );
+}
+
+/**
+ * `Disclosure` que se abre solo cuando adentro aparece un error (y queda abierto: si se cerrara
+ * al corregir, el campo desaparecería mientras se escribe).
+ */
+export function DetailsDisclosure({
+  title,
+  hasError,
+  children,
+}: {
+  title: string;
+  hasError: boolean;
+  children: ReactNode;
+}) {
+  const [forced, setForced] = useState(false);
+  if (hasError && !forced) setForced(true);
+  return (
+    <Disclosure key={forced ? 'abierto' : 'cerrado'} title={title} initiallyOpen={forced}>
+      {children}
+    </Disclosure>
+  );
+}
+
+const useIconStyles = makeStyles((t) => ({
+  button: {
+    width: minTouchTarget,
+    height: minTouchTarget,
+    borderRadius: minTouchTarget / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pressed: { backgroundColor: t.colors.surfaceSunken },
+}));
+
+/** Botón de solo ícono, de 48 px (por ejemplo, el tacho para quitar un paso). */
+export function IconButton({
+  icon: Icon,
+  label,
+  onPress,
+}: {
+  icon: LucideIcon;
+  label: string;
+  onPress: () => void;
+}) {
+  const styles = useIconStyles();
+  const { colors } = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={({ pressed }) => [styles.button, pressed && styles.pressed]}
+    >
+      <Icon color={colors.inkMuted} size={22} aria-hidden />
+    </Pressable>
+  );
 }
 
 /** Lo mismo que acepta la base (panel_source_ids). */
@@ -130,17 +222,13 @@ export function PublishChoice({
   onChange: (publish: boolean) => void;
 }) {
   if (!canPublish) {
-    return (
-      <Text tone="muted">
-        Queda en borrador hasta que alguien con permiso de publicación la revise y la publique.
-      </Text>
-    );
+    return <Text tone="muted">Queda guardada sin publicar hasta que alguien la publique.</Text>;
   }
   return (
     <Checkbox checked={value} onChange={onChange} label="Publicar ahora">
       <Text variant="bodyStrong">Publicar ahora</Text>
       <Text variant="small" tone="muted">
-        Si no, queda en borrador y no la ven las familias.
+        Si no, queda guardada y las familias no la ven.
       </Text>
     </Checkbox>
   );
@@ -172,9 +260,14 @@ export function CreatedView({
       <Text variant="subheading" center>
         {message ??
           (published
-            ? `"${title}" ya está publicada.`
-            : `"${title}" quedó en borrador. Publicala desde Contenidos cuando esté revisada.`)}
+            ? `"${title}" ya la ven las familias.`
+            : `"${title}" quedó guardada sin publicar.`)}
       </Text>
+      {message === undefined && published ? (
+        <Text tone="muted" center>
+          El asistente la va a conocer en la próxima actualización.
+        </Text>
+      ) : null}
       <View style={{ gap: 10, alignSelf: 'stretch' }}>
         {published && viewHref ? (
           <Link href={viewHref as never} asChild>
@@ -188,35 +281,59 @@ export function CreatedView({
           fullWidth
           onPress={onAnother}
         />
-        <Link href="/admin/contenidos" asChild>
-          <Button label="Volver a Contenidos" variant="ghost" fullWidth />
-        </Link>
       </View>
     </Card>
   );
 }
 
-/** Dos columnas en pantallas anchas (formulario y vista previa); una sola en el celular. */
+/**
+ * Dos columnas en pantallas anchas (formulario y vista previa al lado). En el celular, la vista
+ * previa se abre con "Ver cómo queda", antes de guardar (`footer`: publicar, avisos y Guardar).
+ */
 export function FormWithPreview({
   wide,
   form,
   preview,
+  footer,
 }: {
   wide: boolean;
   form: ReactNode;
   preview: ReactNode;
+  footer: ReactNode;
 }) {
+  const [previewOpen, setPreviewOpen] = useState(false);
   if (!wide) {
     return (
       <View style={{ gap: 20 }}>
         {form}
-        {preview}
+        <Button
+          label="Ver cómo queda"
+          variant="secondary"
+          icon={Eye}
+          fullWidth
+          onPress={() => {
+            setPreviewOpen(true);
+          }}
+        />
+        {footer}
+        <Sheet
+          visible={previewOpen}
+          title="Cómo queda"
+          onClose={() => {
+            setPreviewOpen(false);
+          }}
+        >
+          {preview}
+        </Sheet>
       </View>
     );
   }
   return (
     <View style={{ flexDirection: 'row', gap: 24, alignItems: 'flex-start' }}>
-      <View style={{ flex: 1, gap: 20 }}>{form}</View>
+      <View style={{ flex: 1, gap: 20 }}>
+        {form}
+        {footer}
+      </View>
       <View style={{ width: 380 }}>{preview}</View>
     </View>
   );

@@ -1,4 +1,4 @@
-import { ExternalLink, FileBadge } from 'lucide-react-native';
+import { CircleX, ExternalLink, FileBadge } from 'lucide-react-native';
 import { useState } from 'react';
 import { Linking, View } from 'react-native';
 
@@ -20,7 +20,9 @@ import {
   Banner,
   Button,
   Card,
+  Checkbox,
   ChipGroup,
+  ConfirmAction,
   EmptyState,
   ErrorState,
   Screen,
@@ -34,17 +36,63 @@ const METHODS = [
   { value: 'colegio', label: 'Colegio profesional' },
   { value: 'manual', label: 'Revisión manual' },
 ] as const;
+type Method = (typeof METHODS)[number]['value'];
+const METHOD_LABELS: Record<string, string> = Object.fromEntries(
+  METHODS.map((m) => [m.value, m.label]),
+);
+const RESULT_LABELS: Record<string, string> = {
+  verified: 'Aprobada',
+  rejected: 'Rechazada',
+  needs_info: 'Se pidió información',
+};
+const CHECKS = [
+  'El nombre coincide con el del perfil.',
+  'La matrícula figura vigente (REFEPS, SISA o el colegio).',
+  'La profesión coincide con las especialidades.',
+] as const;
 const DATE = new Intl.DateTimeFormat('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
 
 type Credential = NonNullable<ReturnType<typeof useCredentialQueue>['data']>[number];
+type Result = 'verified' | 'rejected' | 'needs_info';
 
-function CredentialReview({ credential }: { credential: Credential }) {
+const DONE_MESSAGES: Record<Result, string> = {
+  verified: 'Aprobada. Ya aparece en el directorio.',
+  needs_info: 'Le enviamos tu pedido. Cuando la corrija, vuelve a esta lista.',
+  rejected: 'Rechazada. Le mostramos el motivo.',
+};
+
+function CredentialReview({
+  credential,
+  onDone,
+}: {
+  credential: Credential;
+  onDone: (message: string) => void;
+}) {
   const verify = useVerifyCredential();
-  const [method, setMethod] = useState<(typeof METHODS)[number]['value']>('refeps');
+  const [method, setMethod] = useState<Method>('refeps');
+  const [checks, setChecks] = useState<boolean[]>(CHECKS.map(() => false));
   const [note, setNote] = useState('');
+  const [noteError, setNoteError] = useState<string | undefined>();
   const [docError, setDocError] = useState<unknown>(null);
   const profile = credential.professional_profiles;
   const pending = credential.status === 'submitted';
+  const allChecked = checks.every(Boolean);
+  const hasNote = note.trim() !== '';
+
+  const send = (result: Result) => {
+    if (result !== 'verified' && !hasNote) {
+      setNoteError('Escribí qué tiene que corregir o por qué no se aprueba.');
+      return;
+    }
+    verify.mutate(
+      { credentialId: credential.id, result, method, note },
+      {
+        onSuccess: () => {
+          onDone(`${profile?.display_name ?? 'Profesional'}: ${DONE_MESSAGES[result]}`);
+        },
+      },
+    );
+  };
 
   return (
     <Card>
@@ -70,7 +118,7 @@ function CredentialReview({ credential }: { credential: Credential }) {
       </Text>
       {credential.document_path ? (
         <Button
-          label="Ver el archivo (enlace de 60 s)"
+          label="Ver el archivo"
           variant="secondary"
           icon={ExternalLink}
           onPress={() => {
@@ -82,67 +130,113 @@ function CredentialReview({ credential }: { credential: Credential }) {
         />
       ) : (
         <Text variant="small" tone="muted">
-          Sin archivo adjunto: verificá con el número de matrícula.
+          Sin archivo: verificala con el número de matrícula.
         </Text>
       )}
       {docError ? <Banner tone="danger">{friendlyError(docError)}</Banner> : null}
 
       {credential.credential_verifications.map((v) => (
         <Text key={v.checked_at} variant="small" tone="muted">
-          {`${DATE.format(new Date(v.checked_at))}: ${v.result} (${v.method})${v.evidence_note ? ` · ${v.evidence_note}` : ''}`}
+          {[
+            DATE.format(new Date(v.checked_at)),
+            RESULT_LABELS[v.result] ?? v.result,
+            METHOD_LABELS[v.method] ?? v.method,
+            v.evidence_note,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
         </Text>
       ))}
 
       {pending ? (
         <View style={{ gap: 12 }}>
-          <Text variant="bodyStrong">Checklist</Text>
-          <Text variant="small">
-            1. El nombre coincide con el perfil. 2. La matrícula figura vigente en REFEPS/SISA o en
-            el colegio de la jurisdicción. 3. La profesión coincide con las especialidades
-            declaradas.
-          </Text>
+          <Text variant="bodyStrong">Antes de aprobar, revisá</Text>
+          {CHECKS.map((label, i) => (
+            <Checkbox
+              key={label}
+              label={label}
+              checked={checks[i] ?? false}
+              onChange={(value) => {
+                setChecks((prev) => prev.map((c, j) => (j === i ? value : c)));
+              }}
+            />
+          ))}
           <ChipGroup
-            label="¿Cómo lo verificaste?"
+            label="¿Cómo lo revisaste?"
             options={METHODS}
             value={method}
             onChange={setMethod}
           />
           <TextField
-            label="Nota (sin datos sensibles)"
-            placeholder="Por ejemplo: REFEPS consultado el 28/10"
+            label="Nota para el profesional"
+            hint="Obligatoria para pedir información o rechazar. La lee el profesional."
+            placeholder="Por ejemplo: falta la foto del dorso de la matrícula"
             value={note}
-            onChangeText={setNote}
+            onChangeText={(value) => {
+              setNote(value);
+              if (value.trim() !== '') setNoteError(undefined);
+            }}
+            error={noteError}
+            multiline
             maxLength={500}
           />
           {verify.error ? <Banner tone="danger">{friendlyError(verify.error)}</Banner> : null}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {(
-              [
-                ['verified', 'Aprobar', 'primary'],
-                ['needs_info', 'Pedir información', 'secondary'],
-                ['rejected', 'Rechazar', 'danger'],
-              ] as const
-            ).map(([result, label, variant]) => (
-              <Button
-                key={result}
-                label={label}
-                variant={variant}
-                loading={verify.isPending && verify.variables.result === result}
-                onPress={() => {
-                  verify.mutate({ credentialId: credential.id, result, method, note });
+            <Button
+              label="Aprobar"
+              disabled={!allChecked}
+              loading={verify.isPending && verify.variables.result === 'verified'}
+              accessibilityHint={allChecked ? undefined : 'Marcá las tres casillas para aprobar.'}
+              onPress={() => {
+                send('verified');
+              }}
+            />
+            <Button
+              label="Pedir información"
+              variant="secondary"
+              loading={verify.isPending && verify.variables.result === 'needs_info'}
+              onPress={() => {
+                send('needs_info');
+              }}
+            />
+            {hasNote ? (
+              <ConfirmAction
+                label="Rechazar"
+                icon={CircleX}
+                confirmLabel="Sí, rechazar"
+                title="¿Rechazar esta credencial?"
+                description="El profesional ve tu nota y puede cargarla de nuevo."
+                loading={verify.isPending && verify.variables.result === 'rejected'}
+                onConfirm={() => {
+                  send('rejected');
                 }}
               />
-            ))}
+            ) : (
+              <Button
+                label="Rechazar"
+                variant="dangerSoft"
+                icon={CircleX}
+                onPress={() => {
+                  send('rejected');
+                }}
+              />
+            )}
           </View>
+          {!allChecked ? (
+            <Text variant="small" tone="muted">
+              Marcá las tres casillas para aprobar.
+            </Text>
+          ) : null}
         </View>
       ) : null}
     </Card>
   );
 }
 
-/** Cola de verificación (F10): ver la credencial, checklist y aprobar, rechazar o pedir info. */
+/** Cola de verificación (F10): ver la credencial, revisar y aprobar, rechazar o pedir info. */
 export default function VerificationsScreen() {
   const queue = useCredentialQueue();
+  const [done, setDone] = useState<string | null>(null);
   if (queue.isPending) return <Skeleton height={300} />;
   if (queue.isError) return <ErrorState onRetry={() => void queue.refetch()} />;
 
@@ -151,14 +245,15 @@ export default function VerificationsScreen() {
   return (
     <Screen maxWidth={1000}>
       <Text variant="title">Verificaciones</Text>
+      {done ? <Banner tone="success">{done}</Banner> : null}
       {pending.length === 0 ? (
         <EmptyState icon={FileBadge} title="No hay credenciales por verificar" />
       ) : (
-        pending.map((c) => <CredentialReview key={c.id} credential={c} />)
+        pending.map((c) => <CredentialReview key={c.id} credential={c} onDone={setDone} />)
       )}
       {reviewed.length > 0 ? <Text variant="heading">Revisadas</Text> : null}
       {reviewed.map((c) => (
-        <CredentialReview key={c.id} credential={c} />
+        <CredentialReview key={c.id} credential={c} onDone={setDone} />
       ))}
     </Screen>
   );

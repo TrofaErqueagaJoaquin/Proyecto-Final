@@ -4,6 +4,7 @@ import { ActivityIndicator } from 'react-native';
 
 import { friendlyError } from '@/copy/errors';
 import { AuthScreen, TextLink } from '@/features/auth/components';
+import { withNext } from '@/features/auth/pendingInvitation';
 import { safeNextPath } from '@/features/auth/redirect';
 import { BroteSays } from '@/features/brote/Brote';
 import { supabase } from '@/lib/supabase';
@@ -31,6 +32,8 @@ function linkErrorMessage(error?: string, code?: string): string {
  * el enlace se abrió en otro dispositivo o navegador, donde no está el verificador PKCE— el correo
  * igual quedó confirmado, así que se dice eso y se ofrece ingresar, en lugar de un error.
  * Con `next=/nueva-clave` (recuperar la contraseña), el paso siguiente es pedir otro enlace.
+ * En el alta, `next` (por ejemplo, una invitación a una familia) se pasa a la bienvenida, o a
+ * ingresar si la sesión no se pudo abrir acá, para que no se pierda.
  */
 export default function AuthCallbackScreen() {
   const router = useRouter();
@@ -75,7 +78,9 @@ export default function AuthCallbackScreen() {
           );
           return;
         }
-        router.replace(confirmation ? '/bienvenida' : safeNextPath(params.next));
+        router.replace(
+          confirmation ? withNext('/bienvenida', params.next) : safeNextPath(params.next),
+        );
       })
       .catch((cause: unknown) => {
         setOutcome(
@@ -88,7 +93,7 @@ export default function AuthCallbackScreen() {
     return (
       <AuthScreen title="¡Correo confirmado!">
         <BroteSays mood="feliz">¡Listo! Tu cuenta ya está activa. Entrá y arrancamos.</BroteSays>
-        <Link href="/ingresar" asChild>
+        <Link href={withNext('/ingresar', params.next)} asChild>
           <Button label="Ingresar" fullWidth />
         </Link>
         <Text variant="small" tone="muted" center>
@@ -119,10 +124,10 @@ export default function AuthCallbackScreen() {
           Probá ingresar: si tu correo ya estaba confirmado, entrás directo. Si no, creá la cuenta
           de nuevo con el mismo correo y te mando otro enlace.
         </Text>
-        <Link href="/ingresar" asChild>
+        <Link href={withNext('/ingresar', params.next)} asChild>
           <Button label="Ingresar" fullWidth />
         </Link>
-        <TextLink standalone href="/registrarse">
+        <TextLink standalone href={withNext('/registrarse', params.next)}>
           Crear la cuenta de nuevo
         </TextLink>
       </AuthScreen>
@@ -143,7 +148,7 @@ export default function AuthCallbackScreen() {
             </TextLink>
           </>
         ) : (
-          <Link href="/ingresar" asChild>
+          <Link href={withNext('/ingresar', params.next)} asChild>
             <Button label="Volver a ingresar" fullWidth />
           </Link>
         )}

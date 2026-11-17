@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { View } from 'react-native';
+import type { ComponentProps } from 'react';
+import { useWindowDimensions, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -12,7 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Circle, Ellipse, G, Path } from 'react-native-svg';
 
-import { makeStyles, Text, useTheme } from '@/ui';
+import { EmptyState, makeStyles, Text, useTheme } from '@/ui';
 
 export type BroteMood = 'hola' | 'feliz' | 'pensando' | 'calma';
 
@@ -159,7 +160,14 @@ const useStyles = makeStyles((t) => ({
   says: { fontFamily: t.fonts.display, fontSize: 21, lineHeight: 28, color: t.colors.ink },
 }));
 
-/** Brote con un globo de diálogo: la forma de "hablarle" a la familia en los momentos clave. */
+/** Por debajo de este ancho, Brote se achica para que el globo tenga lugar. */
+const NARROW = 400;
+const NARROW_SIZE = 72;
+
+/**
+ * Brote con un globo de diálogo: la forma de "hablarle" a la familia en los momentos clave.
+ * Pauta: lo que dice Brote, hasta unos 60 caracteres (en el celular, dos o tres renglones).
+ */
 export function BroteSays({
   children,
   mood = 'hola',
@@ -172,12 +180,25 @@ export function BroteSays({
   celebrate?: number;
 }) {
   const styles = useStyles();
+  const { width } = useWindowDimensions();
+  const shown = width < NARROW ? Math.min(size, NARROW_SIZE) : size;
   return (
     <View style={styles.row}>
-      <Brote mood={mood} size={size} celebrate={celebrate} />
+      <Brote mood={mood} size={shown} celebrate={celebrate} />
       <View style={styles.bubble} accessibilityLiveRegion="polite">
         <Text style={styles.says}>{children}</Text>
       </View>
     </View>
   );
+}
+
+/**
+ * Estado vacío con Brote en lugar del ícono: más cálido y sin sumar texto.
+ * `<BroteEmptyState title="Todavía no hay plan" action={<Button … />} />`.
+ */
+export function BroteEmptyState({
+  mood = 'pensando',
+  ...props
+}: Omit<ComponentProps<typeof EmptyState>, 'icon' | 'illustration'> & { mood?: BroteMood }) {
+  return <EmptyState {...props} illustration={<Brote mood={mood} size={NARROW_SIZE} />} />;
 }
