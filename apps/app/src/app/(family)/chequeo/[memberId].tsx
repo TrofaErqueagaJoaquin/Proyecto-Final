@@ -34,6 +34,7 @@ export default function CheckScreen() {
   const save = useSaveAnswer(attemptId ?? '');
   const submit = useSubmitAssessment(attemptId ?? '');
   const [step, setStep] = useState(0);
+  const [markMissing, setMarkMissing] = useState<string | null>(null);
   const started = useRef(false);
   const isTheme = slug !== QUICK_CHECK;
   const quick = useQuickAnswers(memberId, isTheme);
@@ -204,8 +205,13 @@ export default function CheckScreen() {
     />
   ) : null;
 
+  const answeredIds = new Set(answers.data.map((r) => r.question_id));
+  const firstMissing = visible.findIndex(
+    (v) => v.question.required && !answeredIds.has(v.question.id ?? ''),
+  );
+
   return (
-    <Screen>
+    <Screen scrollKey={isDone ? 'fin' : step}>
       <GrowthLine
         progress={visible.length === 0 ? 1 : Math.min(step, visible.length) / visible.length}
         label="Avance del chequeo"
@@ -220,27 +226,22 @@ export default function CheckScreen() {
             key={current.question.code}
             question={current.question}
             rows={answers.data.filter((r) => r.question_id === current.question.id)}
+            missing={markMissing === current.question.code}
             onAnswer={(change) => {
               saveAnswer(change, step);
             }}
             onNext={() => {
               setStep((s) => (saveFailed.current ? s : s + 1));
             }}
+            onBack={
+              step > 0
+                ? () => {
+                    setStep((s) => Math.max(0, s - 1));
+                  }
+                : undefined
+            }
           />
           {saveError}
-          {step > 0 ? (
-            <Button
-              label="Volver a la anterior"
-              variant="ghost"
-              onPress={() => {
-                setStep((s) => Math.max(0, s - 1));
-              }}
-            />
-          ) : (
-            <Link href="/hoy" replace asChild>
-              <Button label="Ahora no, ir a Hoy" variant="ghost" />
-            </Link>
-          )}
         </View>
       ) : (
         <View style={{ gap: 20 }}>
@@ -253,6 +254,13 @@ export default function CheckScreen() {
             loading={submit.isPending}
             disabled={save.isPending || failed.size > 0}
             onPress={() => {
+              // Si quedó alguna sin responder, se lleva a la primera y se marca "Falta esta".
+              const missing = visible[firstMissing];
+              if (missing) {
+                setMarkMissing(missing.question.code);
+                setStep(firstMissing);
+                return;
+              }
               submit.mutate(undefined, {
                 onSuccess: () => void attempt.refetch(),
               });
