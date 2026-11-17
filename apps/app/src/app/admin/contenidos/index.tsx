@@ -200,7 +200,11 @@ export default function ContentAdminScreen() {
   const canPublish = permissions.has('content.publish');
   // Sin segundo factor (solo pasa en la demo) se toca únicamente lo cargado en el panel.
   const withoutMfa = mfa.data !== undefined && mfa.data.level !== 'aal2';
-  const otherAdmin = [...permissions].some((p) => !p.startsWith('content.'));
+  // Cuestionarios y base de conocimiento vienen con el rol de contenidos: no cuentan como "otras
+  // secciones" que pidan activar la verificación.
+  const otherAdmin = [...permissions].some(
+    (p) => !p.startsWith('content.') && p !== 'questionnaires.manage' && p !== 'kb.manage',
+  );
 
   if (content.isPending) return <LoadingScreen />;
   if (content.isError) {
