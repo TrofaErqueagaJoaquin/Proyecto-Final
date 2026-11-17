@@ -23,8 +23,8 @@ import {
   ChipGroup,
   ErrorBanner,
   FormTextField,
+  LoadingScreen,
   Screen,
-  Skeleton,
   Text,
   useOverlayTurn,
 } from '@/ui';
@@ -108,7 +108,7 @@ export default function InviteScreen() {
   });
   const role = useController({ control, name: 'role' });
 
-  if (isPending) return <Skeleton height={300} />;
+  if (isPending) return <LoadingScreen />;
   if (!family) return <Redirect href="/bienvenida" />;
   if (!canManage(family.role)) return <Redirect href="/familia" />;
 

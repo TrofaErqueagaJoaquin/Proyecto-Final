@@ -1,16 +1,17 @@
 import { Link } from 'expo-router';
-import { Bookmark, CalendarDays, CircleCheck, Clock, Puzzle, Target } from 'lucide-react-native';
+import { CalendarDays, Puzzle, Target } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { ActivityScene, sceneFor } from '@/features/animations';
+import { BroteEmptyState } from '@/features/brote/Brote';
 import { feedback } from '@/features/feedback/feedback';
 import { useActiveFamily } from '@/features/families/queries';
 import { useActivityFlow } from '@/features/library/ActivityFlow';
 import { ActivityGrid } from '@/features/library/ActivityTile';
 import { IconGrid, IconTile, useColumnWidth } from '@/features/library/IconTile';
 import { useActivityLogs, useSavedActivities } from '@/features/library/queries';
-import { Button, Card, EmptyState, ErrorState, makeStyles, Screen, Skeleton, Text } from '@/ui';
+import { Button, Card, ErrorState, LoadingScreen, makeStyles, Screen, Skeleton, Text } from '@/ui';
 import { minTouchTarget } from '@/ui/tokens';
 
 /** Cuántas de "Lo que hicieron" se ven antes de tocar "Ver todo". */
@@ -77,7 +78,7 @@ export default function MyActivitiesScreen() {
   const [showAll, setShowAll] = useState(false);
   const tileWidth = useColumnWidth(720, { phone: 3, tablet: 3, desktop: 3 });
 
-  if (isPending) return <Skeleton height={300} />;
+  if (isPending) return <LoadingScreen />;
 
   return (
     <Screen>
@@ -113,8 +114,7 @@ export default function MyActivitiesScreen() {
 
       {!family ? (
         <Card>
-          <EmptyState
-            icon={Bookmark}
+          <BroteEmptyState
             title="Creá tu familia para armar tu lista"
             action={
               <Link href="/bienvenida" asChild>
@@ -129,11 +129,10 @@ export default function MyActivitiesScreen() {
           {saved.isPending ? (
             <Skeleton height={120} />
           ) : saved.isError ? (
-            <ErrorState onRetry={() => void saved.refetch()} />
+            <ErrorState error={saved.error} onRetry={() => void saved.refetch()} />
           ) : saved.data.length === 0 ? (
             <Card>
-              <EmptyState
-                icon={Clock}
+              <BroteEmptyState
                 title="Tu lista está vacía"
                 description="En una actividad, tocá Hacer más tarde."
               />
@@ -161,11 +160,10 @@ export default function MyActivitiesScreen() {
           {logs.isPending ? (
             <Skeleton height={120} />
           ) : logs.isError ? (
-            <ErrorState onRetry={() => void logs.refetch()} />
+            <ErrorState error={logs.error} onRetry={() => void logs.refetch()} />
           ) : logs.data.length === 0 ? (
             <Card>
-              <EmptyState
-                icon={CircleCheck}
+              <BroteEmptyState
                 title="Todavía no registraron actividades"
                 description="Cuando hagan una, tocá Realizado."
               />

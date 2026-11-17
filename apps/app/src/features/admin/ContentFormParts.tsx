@@ -1,7 +1,7 @@
 import { AGE_STAGES, EVIDENCE_LABELS, type EvidenceLabel } from '@crecer/shared';
 import { Link } from 'expo-router';
 import { CircleCheck, Eye, Plus, type LucideIcon } from 'lucide-react-native';
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Brote } from '@/features/brote/Brote';
@@ -15,6 +15,7 @@ import {
   Sheet,
   Text,
   TextField,
+  useOverlayTurn,
   useTheme,
 } from '@/ui';
 import { minTouchTarget } from '@/ui/tokens';
@@ -130,6 +131,8 @@ export function SourcePicker({
   const sources = useAdminSources();
   const [query, setQuery] = useState('');
   const [adding, setAdding] = useState(false);
+  const addingId = useId();
+  const addingVisible = useOverlayTurn(`nueva-fuente-${addingId}`, adding);
   const all = sources.data ?? [];
   const selected = all.filter((s) => value.includes(s.id));
   const q = normalize(query.trim());
@@ -194,7 +197,7 @@ export function SourcePicker({
         }}
       />
       <Sheet
-        visible={adding}
+        visible={addingVisible}
         title="Nueva fuente"
         onClose={() => {
           setAdding(false);
@@ -302,6 +305,8 @@ export function FormWithPreview({
   footer: ReactNode;
 }) {
   const [previewOpen, setPreviewOpen] = useState(false);
+  const previewId = useId();
+  const previewVisible = useOverlayTurn(`vista-previa-${previewId}`, previewOpen && !wide);
   if (!wide) {
     return (
       <View style={{ gap: 20 }}>
@@ -317,7 +322,7 @@ export function FormWithPreview({
         />
         {footer}
         <Sheet
-          visible={previewOpen}
+          visible={previewVisible}
           title="Cómo queda"
           onClose={() => {
             setPreviewOpen(false);

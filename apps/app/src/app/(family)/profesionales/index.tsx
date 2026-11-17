@@ -1,12 +1,14 @@
 import { Link, Redirect } from 'expo-router';
-import { HeartHandshake, Search } from 'lucide-react-native';
+import { Search } from 'lucide-react-native';
+
+import { BroteEmptyState } from '@/features/brote/Brote';
 
 import { canManage, useActiveFamily } from '@/features/families/queries';
 import { LinkCard } from '@/features/library/LinkCard';
 import { ProfessionalAvatar, VerificationBadge } from '@/features/professionals/components';
 import { CARE_STATUS_LABELS, type VerificationStatus } from '@/features/professionals/labels';
 import { useFamilyCare } from '@/features/professionals/queries';
-import { Button, EmptyState, ErrorState, Screen, Skeleton, Text } from '@/ui';
+import { Button, ErrorState, LoadingScreen, Screen, Skeleton, Text } from '@/ui';
 
 const OPEN = new Set(['requested', 'active']);
 
@@ -14,15 +16,14 @@ export default function FamilyProfessionalsScreen() {
   const { isPending, family } = useActiveFamily();
   const care = useFamilyCare(family?.id);
 
-  if (isPending) return <Skeleton height={300} />;
+  if (isPending) return <LoadingScreen />;
   if (!family) return <Redirect href="/bienvenida" />;
   if (!canManage(family.role)) {
     return (
       <Screen>
-        <EmptyState
-          icon={HeartHandshake}
-          title="No tenés acceso a esta sección"
-          description="Los acompañamientos de profesionales los manejan los responsables de la familia."
+        <BroteEmptyState
+          title="Esto lo manejan los responsables"
+          description="Pedile a quien maneja la familia que te cuente."
         />
       </Screen>
     );
@@ -51,10 +52,7 @@ export default function FamilyProfessionalsScreen() {
   return (
     <Screen>
       <Text variant="title">Profesionales</Text>
-      <Text tone="muted">
-        Quiénes acompañan a la familia y qué puede ver cada uno. Podés revocar cualquier permiso
-        cuando quieras.
-      </Text>
+      <Text tone="muted">Quiénes acompañan a la familia y qué ve cada uno.</Text>
       <Link href="/directorio" asChild>
         <Button label="Buscar profesionales" icon={Search} />
       </Link>
@@ -62,12 +60,11 @@ export default function FamilyProfessionalsScreen() {
       {care.isPending ? (
         <Skeleton height={200} />
       ) : care.isError ? (
-        <ErrorState onRetry={() => void care.refetch()} />
+        <ErrorState error={care.error} onRetry={() => void care.refetch()} />
       ) : list.length === 0 ? (
-        <EmptyState
-          icon={HeartHandshake}
-          title="Todavía no hay profesionales acompañando"
-          description="Buscá en el directorio a una psicóloga, un psicopedagogo, una pediatra o quien necesiten, y pedile que los acompañe."
+        <BroteEmptyState
+          title="Todavía no los acompaña nadie"
+          description="Buscá a quien necesiten en el directorio."
         />
       ) : (
         <>

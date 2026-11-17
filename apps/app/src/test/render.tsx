@@ -3,6 +3,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ThemeProvider } from '@/ui';
+import { OverlayQueueProvider } from '@/ui/OverlayQueue';
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -12,12 +13,14 @@ const metrics = {
 function Providers({ children }: { children: ReactNode }) {
   return (
     <SafeAreaProvider initialMetrics={metrics}>
-      <ThemeProvider>{children}</ThemeProvider>
+      <ThemeProvider>
+        <OverlayQueueProvider>{children}</OverlayQueueProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
 
-/** Render con los providers de la app (tema y áreas seguras). En RNTL 14 es asíncrono. */
+/** Render con los providers de la app (tema, áreas seguras y turnos de las ventanas). En RNTL 14 es asíncrono. */
 export function renderWithProviders(ui: ReactElement, options?: RenderOptions) {
   return render(ui, { wrapper: Providers, ...options });
 }

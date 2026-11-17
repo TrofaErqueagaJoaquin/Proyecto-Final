@@ -19,8 +19,8 @@ export const SCOPE_LABELS: Record<Scope, { label: string; description: string }>
     description: 'Apodo, edad e intereses. Es necesario para compartir cualquier otra cosa.',
   },
   assessments: {
-    label: 'Evaluaciones',
-    description: 'Los resultados de las evaluaciones de hábitos y su historial.',
+    label: 'Chequeos',
+    description: 'Los resultados de los chequeos y su historial.',
   },
   goals: {
     label: 'Objetivos',
@@ -46,11 +46,11 @@ export const SCOPE_LABELS: Record<Scope, { label: string; description: string }>
 };
 
 export const VERIFICATION_LABELS = {
-  unverified: 'Credenciales declaradas, no verificadas',
-  pending: 'Verificación en curso',
-  verified: 'Credenciales verificadas',
-  rejected: 'Verificación rechazada',
-  expired: 'Verificación vencida',
+  unverified: 'Matrícula sin verificar',
+  pending: 'Matrícula en revisión',
+  verified: 'Matrícula verificada',
+  rejected: 'No pudimos verificar la matrícula',
+  expired: 'La verificación venció',
 } as const;
 export type VerificationStatus = keyof typeof VERIFICATION_LABELS;
 
@@ -59,7 +59,7 @@ export const CARE_STATUS_LABELS = {
   active: 'Acompañamiento activo',
   rejected: 'Solicitud rechazada',
   cancelled: 'Solicitud cancelada',
-  ended: 'Acompañamiento finalizado',
+  ended: 'Acompañamiento terminado',
 } as const;
 export type CareStatus = keyof typeof CARE_STATUS_LABELS;
 

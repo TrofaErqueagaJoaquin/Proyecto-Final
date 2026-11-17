@@ -6,7 +6,7 @@ import { clearPendingInvitation } from '@/features/auth/pendingInvitation';
 import { GuidePopup } from '@/features/brote/GuidePopup';
 import { useAcceptInvitation } from '@/features/families/queries';
 import { feedback } from '@/features/feedback/feedback';
-import { Banner, Button, Card, ChipGroup, ErrorBanner, Screen, Text } from '@/ui';
+import { Banner, Button, Card, ChipGroup, ErrorBanner, Screen, Text, useOverlayTurn } from '@/ui';
 
 /** Errores con los que la invitación ya no sirve: se olvida y se ofrece ir a Hoy. */
 function invitationIsDone(error: unknown): boolean {
@@ -25,6 +25,7 @@ export default function AcceptInvitationScreen() {
   const [relationship, setRelationship] = useState<string | null>(null);
   const [showError, setShowError] = useState(false);
   const [joined, setJoined] = useState(false);
+  const joinedVisible = useOverlayTurn('invitacion-aceptada', joined);
   const done = accept.isError && invitationIsDone(accept.error);
 
   // Sin token (o con una invitación que ya no sirve), el respaldo guardado al crear la cuenta no
@@ -54,10 +55,7 @@ export default function AcceptInvitationScreen() {
     <Screen>
       <Text variant="title">Te invitaron a una familia</Text>
       <Card>
-        <Text>
-          Al aceptar, vas a ver a los integrantes de la familia y lo que tu rol permita. Podés salir
-          cuando quieras.
-        </Text>
+        <Text>Vas a ver a la familia según tu rol. Podés salir cuando quieras.</Text>
         <ChipGroup
           label="¿Cuál es tu vínculo con la familia?"
           options={RELATIONSHIPS}
@@ -98,7 +96,7 @@ export default function AcceptInvitationScreen() {
         )}
       </Card>
       <GuidePopup
-        visible={joined}
+        visible={joinedVisible}
         celebrate
         title="¡Ya sos parte de la familia!"
         message="Desde ahora ven lo mismo y se organizan juntos."

@@ -1,5 +1,5 @@
 import { Link, useLocalSearchParams } from 'expo-router';
-import { HeartHandshake, MapPin, Video } from 'lucide-react-native';
+import { HeartHandshake, MapPin, Users, Video } from 'lucide-react-native';
 import { View } from 'react-native';
 
 import { useAuth } from '@/features/auth/AuthProvider';
@@ -7,7 +7,8 @@ import { canManage, useActiveFamily } from '@/features/families/queries';
 import { ProfessionalAvatar, VerificationBadge } from '@/features/professionals/components';
 import { MODALITY_LABELS } from '@/features/professionals/labels';
 import { useProfessional, useSpecialties } from '@/features/professionals/queries';
-import { Badge, Banner, Button, Card, EmptyState, ErrorState, Screen, Skeleton, Text } from '@/ui';
+import { BroteEmptyState } from '@/features/brote/Brote';
+import { Badge, Banner, Button, Card, ErrorState, Screen, Skeleton, Text } from '@/ui';
 
 function RequestAction({ professionalId }: { professionalId: string }) {
   const auth = useAuth();
@@ -54,14 +55,24 @@ export default function ProfessionalScreen() {
       </Screen>
     );
   }
-  if (professional.isError) return <ErrorState onRetry={() => void professional.refetch()} />;
+  if (professional.isError) {
+    return (
+      <Screen edges={['bottom']}>
+        <ErrorState error={professional.error} onRetry={() => void professional.refetch()} />
+      </Screen>
+    );
+  }
   if (!professional.data) {
     return (
       <Screen edges={['bottom']}>
-        <EmptyState
-          icon={HeartHandshake}
+        <BroteEmptyState
           title="No encontramos a este profesional"
-          description="Puede que todavía no esté verificado o que haya dejado de figurar en el directorio."
+          description="Puede que ya no figure en el directorio."
+          action={
+            <Link href="/directorio" asChild>
+              <Button label="Ver todos los profesionales" icon={Users} />
+            </Link>
+          }
         />
       </Screen>
     );
@@ -114,10 +125,7 @@ export default function ProfessionalScreen() {
       ) : null}
       <Card>
         <Text variant="subheading">Pedir acompañamiento</Text>
-        <Text tone="muted">
-          Le mandás una solicitud y elegís, integrante por integrante, qué puede ver. Nada se
-          comparte hasta que acepte, y podés revocarlo cuando quieras.
-        </Text>
+        <Text tone="muted">Vos elegís qué puede ver. Lo podés cambiar cuando quieras.</Text>
         <RequestAction professionalId={p.user_id} />
       </Card>
     </Screen>

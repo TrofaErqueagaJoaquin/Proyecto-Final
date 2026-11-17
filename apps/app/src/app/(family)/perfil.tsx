@@ -17,19 +17,19 @@ import { authKeys, useMe } from '@/features/auth/queries';
 import { MfaSettingsCard } from '@/features/auth/mfa';
 import { SignOutButton } from '@/features/auth/signOut';
 import { feedback, setFeedbackSettings, useFeedbackSettings } from '@/features/feedback/feedback';
+import { useFieldErrors } from '@/features/forms/useFieldErrors';
 import { useMyProfessionalProfile } from '@/features/professionals/queries';
 import { supabase } from '@/lib/supabase';
 import {
-  Banner,
   Button,
   Card,
   Checkbox,
   Disclosure,
   ErrorBanner,
   ErrorState,
+  LoadingScreen,
   makeStyles,
   Screen,
-  Skeleton,
   Text,
   TextField,
   useTheme,
@@ -118,10 +118,7 @@ function CreateProfessionalCard() {
   return (
     <Card>
       <Text variant="subheading">Espacio profesional</Text>
-      <Text tone="muted">
-        ¿Sos psicóloga, psicopedagogo, pediatra o terapeuta? Creá tu perfil para que las familias te
-        encuentren.
-      </Text>
+      <Text tone="muted">¿Trabajás con chicos? Creá tu perfil para que te encuentren.</Text>
       <Link href="/profesional/perfil" asChild>
         <Button label="Crear mi perfil profesional" variant="secondary" icon={BriefcaseMedical} />
       </Link>
@@ -129,10 +126,22 @@ function CreateProfessionalCard() {
   );
 }
 
-/** Arranca con el nombre ya cargado: no hace falta sincronizarlo con un efecto. */
-function NameCard({ initialName, email }: { initialName: string; email: string | null }) {
+/**
+ * Arranca con el nombre ya cargado: no hace falta sincronizarlo con un efecto. Como se vuelve a
+ * montar al cambiar el nombre, el "✓ Guardado" lo cuenta la pantalla (`savedKey`/`onSaved`).
+ */
+function NameCard({
+  initialName,
+  email,
+  savedKey,
+  onSaved,
+}: {
+  initialName: string;
+  email: string | null;
+  savedKey: number;
+  onSaved: () => void;
+}) {
   const [name, setName] = useState(initialName);
-  const [touched, setTouched] = useState(false);
   const saveProfile = useSaveProfile();
   const trimmed = name.trim();
   const nameError =
@@ -141,19 +150,29 @@ function NameCard({ initialName, email }: { initialName: string; email: string |
       : trimmed.length > 80
         ? 'Usá como máximo 80 caracteres.'
         : undefined;
+  const unchanged = trimmed === initialName;
+  const save = () => {
+    if (unchanged || saveProfile.isPending) return;
+    saveProfile.mutate({ display_name: trimmed }, { onSuccess: onSaved });
+  };
+  // El error aparece al salir del campo, no mientras se escribe; Enter guarda.
+  const fields = useFieldErrors(
+    { name: nameError },
+    {
+      onSubmit: () => {
+        if (fields.attempt()) save();
+      },
+    },
+  );
 
   return (
     <Card>
       <Text variant="subheading">Mis datos</Text>
       <TextField
+        {...fields.field('name')}
         label="Nombre"
         value={name}
         onChangeText={setName}
-        onBlur={() => {
-          setTouched(true);
-        }}
-        // El error aparece al salir del campo, no mientras se escribe.
-        error={touched ? nameError : undefined}
         autoComplete="name"
       />
       <Text variant="small" tone="muted">
@@ -162,20 +181,12 @@ function NameCard({ initialName, email }: { initialName: string; email: string |
       <Button
         label="Guardar cambios"
         variant="secondary"
-        disabled={nameError !== undefined || trimmed === initialName}
+        disabled={nameError !== undefined || unchanged}
         loading={saveProfile.isPending}
-        onPress={() => {
-          saveProfile.mutate({ display_name: trimmed });
-        }}
+        savedKey={savedKey}
+        onPress={save}
       />
-      {saveProfile.isSuccess ? <Banner tone="success">Guardamos tus cambios.</Banner> : null}
-      <ErrorBanner
-        error={saveProfile.error}
-        onRetry={() => {
-          saveProfile.mutate({ display_name: trimmed });
-        }}
-        retryLoading={saveProfile.isPending}
-      />
+      <ErrorBanner error={saveProfile.error} onRetry={save} retryLoading={saveProfile.isPending} />
     </Card>
   );
 }
@@ -215,10 +226,7 @@ function LookAndSoundCard() {
           );
         })}
       </View>
-      <Text tone="muted">
-        Sonidos y vibraciones festejan las actividades hechas y los logros. Con el teléfono en
-        silencio, no suenan.
-      </Text>
+      <Text tone="muted">Festejan lo que hacen. Con el teléfono en silencio, no suenan.</Text>
       <Checkbox
         checked={settings.sound}
         label="Sonidos"
@@ -243,13 +251,9 @@ function LookAndSoundCard() {
 export default function ProfileScreen() {
   const styles = useStyles();
   const me = useMe();
+  const [nameSaved, setNameSaved] = useState(0);
 
-  if (me.isPending)
-    return (
-      <Screen>
-        <Skeleton height={200} />
-      </Screen>
-    );
+  if (me.isPending) return <LoadingScreen />;
   // Aunque no carguen los datos, siempre se puede cerrar la sesión (si no, la persona queda trabada).
   if (me.isError)
     return (
@@ -271,6 +275,10 @@ export default function ProfileScreen() {
         key={me.data.profile.displayName}
         initialName={me.data.profile.displayName}
         email={me.data.email}
+        savedKey={nameSaved}
+        onSaved={() => {
+          setNameSaved((n) => n + 1);
+        }}
       />
 
       <LookAndSoundCard />

@@ -1,22 +1,12 @@
 import type { Band } from '@crecer/domain';
 import { Link, useLocalSearchParams } from 'expo-router';
-import { History } from 'lucide-react-native';
 import { View } from 'react-native';
 
 import { BAND_LABELS, describeChange } from '@/features/assessments/labels';
 import { useMemberHistory, useQuestionnaireVersion } from '@/features/assessments/queries';
+import { BroteEmptyState } from '@/features/brote/Brote';
 import { LinkCard } from '@/features/library/LinkCard';
-import {
-  Button,
-  Card,
-  EmptyState,
-  ErrorState,
-  makeStyles,
-  Screen,
-  Skeleton,
-  Text,
-  useTheme,
-} from '@/ui';
+import { Button, Card, ErrorScreen, LoadingScreen, makeStyles, Screen, Text, useTheme } from '@/ui';
 
 // Puntos conectados, de abajo ("Por dónde empezar") hacia arriba ("Fortaleza").
 const LEVEL: Record<Band, number> = { priority: 0, watch: 1, strength: 2 };
@@ -49,17 +39,24 @@ export default function HistoryScreen() {
   const styles = useStyles();
   const { colors } = useTheme();
 
-  if (history.isPending || (latest && version.isPending)) return <Skeleton height={300} />;
+  if (history.isPending || (latest && version.isPending)) return <LoadingScreen />;
   if (history.isError || version.isError) {
-    return <ErrorState onRetry={() => void history.refetch()} />;
+    return (
+      <ErrorScreen
+        error={history.error ?? version.error}
+        onRetry={() => {
+          void history.refetch();
+          if (latest) void version.refetch();
+        }}
+      />
+    );
   }
   if (!latest || !version.data) {
     return (
       <Screen>
-        <EmptyState
-          icon={History}
+        <BroteEmptyState
           title="Todavía no hay evaluaciones"
-          description="Cuando completen la primera, acá van a ver cómo cambia con el tiempo."
+          description="Después de la primera, acá ves cómo cambia."
           action={
             <Link href="/evaluaciones" asChild>
               <Button label="Ir a Evaluaciones" variant="secondary" />
@@ -134,7 +131,6 @@ export default function HistoryScreen() {
           key={a.id}
           href={`/evaluaciones/${a.id}/resultado`}
           title={new Date(a.submitted_at ?? '').toLocaleDateString('es-AR')}
-          description="Ver el resultado y las recomendaciones"
         />
       ))}
     </Screen>

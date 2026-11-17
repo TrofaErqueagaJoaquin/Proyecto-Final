@@ -3,8 +3,8 @@ import { ASSISTANT_QUESTION_MAX } from '@crecer/shared';
 import { RISK_RESPONSES, type HighRiskCategory } from '@crecer/domain';
 import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Clock, MessageCircle, MoreHorizontal, Send, Trash2 } from 'lucide-react-native';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Clock, MoreHorizontal, Send, Trash2 } from 'lucide-react-native';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
   Platform,
   Pressable,
@@ -27,10 +27,9 @@ import {
   useDeleteConversation,
   type StoredMessage,
 } from '@/features/assistant/queries';
-import { BroteSays } from '@/features/brote/Brote';
+import { BroteEmptyState, BroteSays } from '@/features/brote/Brote';
 import {
   Button,
-  EmptyState,
   ErrorBanner,
   ErrorScreen,
   LoadingScreen,
@@ -38,6 +37,7 @@ import {
   Sheet,
   Text,
   TextField,
+  useOverlayTurn,
   useTheme,
 } from '@/ui';
 import { minTouchTarget } from '@/ui/tokens';
@@ -75,6 +75,8 @@ function retentionLabel(expiresAt: string): string {
 function ConversationMenu({ loading, onDelete }: { loading: boolean; onDelete: () => void }) {
   const { colors } = useTheme();
   const [open, setOpen] = useState<'menu' | 'confirm' | null>(null);
+  const id = useId();
+  const visible = useOverlayTurn(`conversacion-menu-${id}`, open !== null);
   const wasLoading = useRef(false);
   // Al terminar de borrar, la ventana se cierra sola.
   useEffect(() => {
@@ -103,7 +105,7 @@ function ConversationMenu({ loading, onDelete }: { loading: boolean; onDelete: (
         <MoreHorizontal size={24} color={colors.ink} aria-hidden />
       </Pressable>
       <Sheet
-        visible={open !== null}
+        visible={visible}
         onClose={close}
         title={open === 'confirm' ? '¿Borrar la conversación?' : 'Más opciones'}
       >
@@ -243,10 +245,10 @@ export default function ConversationScreen() {
   if (!conversation.data) {
     return (
       <Screen>
-        <EmptyState
-          icon={MessageCircle}
+        <BroteEmptyState
           title="Esta conversación ya no está"
-          description="Puede que se haya borrado o que haya vencido su tiempo de guardado."
+          description="Se borró o venció su tiempo de guardado."
+          action={<Button label="Ir al asistente" onPress={() => router.replace('/asistente')} />}
         />
       </Screen>
     );

@@ -230,8 +230,7 @@ export function RiskCard({ category }: { category: HighRiskCategory }) {
       ))}
       {response.verifiedAt === null ? (
         <Text variant="small" tone="muted">
-          Líneas tomadas de fuentes oficiales; el equipo está verificando su vigencia en Mar del
-          Plata.
+          Estamos verificando estas líneas en Mar del Plata.
         </Text>
       ) : null}
     </View>

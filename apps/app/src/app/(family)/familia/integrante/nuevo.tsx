@@ -10,8 +10,8 @@ import {
   Checkbox,
   Disclosure,
   ErrorBanner,
+  LoadingScreen,
   Screen,
-  Skeleton,
   Text,
   useOverlayTurn,
 } from '@/ui';
@@ -26,7 +26,7 @@ export default function NewMemberScreen() {
   const [added, setAdded] = useState<{ id: string; alias: string } | null>(null);
   const addedVisible = useOverlayTurn('integrante-agregado', added !== null);
 
-  if (isPending) return <Skeleton height={300} />;
+  if (isPending) return <LoadingScreen />;
   if (!family) return <Redirect href="/bienvenida" />;
   if (!canManage(family.role)) return <Redirect href="/familia" />;
 

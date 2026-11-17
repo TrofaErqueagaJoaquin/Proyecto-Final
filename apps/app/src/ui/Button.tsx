@@ -122,7 +122,9 @@ export function Button({
           hovered === true && styles.hovered,
           state.pressed && styles.pressed,
           focused === true && styles.focused,
-          isDisabled && styles.disabled,
+          // Durante "✓ Guardado" el botón suele quedar deshabilitado (no hay cambios): no se
+          // apaga, para que el aviso se lea.
+          isDisabled && (!saved || loading) && styles.disabled,
         ];
       }}
     >

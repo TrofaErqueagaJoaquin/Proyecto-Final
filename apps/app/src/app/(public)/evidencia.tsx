@@ -2,7 +2,7 @@ import { EVIDENCE_LABELS } from '@crecer/shared';
 
 import { SourceList } from '@/features/library/SourceList';
 import { useSources } from '@/features/library/queries';
-import { Card, ErrorState, EvidenceChip, Screen, Skeleton, Text } from '@/ui';
+import { Card, Disclosure, ErrorState, EvidenceChip, Screen, Skeleton, Text } from '@/ui';
 
 /** Cómo leemos la evidencia y la bibliografía completa (UX_AND_NAVIGATION.md §4). */
 export default function EvidenceScreen() {
@@ -10,11 +10,13 @@ export default function EvidenceScreen() {
   return (
     <Screen edges={['bottom']}>
       <Text variant="title">Sobre la evidencia</Text>
-      <Text>
-        El problema no son “las pantallas” en sí, sino lo que el uso digital desplaza (sueño,
-        movimiento, juego, conversación), el contexto en que se usa y el diseño de las plataformas.
-        Por eso cada contenido dice qué tan firme es lo que afirma.
-      </Text>
+      <Text tone="muted">Cada contenido dice qué tan firme es lo que afirma.</Text>
+      <Disclosure title="¿Por qué?">
+        <Text>
+          El problema no son “las pantallas” en sí, sino lo que el uso digital desplaza (sueño,
+          movimiento, juego, conversación), cómo se usa y el diseño de las plataformas.
+        </Text>
+      </Disclosure>
       <Card>
         <Text variant="subheading">Qué significa cada etiqueta</Text>
         {Object.keys(EVIDENCE_LABELS).map((label) => (
@@ -33,7 +35,7 @@ export default function EvidenceScreen() {
         {sources.isPending ? (
           <Skeleton height={200} />
         ) : sources.isError ? (
-          <ErrorState onRetry={() => void sources.refetch()} />
+          <ErrorState error={sources.error} onRetry={() => void sources.refetch()} />
         ) : (
           <SourceList refs={sources.data.map((s) => ({ locator: null, sources: s }))} />
         )}

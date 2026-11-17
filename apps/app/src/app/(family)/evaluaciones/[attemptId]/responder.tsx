@@ -17,10 +17,10 @@ import { feedback } from '@/features/feedback/feedback';
 import {
   Button,
   ErrorBanner,
-  ErrorState,
+  ErrorScreen,
   GrowthLine,
+  LoadingScreen,
   Screen,
-  Skeleton,
   Text,
   useOverlayTurn,
 } from '@/ui';
@@ -42,7 +42,7 @@ export default function AnswerScreen() {
   const [markMissing, setMarkMissing] = useState<string | null>(null);
   // Enviado: se festeja antes de ir al resultado (sin esto, el redireccionamiento lo saltea).
   const [sent, setSent] = useState(false);
-  const popupVisible = useOverlayTurn('resultado', sent && submit.isSuccess);
+  const popupVisible = useOverlayTurn('evaluacion-resultado', sent && submit.isSuccess);
   const goToResult = () => {
     router.replace(`/evaluaciones/${attemptId}/resultado`);
   };
@@ -51,16 +51,11 @@ export default function AnswerScreen() {
   }, [submit.isSuccess]);
 
   if (attempt.isPending || answers.isPending || (attempt.data && version.isPending)) {
-    return (
-      <Screen>
-        <Skeleton height={24} />
-        <Skeleton height={320} />
-      </Screen>
-    );
+    return <LoadingScreen />;
   }
   if (attempt.isError || answers.isError || version.isError) {
     return (
-      <ErrorState
+      <ErrorScreen
         error={attempt.error ?? answers.error ?? version.error}
         onRetry={() => {
           void attempt.refetch();

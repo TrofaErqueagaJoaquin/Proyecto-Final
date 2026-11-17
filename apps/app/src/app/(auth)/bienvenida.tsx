@@ -18,8 +18,8 @@ import {
   Checkbox,
   ChipGroup,
   ErrorBanner,
+  LoadingScreen,
   makeStyles,
-  Skeleton,
   Text,
   TextField,
   useTheme,
@@ -192,7 +192,7 @@ export default function WelcomeScreen() {
 
   if (auth.status === 'signedOut') return <Redirect href={leaving ? '/' : '/ingresar'} />;
   if (auth.status === 'loading' || terms.isPending || me.isPending || !pending.ready) {
-    return <Skeleton height={320} />;
+    return <LoadingScreen lines={0} />;
   }
   const hasFamily = (me.data?.families.length ?? 0) > 0;
   // Profesionales y administración no arman una familia: solo aceptan los términos.

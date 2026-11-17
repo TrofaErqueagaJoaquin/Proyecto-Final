@@ -59,7 +59,7 @@ const GOAL_STATUS_OPTIONS = (Object.keys(GOAL_STATUS_LABELS) as GoalStatus[]).ma
 type Tab = 'resumen' | 'evaluaciones' | 'objetivos' | 'observaciones';
 
 function AssessmentsSection({ items }: { items: NonNullable<MemberOverview['assessments']> }) {
-  if (items.length === 0) return <Text tone="muted">Todavía no hay evaluaciones enviadas.</Text>;
+  if (items.length === 0) return <Text tone="muted">Todavía no hay chequeos enviados.</Text>;
   return (
     <>
       {items.map((attempt) => (
@@ -86,7 +86,7 @@ function AssessmentsSection({ items }: { items: NonNullable<MemberOverview['asse
         </Card>
       ))}
       <Text variant="small" tone="muted">
-        Las bandas son orientativas: resumen hábitos que contó la familia, no son un diagnóstico.
+        Es una orientación según lo que contó la familia, no un diagnóstico.
       </Text>
     </>
   );
@@ -111,6 +111,7 @@ function GoalsSection({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [proposed, setProposed] = useState(0);
 
   return (
     <>
@@ -187,6 +188,8 @@ function GoalsSection({
         <ErrorBanner error={propose.error} />
         <Button
           label="Proponer a la familia"
+          savedKey={proposed}
+          savedLabel="Propuesto"
           loading={propose.isPending}
           disabled={title.trim().length < 3}
           onPress={() => {
@@ -196,6 +199,7 @@ function GoalsSection({
                 onSuccess: () => {
                   setTitle('');
                   setDescription('');
+                  setProposed((n) => n + 1);
                 },
               },
             );
@@ -219,6 +223,7 @@ function ObservationsSection({
   const { colors } = useTheme();
   const [body, setBody] = useState('');
   const [shared, setShared] = useState(false);
+  const [savedCount, setSavedCount] = useState(0);
 
   return (
     <>
@@ -239,6 +244,7 @@ function ObservationsSection({
         <ErrorBanner error={save.error} />
         <Button
           label="Guardar observación"
+          savedKey={savedCount}
           loading={save.isPending}
           disabled={body.trim() === ''}
           onPress={() => {
@@ -248,6 +254,7 @@ function ObservationsSection({
                 onSuccess: () => {
                   setBody('');
                   setShared(false);
+                  setSavedCount((n) => n + 1);
                 },
               },
             );
@@ -334,7 +341,7 @@ export default function MemberCaseScreen() {
     queryClient.invalidateQueries({ queryKey: proKeys.overview(assignmentId, memberId) });
   const tabs: { value: Tab; label: string }[] = [
     { value: 'resumen', label: 'Resumen' },
-    ...(o.assessments ? [{ value: 'evaluaciones' as const, label: 'Evaluaciones' }] : []),
+    ...(o.assessments ? [{ value: 'evaluaciones' as const, label: 'Chequeos' }] : []),
     ...(o.goals ? [{ value: 'objetivos' as const, label: 'Objetivos' }] : []),
     ...(o.observations ? [{ value: 'observaciones' as const, label: 'Observaciones' }] : []),
   ];
@@ -360,7 +367,7 @@ export default function MemberCaseScreen() {
           {o.member.interests.length > 0 ? (
             <Text>{`Le gusta: ${o.member.interests.join(', ')}`}</Text>
           ) : null}
-          <Text>{`Evaluaciones: ${o.assessments ? String(o.assessments.length) : 'no compartidas'}`}</Text>
+          <Text>{`Chequeos: ${o.assessments ? String(o.assessments.length) : 'no compartidos'}`}</Text>
           <Text>{`Objetivos: ${o.goals ? String(o.goals.length) : 'no compartidos'}`}</Text>
           {o.activities ? (
             <>

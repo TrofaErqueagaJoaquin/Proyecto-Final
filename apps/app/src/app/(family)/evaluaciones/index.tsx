@@ -1,7 +1,7 @@
 import { ageInMonths } from '@crecer/domain';
 import { Link, Redirect, useRouter } from 'expo-router';
 import { ClipboardList, Info, Plus } from 'lucide-react-native';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { BAND_LABELS } from '@/features/assessments/labels';
@@ -21,13 +21,14 @@ import {
   Button,
   Card,
   ErrorBanner,
-  ErrorState,
+  ErrorScreen,
   EvidenceChip,
+  LoadingScreen,
   makeStyles,
   Screen,
   Sheet,
-  Skeleton,
   Text,
+  useOverlayTurn,
   useTheme,
 } from '@/ui';
 import { minTouchTarget } from '@/ui/tokens';
@@ -67,8 +68,10 @@ export default function AssessmentsScreen() {
   const definition = useQuestionnaireVersion(questionnaire.data?.id ?? undefined);
   const start = useStartAssessment();
   const [infoOpen, setInfoOpen] = useState(false);
+  const infoId = useId();
+  const infoVisible = useOverlayTurn(`que-es-el-chequeo-${infoId}`, infoOpen);
 
-  if (isPending) return <Skeleton height={300} />;
+  if (isPending) return <LoadingScreen />;
   if (!family) return <Redirect href="/bienvenida" />;
   if (!manage) {
     // ROLES_AND_PERMISSIONS.md §3: la caregiver no ve los chequeos.
@@ -82,11 +85,11 @@ export default function AssessmentsScreen() {
     );
   }
   if (members.isPending || attempts.isPending || questionnaire.isPending) {
-    return <Skeleton height={300} />;
+    return <LoadingScreen />;
   }
   if (members.isError || attempts.isError || questionnaire.isError) {
     return (
-      <ErrorState
+      <ErrorScreen
         error={members.error ?? attempts.error ?? questionnaire.error}
         onRetry={() => {
           void members.refetch();
@@ -227,7 +230,7 @@ export default function AssessmentsScreen() {
       )}
 
       <Sheet
-        visible={infoOpen}
+        visible={infoVisible}
         title="Qué es el chequeo"
         onClose={() => {
           setInfoOpen(false);

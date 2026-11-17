@@ -69,7 +69,7 @@ function AdminShell() {
             <EmptyState
               icon={ShieldAlert}
               title="Activá la verificación en dos pasos"
-              description="La administración pide un código de tu teléfono además de la contraseña. Activala en Mi cuenta, en Opciones avanzadas."
+              description="Se activa en Mi cuenta, en Opciones avanzadas."
               action={
                 <Link href="/perfil" asChild>
                   <Button label="Ir a Mi cuenta" icon={CircleUserRound} />

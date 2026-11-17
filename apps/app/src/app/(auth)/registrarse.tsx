@@ -79,9 +79,10 @@ export default function SignUpScreen() {
   const [error, setError] = useState<unknown>(null);
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [resending, setResending] = useState(false);
-  const [resent, setResent] = useState(false);
+  // Cada reenvío muestra "✓ Te lo mandé de nuevo" en el mismo botón, sin un aviso fijo.
+  const [resentKey, setResentKey] = useState(0);
   const cooldown = useCooldown(60);
-  const { control, handleSubmit, formState } = useForm<SignUpInput>({
+  const { control, handleSubmit, formState, setFocus } = useForm<SignUpInput>({
     resolver: zodResolver(SignUpSchema),
     // Valida cada campo al salir de él y después mientras se corrige.
     mode: 'onTouched',
@@ -112,14 +113,13 @@ export default function SignUpScreen() {
       return;
     }
     // Mismo mensaje exista o no la cuenta: no se revela qué correos están registrados.
-    setResent(false);
+    setResentKey(0);
     cooldown.start();
     setSentTo(email);
   });
 
   async function resend(email: string) {
     setError(null);
-    setResent(false);
     setResending(true);
     try {
       const { error: resendError } = await supabase.auth.resend({
@@ -128,7 +128,7 @@ export default function SignUpScreen() {
         options: { emailRedirectTo: confirmUrl },
       });
       if (resendError) throw resendError;
-      setResent(true);
+      setResentKey((n) => n + 1);
       cooldown.start();
     } catch (cause) {
       setError(cause);
@@ -143,7 +143,6 @@ export default function SignUpScreen() {
       <AuthScreen title="¡Ya casi!">
         <BroteSays mood="feliz">{`Te mandé un enlace a ${sentTo}. Tocalo y seguimos.`}</BroteSays>
         <Text tone="muted">Si no lo ves en un minuto, mirá en spam o en promociones.</Text>
-        {resent ? <Banner tone="success">Te lo mandé de nuevo.</Banner> : null}
         <ErrorBanner error={error} />
         <Button
           label={
@@ -151,6 +150,8 @@ export default function SignUpScreen() {
           }
           variant="secondary"
           fullWidth
+          savedKey={resentKey}
+          savedLabel="Te lo mandé de nuevo"
           loading={resending}
           disabled={waiting}
           onPress={() => void resend(sentTo)}
@@ -159,7 +160,7 @@ export default function SignUpScreen() {
           onPress={() => {
             // Vuelve al formulario con el correo cargado para corregirlo.
             setError(null);
-            setResent(false);
+            setResentKey(0);
             setSentTo(null);
           }}
         >
@@ -195,6 +196,9 @@ export default function SignUpScreen() {
         autoCapitalize="none"
         textContentType="emailAddress"
         inputMode="email"
+        onNext={() => {
+          setFocus('password');
+        }}
       />
       <FormTextField
         control={control}
@@ -203,6 +207,7 @@ export default function SignUpScreen() {
         autoComplete="new-password"
         textContentType="newPassword"
         secureTextEntry
+        returnKeyType="go"
         onSubmitEditing={() => void onSubmit()}
       />
       <PasswordRules control={control} />

@@ -1,8 +1,8 @@
 import { Link, router } from 'expo-router';
-import { BriefcaseMedical, ChevronRight } from 'lucide-react-native';
+import { ChevronRight } from 'lucide-react-native';
 import { Pressable, View } from 'react-native';
 
-import { friendlyError } from '@/copy/errors';
+import { BroteEmptyState } from '@/features/brote/Brote';
 import { VerificationBadge } from '@/features/professionals/components';
 import { ageLabel, SCOPE_LABELS } from '@/features/professionals/labels';
 import {
@@ -16,11 +16,11 @@ import {
   Button,
   Card,
   ConfirmAction,
-  EmptyState,
-  ErrorState,
+  ErrorBanner,
+  ErrorScreen,
+  LoadingScreen,
   makeStyles,
   Screen,
-  Skeleton,
   Text,
   useTheme,
 } from '@/ui';
@@ -49,8 +49,9 @@ export default function CasesScreen() {
   const cases = useProCases();
   const end = useEndCare();
 
-  if (cases.isPending) return <Skeleton height={300} />;
-  if (cases.isError) return <ErrorState onRetry={() => void cases.refetch()} />;
+  if (cases.isPending) return <LoadingScreen />;
+  if (cases.isError)
+    return <ErrorScreen error={cases.error} onRetry={() => void cases.refetch()} />;
 
   const active = cases.data.filter((c) => c.status === 'active');
   const pending = cases.data.filter((c) => c.status === 'requested').length;
@@ -76,8 +77,8 @@ export default function CasesScreen() {
           }
         >
           {profile.data.verification_status === 'pending'
-            ? 'Estamos revisando tu matrícula. Cuando esté verificada, las familias te van a encontrar.'
-            : 'Cuando tu matrícula esté verificada, las familias te van a encontrar y te van a poder pedir acompañamiento.'}
+            ? 'Estamos revisando tu matrícula.'
+            : 'Cargá tu matrícula para que las familias te encuentren.'}
         </Banner>
       ) : null}
       {pending > 0 ? (
@@ -93,10 +94,9 @@ export default function CasesScreen() {
       ) : null}
 
       {active.length === 0 ? (
-        <EmptyState
-          icon={BriefcaseMedical}
+        <BroteEmptyState
           title="Todavía no acompañás a ninguna familia"
-          description="Cuando una familia te pida acompañamiento y aceptes, vas a ver acá a los integrantes que te autorizó."
+          description="Cuando aceptes una solicitud, la familia aparece acá."
         />
       ) : (
         active.map((c) => (
@@ -108,7 +108,7 @@ export default function CasesScreen() {
               }`}
             </Text>
             {c.members.length === 0 ? (
-              <Text tone="muted">La familia revocó el acceso a todos los integrantes.</Text>
+              <Text tone="muted">La familia quitó el permiso de todos los integrantes.</Text>
             ) : null}
             {c.members.map((m) => (
               <Link key={m.id} href={`/profesional/casos/${c.id}/${m.id}`} asChild>
@@ -151,7 +151,7 @@ export default function CasesScreen() {
           </Card>
         ))
       )}
-      {end.error ? <Banner tone="danger">{friendlyError(end.error)}</Banner> : null}
+      <ErrorBanner error={end.error} />
 
       {ended.length > 0 ? (
         <>

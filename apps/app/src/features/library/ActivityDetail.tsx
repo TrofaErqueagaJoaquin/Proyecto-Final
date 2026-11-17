@@ -1,19 +1,12 @@
 import { COST_LABELS, SPACE_LABELS } from '@crecer/shared';
-import {
-  CalendarHeart,
-  Clock,
-  PackageOpen,
-  Puzzle,
-  Wallet,
-  type LucideIcon,
-} from 'lucide-react-native';
+import { CalendarHeart, Clock, PackageOpen, Wallet, type LucideIcon } from 'lucide-react-native';
 import { useWindowDimensions, View } from 'react-native';
 
 import { ActivityScene, sceneFor } from '@/features/animations';
+import { BroteEmptyState } from '@/features/brote/Brote';
 import {
   Banner,
   Disclosure,
-  EmptyState,
   ErrorState,
   EvidenceChip,
   makeStyles,
@@ -89,8 +82,10 @@ export function ActivityDetail({
   const sceneWidth = Math.min(width - 48, 560);
 
   if (activity.isPending) return <Skeleton height={320} />;
-  if (activity.isError) return <ErrorState onRetry={() => void activity.refetch()} />;
-  if (!activity.data) return <EmptyState icon={Puzzle} title="No encontramos esta actividad" />;
+  if (activity.isError) {
+    return <ErrorState error={activity.error} onRetry={() => void activity.refetch()} />;
+  }
+  if (!activity.data) return <BroteEmptyState title="No encontramos esta actividad" />;
 
   const a = activity.data;
   const categories = a.activity_category_links.flatMap((link) =>

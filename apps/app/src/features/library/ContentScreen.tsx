@@ -1,16 +1,15 @@
 import { AGE_STAGES } from '@crecer/shared';
 import { Link, type Href } from 'expo-router';
-import { BookX, Puzzle, Stethoscope, UserPlus } from 'lucide-react-native';
+import { Puzzle, Stethoscope, UserPlus } from 'lucide-react-native';
 import { useId, useState } from 'react';
 import { View } from 'react-native';
 
 import { useAuth } from '@/features/auth/AuthProvider';
-import { BroteSays } from '@/features/brote/Brote';
+import { BroteEmptyState, BroteSays } from '@/features/brote/Brote';
 import {
   Banner,
   Button,
   Card,
-  EmptyState,
   ErrorState,
   Disclosure,
   EvidenceChip,
@@ -89,8 +88,7 @@ export function ContentBody({
       <EvidenceChip label={content.evidence_label} showHelp={!collapseSections} />
       {content.reviewed_at === null ? (
         <Banner tone="caution" title="En revisión profesional">
-          Este contenido se basa en las fuentes citadas y todavía no fue revisado por un profesional
-          de la salud. No reemplaza una consulta.
+          Todavía no lo revisó un profesional. No reemplaza una consulta.
         </Banner>
       ) : null}
       <GrowthLine />
@@ -114,8 +112,8 @@ export function ContentBody({
 function ContentDetail({ slug }: { slug: string }) {
   const item = useContentItem(slug);
   if (item.isPending) return <Skeleton height={240} />;
-  if (item.isError) return <ErrorState onRetry={() => void item.refetch()} />;
-  if (!item.data) return <EmptyState icon={BookX} title="No encontramos este contenido" />;
+  if (item.isError) return <ErrorState error={item.error} onRetry={() => void item.refetch()} />;
+  if (!item.data) return <BroteEmptyState title="No encontramos este contenido" />;
   return <ContentBody content={item.data} />;
 }
 
@@ -202,12 +200,17 @@ export function ContentScreen({
       </Screen>
     );
   }
-  if (item.isError) return <ErrorState onRetry={() => void item.refetch()} />;
+  if (item.isError) {
+    return (
+      <Screen edges={['bottom']}>
+        <ErrorState error={item.error} onRetry={() => void item.refetch()} />
+      </Screen>
+    );
+  }
   if (!item.data) {
     return (
       <Screen edges={['bottom']}>
-        <EmptyState
-          icon={BookX}
+        <BroteEmptyState
           title="No encontramos este contenido"
           description="Puede que se haya movido o que todavía no esté publicado."
         />

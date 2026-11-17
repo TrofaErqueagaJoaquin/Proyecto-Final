@@ -1,9 +1,9 @@
 import { Redirect } from 'expo-router';
-import { ShieldCheck } from 'lucide-react-native';
+import { Lock } from 'lucide-react-native';
 import { View } from 'react-native';
 
-import { friendlyError } from '@/copy/errors';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { BroteEmptyState } from '@/features/brote/Brote';
 import { CONSENT_LABELS } from '@/features/families/labels';
 import {
   canManage,
@@ -11,16 +11,32 @@ import {
   useFamilyConsents,
   useRevokeConsent,
 } from '@/features/families/queries';
-import { Banner, Card, ConfirmAction, EmptyState, ErrorState, Screen, Skeleton, Text } from '@/ui';
+import {
+  Banner,
+  Card,
+  ConfirmAction,
+  ErrorBanner,
+  ErrorState,
+  LoadingScreen,
+  Screen,
+  Skeleton,
+  Text,
+} from '@/ui';
+
+const DATE = new Intl.DateTimeFormat('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+function purposeLabel(purpose: string): string {
+  return CONSENT_LABELS[purpose] ?? purpose;
+}
 
 function consequence(purpose: string, alias: string | undefined): string {
   if (purpose === 'child_data') {
     return `${alias ?? 'El integrante'} se archiva: sus datos dejan de usarse y de compartirse.`;
   }
   if (purpose === 'ai_personal_context') {
-    return 'El asistente va a responder sin usar los datos de tu familia.';
+    return 'El asistente va a responder sin conocer a tu familia.';
   }
-  return 'Se deja de usar este dato para esa finalidad.';
+  return 'Dejamos de usar estos datos.';
 }
 
 export default function PrivacyScreen() {
@@ -30,49 +46,38 @@ export default function PrivacyScreen() {
   const consents = useFamilyConsents(family?.id, manage);
   const revoke = useRevokeConsent(family?.id);
 
-  if (isPending) return <Skeleton height={300} />;
+  if (isPending) return <LoadingScreen />;
   if (!family) return <Redirect href="/bienvenida" />;
 
   return (
     <Screen>
       <Text variant="title">Privacidad</Text>
-      <Text tone="muted">
-        Cada uso de los datos de tu familia necesita un consentimiento. Acá ves los vigentes y podés
-        revocarlos cuando quieras.
-      </Text>
+      <Text tone="muted">Los permisos que diste. Los podés quitar cuando quieras.</Text>
 
       {!manage ? (
-        <Banner tone="info">
-          Los consentimientos de la familia los gestionan las personas con rol de responsable.
-        </Banner>
+        <Banner tone="info">Los permisos los manejan los responsables de la familia.</Banner>
       ) : consents.isPending ? (
         <Skeleton height={160} />
       ) : consents.isError ? (
-        <ErrorState onRetry={() => void consents.refetch()} />
+        <ErrorState error={consents.error} onRetry={() => void consents.refetch()} />
       ) : consents.data.length === 0 ? (
-        <Card>
-          <EmptyState
-            icon={ShieldCheck}
-            title="No hay consentimientos vigentes"
-            description="Cuando agregues integrantes o habilites funciones, van a aparecer acá."
-          />
-        </Card>
+        <BroteEmptyState title="Todavía no diste ningún permiso" />
       ) : (
         consents.data.map((consent) => (
           <Card key={consent.id}>
             <View style={{ gap: 4 }}>
-              <Text variant="subheading">{CONSENT_LABELS[consent.purpose] ?? consent.purpose}</Text>
+              <Text variant="subheading">{purposeLabel(consent.purpose)}</Text>
               {consent.family_members ? (
-                <Text tone="muted">Integrante: {consent.family_members.alias}</Text>
+                <Text tone="muted">{consent.family_members.alias}</Text>
               ) : null}
               <Text variant="small" tone="muted">
-                Otorgado el {new Date(consent.granted_at).toLocaleDateString('es-AR')} · versión{' '}
-                {consent.policy_version}
+                {`Desde el ${DATE.format(new Date(consent.granted_at))}`}
               </Text>
             </View>
             <ConfirmAction
-              label="Revocar"
-              confirmLabel="Sí, revocar"
+              label="Quitar el permiso"
+              confirmLabel="Sí, quitar"
+              icon={Lock}
               description={consequence(consent.purpose, consent.family_members?.alias)}
               loading={revoke.isPending && revoke.variables.consentId === consent.id}
               onConfirm={() => {
@@ -83,7 +88,7 @@ export default function PrivacyScreen() {
           </Card>
         ))
       )}
-      {revoke.error ? <Banner tone="danger">{friendlyError(revoke.error)}</Banner> : null}
+      <ErrorBanner error={revoke.error} />
     </Screen>
   );
 }

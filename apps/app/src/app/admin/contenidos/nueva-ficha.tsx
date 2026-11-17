@@ -3,7 +3,6 @@ import { Save } from 'lucide-react-native';
 import { useState } from 'react';
 import { useWindowDimensions } from 'react-native';
 
-import { friendlyError } from '@/copy/errors';
 import {
   AGE_STAGE_OPTIONS,
   agesFromStages,
@@ -18,7 +17,17 @@ import { slugify } from '@/features/admin/slug';
 import { useFieldErrors } from '@/features/forms/useFieldErrors';
 import { useUnsavedGuard } from '@/features/forms/useUnsavedGuard';
 import { Markdown } from '@/features/library/Markdown';
-import { Banner, Button, Card, ChipGroup, Disclosure, Screen, Text, TextField } from '@/ui';
+import {
+  Banner,
+  Button,
+  Card,
+  ChipGroup,
+  Disclosure,
+  ErrorBanner,
+  Screen,
+  Text,
+  TextField,
+} from '@/ui';
 
 // Los mismos topes que la tabla content_items.
 const MAX_TITLE = 160;
@@ -136,8 +145,7 @@ export default function NewContentScreen() {
         hint="Ej.: Cuando no quiere irse a dormir."
         value={title}
         onChangeText={setTitle}
-        onBlur={fields.touch('title')}
-        error={fields.shown('title')}
+        {...fields.field('title')}
         maxLength={MAX_TITLE}
       />
       <TextField
@@ -181,7 +189,7 @@ export default function NewContentScreen() {
   const footer = (
     <>
       <PublishChoice canPublish={canPublish} value={publish} onChange={setPublish} />
-      {create.error ? <Banner tone="danger">{friendlyError(create.error)}</Banner> : null}
+      <ErrorBanner error={create.error} />
       {fields.attempted && fields.hasErrors ? (
         <Banner tone="caution">Revisá lo marcado arriba.</Banner>
       ) : null}

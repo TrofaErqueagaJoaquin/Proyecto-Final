@@ -5,24 +5,14 @@ import { CalendarDays, Sparkles, Target } from 'lucide-react-native';
 import { View } from 'react-native';
 
 import { useFamilyAttempts } from '@/features/assessments/queries';
-import { BroteSays } from '@/features/brote/Brote';
+import { BroteEmptyState, BroteSays } from '@/features/brote/Brote';
 import { PersonalizeCard } from '@/features/chequeo/PersonalizeCard';
 import { feedback } from '@/features/feedback/feedback';
 import { canManage } from '@/features/families/queries';
 import { useFamilyProgress } from '@/features/logros/LogrosStrip';
 import { latestProgress, useGoals } from '@/features/goals/queries';
 import { LinkCard } from '@/features/library/LinkCard';
-import {
-  Button,
-  Card,
-  EmptyState,
-  ErrorBanner,
-  ErrorState,
-  makeStyles,
-  Skeleton,
-  Text,
-  useTheme,
-} from '@/ui';
+import { Button, Card, ErrorBanner, ErrorState, makeStyles, Skeleton, Text, useTheme } from '@/ui';
 
 import { PlanItemCard } from './PlanItemCard';
 import { localDate, useGeneratePlan, useWeekPlans } from './queries';
@@ -118,10 +108,9 @@ export function TodaySection({ familyId, role }: { familyId: string; role: Famil
         </View>
       ) : (
         <Card>
-          <EmptyState
-            icon={CalendarDays}
+          <BroteEmptyState
             title="Tu sugerencia del día"
-            description="Cuando la persona responsable arme el plan de la semana, acá vas a ver la idea del día."
+            description="Aparece cuando armen el plan de la semana."
           />
         </Card>
       )}

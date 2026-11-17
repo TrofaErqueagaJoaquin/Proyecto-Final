@@ -97,8 +97,7 @@ export default function AuthCallbackScreen() {
           <Button label="Ingresar" fullWidth />
         </Link>
         <Text variant="small" tone="muted" center>
-          Si te registraste desde la app del celular, volvé a la app e ingresá con tu correo y
-          contraseña.
+          ¿Te registraste desde el celular? Ingresá desde la app.
         </Text>
       </AuthScreen>
     );
@@ -120,10 +119,7 @@ export default function AuthCallbackScreen() {
         <BroteSays mood="pensando">
           Ese enlace ya no sirve: vencen a las 24 horas o al usarlos una vez.
         </BroteSays>
-        <Text>
-          Probá ingresar: si tu correo ya estaba confirmado, entrás directo. Si no, creá la cuenta
-          de nuevo con el mismo correo y te mando otro enlace.
-        </Text>
+        <Text>Probá ingresar. Si no entrás, creá la cuenta de nuevo con el mismo correo.</Text>
         <Link href={withNext('/ingresar', params.next)} asChild>
           <Button label="Ingresar" fullWidth />
         </Link>
