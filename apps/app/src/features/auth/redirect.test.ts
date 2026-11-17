@@ -13,6 +13,13 @@ describe('safeNextPath', () => {
     '//sitio-malicioso.example',
     'javascript:alert(1)',
     'hoy',
+    '/\\sitio-malicioso.example',
+    '/\\/sitio-malicioso.example',
+    '/hoy\\..\\x',
+    '/ /sitio-malicioso.example',
+    '/\t/sitio-malicioso.example',
+    '/hoy\n',
+    '/hoy\u0000',
     undefined,
     ['/hoy'],
   ])('rechaza %p y vuelve a /hoy (evita redirecciones abiertas)', (value) => {

@@ -2,7 +2,7 @@ import { ASSISTANT_QUESTION_MAX } from '@crecer/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { Redirect, router } from 'expo-router';
 import { MessageCircle, Send, Sparkles } from 'lucide-react-native';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Platform, View, type TextInputKeyPressEvent } from 'react-native';
 
 import { friendlyError } from '@/copy/errors';
@@ -64,6 +64,8 @@ function Ask({ familyId }: { familyId: string }) {
   const withContext = chosenContext ?? consent.data === true;
   const needsConsent = withContext && consent.data === false;
   const busy = create.isPending || grant.isPending;
+  // Evita un doble envío (Enter + toque) antes de que `busy` llegue a la pantalla.
+  const startingRef = useRef(false);
 
   const options = [
     { value: FAMILY, label: 'La familia en general' },
@@ -74,7 +76,8 @@ function Ask({ familyId }: { familyId: string }) {
 
   const start = () => {
     const text = question.trim();
-    if (!text || busy) return;
+    if (!text || busy || startingRef.current) return;
+    startingRef.current = true;
     void (async () => {
       if (needsConsent) await grant.mutateAsync();
       const id = await create.mutateAsync({
@@ -84,7 +87,11 @@ function Ask({ familyId }: { familyId: string }) {
       queryClient.setQueryData(firstQuestionKey(id), text);
       setQuestion('');
       router.push(`/asistente/${id}`);
-    })().catch(() => undefined);
+    })()
+      .catch(() => undefined)
+      .finally(() => {
+        startingRef.current = false;
+      });
   };
 
   return (

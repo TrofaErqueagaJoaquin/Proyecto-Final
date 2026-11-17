@@ -13,7 +13,7 @@ function invitationIsDone(error: unknown): boolean {
   const message = (error as { message?: unknown } | null)?.message;
   return (
     typeof message === 'string' &&
-    /INVITATION_INVALID|INVITATION_EXPIRED|ALREADY_MEMBER/.test(message)
+    /INVITATION_INVALID|INVITATION_EXPIRED|INVITATION_EMAIL_MISMATCH|ALREADY_MEMBER/.test(message)
   );
 }
 

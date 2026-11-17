@@ -87,7 +87,8 @@ export function useFieldErrors<K extends string>(
     attempt: () => {
       setAttempted(true);
       if (hasErrors) {
-        const first = [...chain, ...keys].find((k) => errors[k] !== undefined && refs.current[k]);
+        // Solo el primero con error: si no tiene campo en pantalla, el foco no salta a otro.
+        const first = [...chain, ...keys].find((k) => errors[k] !== undefined);
         if (first) focus(first);
       }
       return !hasErrors;

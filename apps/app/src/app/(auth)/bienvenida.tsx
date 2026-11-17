@@ -198,9 +198,14 @@ export default function WelcomeScreen() {
   // Profesionales y administración no arman una familia: solo aceptan los términos.
   const otherSpace =
     nextParam?.startsWith('/profesional') === true || nextParam?.startsWith('/admin') === true;
-  // La invitación guardada gana sobre el destino de siempre (Hoy), nunca sobre otro espacio.
-  const next =
-    !isInvitationPath(nextParam) && !otherSpace && pending.path ? pending.path : nextParam;
+  // La invitación guardada gana sobre el destino de siempre (Hoy), nunca sobre otro espacio ni
+  // sobre un `next` propio de quien ya tiene familia.
+  const resumePending =
+    pending.path !== null &&
+    !isInvitationPath(nextParam) &&
+    !otherSpace &&
+    (!hasFamily || !nextParam || nextParam === '/hoy');
+  const next = resumePending ? pending.path : nextParam;
   const viaInvitation = isInvitationPath(next);
   const termsOnly = viaInvitation || hasFamily || otherSpace;
   if (terms.data?.accepted && termsOnly) {

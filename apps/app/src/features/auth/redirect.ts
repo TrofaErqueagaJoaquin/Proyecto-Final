@@ -26,8 +26,13 @@ export function emailRedirectUrl(path: string): string {
   return authRedirectUrl(path);
 }
 
-/** Solo se permiten destinos internos después del ingreso (evita redirecciones abiertas). */
+/**
+ * Solo se permiten destinos internos después del ingreso (evita redirecciones abiertas): empieza
+ * con una sola `/`, sin `\` (los navegadores lo leen como `/`), espacios ni caracteres de control.
+ */
+const INTERNAL_PATH = /^\/(?![/\\])[^\s\\\u0000-\u001f\u007f]*$/;
+
 export function safeNextPath(next: unknown, fallback = '/hoy'): string {
   if (typeof next !== 'string') return fallback;
-  return next.startsWith('/') && !next.startsWith('//') ? next : fallback;
+  return INTERNAL_PATH.test(next) ? next : fallback;
 }

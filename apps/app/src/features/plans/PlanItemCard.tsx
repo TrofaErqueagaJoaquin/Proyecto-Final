@@ -1,6 +1,6 @@
 import { CircleCheck, Ellipsis, PlayCircle, RefreshCw, SkipForward } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 
 import { ActivityScene, sceneFor } from '@/features/animations';
 import {
@@ -41,6 +41,8 @@ function useSkipWithUndo(itemId: string) {
   const skip = useSkipItem();
   const skipNow = skip.mutate;
   const [waiting, setWaiting] = useState(false);
+  // Ya se mandó a guardar: sigue "Salteada" hasta que llegue el plan actualizado (sin parpadeo).
+  const [committed, setCommitted] = useState(false);
   const pending = useRef(false);
 
   useEffect(() => {
@@ -49,13 +51,22 @@ function useSkipWithUndo(itemId: string) {
     const commit = () => {
       if (!pending.current) return;
       pending.current = false;
-      skipNow(itemId);
+      setCommitted(true);
+      skipNow(itemId, {
+        onError: () => {
+          setCommitted(false);
+        },
+      });
     };
     const timer = setTimeout(() => {
       commit();
       setWaiting(false);
     }, UNDO_MS);
+    // En la web, cerrar o recargar la pestaña no desmonta: se guarda al ocultarse la página.
+    const web = Platform.OS === 'web' && typeof window !== 'undefined';
+    if (web) window.addEventListener('pagehide', commit);
     return () => {
+      if (web) window.removeEventListener('pagehide', commit);
       clearTimeout(timer);
       commit();
     };
@@ -63,7 +74,7 @@ function useSkipWithUndo(itemId: string) {
 
   return {
     waiting,
-    saving: skip.isPending,
+    saving: skip.isPending || committed,
     error: skip.error,
     start: () => {
       setWaiting(true);

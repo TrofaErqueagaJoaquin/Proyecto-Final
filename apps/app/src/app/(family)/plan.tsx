@@ -57,7 +57,10 @@ export default function PlanScreen() {
   const pendingCount = plan?.items.filter((i) => i.status === 'planned').length ?? 0;
 
   if (plan && (lastPending?.id !== plan.id || lastPending.pending !== pendingCount)) {
-    if (lastPending?.id === plan.id && pendingCount === 0 && doneCount > 0) setWeekDone(true);
+    // Solo si se hicieron todas: con alguna salteada no es una "semana completa".
+    if (lastPending?.id === plan.id && pendingCount === 0 && doneCount === plan.items.length) {
+      setWeekDone(true);
+    }
     setLastPending({ id: plan.id, pending: pendingCount });
   }
 
