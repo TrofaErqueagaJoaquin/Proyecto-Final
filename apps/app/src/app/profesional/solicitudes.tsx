@@ -16,6 +16,7 @@ import {
   LoadingScreen,
   Screen,
   Text,
+  useOverlayTurn,
 } from '@/ui';
 
 const DATE = new Intl.DateTimeFormat('es-AR', { day: 'numeric', month: 'long' });
@@ -26,6 +27,7 @@ export default function RequestsScreen() {
   const respond = useRespondCare();
   // Después de aceptar: festejo de Brote con "Ver el caso" (la tarjeta ya no está en la lista).
   const [accepted, setAccepted] = useState<{ family: string; href: Href } | null>(null);
+  const acceptedVisible = useOverlayTurn('solicitud-aceptada', accepted !== null);
 
   if (cases.isPending) return <LoadingScreen />;
   if (cases.isError) {
@@ -108,7 +110,7 @@ export default function RequestsScreen() {
       )}
       <ErrorBanner error={respond.error} />
       <GuidePopup
-        visible={accepted !== null}
+        visible={acceptedVisible}
         celebrate
         title={`¡Aceptaste a la familia ${accepted?.family ?? ''}!`}
         message="Ya podés ver lo que te autorizaron."

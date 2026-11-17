@@ -59,7 +59,7 @@ const GOAL_STATUS_OPTIONS = (Object.keys(GOAL_STATUS_LABELS) as GoalStatus[]).ma
 type Tab = 'resumen' | 'evaluaciones' | 'objetivos' | 'observaciones';
 
 function AssessmentsSection({ items }: { items: NonNullable<MemberOverview['assessments']> }) {
-  if (items.length === 0) return <Text tone="muted">Todavía no hay evaluaciones enviadas.</Text>;
+  if (items.length === 0) return <Text tone="muted">Todavía no hay chequeos enviados.</Text>;
   return (
     <>
       {items.map((attempt) => (
@@ -341,7 +341,7 @@ export default function MemberCaseScreen() {
     queryClient.invalidateQueries({ queryKey: proKeys.overview(assignmentId, memberId) });
   const tabs: { value: Tab; label: string }[] = [
     { value: 'resumen', label: 'Resumen' },
-    ...(o.assessments ? [{ value: 'evaluaciones' as const, label: 'Evaluaciones' }] : []),
+    ...(o.assessments ? [{ value: 'evaluaciones' as const, label: 'Chequeos' }] : []),
     ...(o.goals ? [{ value: 'objetivos' as const, label: 'Objetivos' }] : []),
     ...(o.observations ? [{ value: 'observaciones' as const, label: 'Observaciones' }] : []),
   ];
@@ -367,7 +367,7 @@ export default function MemberCaseScreen() {
           {o.member.interests.length > 0 ? (
             <Text>{`Le gusta: ${o.member.interests.join(', ')}`}</Text>
           ) : null}
-          <Text>{`Evaluaciones: ${o.assessments ? String(o.assessments.length) : 'no compartidas'}`}</Text>
+          <Text>{`Chequeos: ${o.assessments ? String(o.assessments.length) : 'no compartidos'}`}</Text>
           <Text>{`Objetivos: ${o.goals ? String(o.goals.length) : 'no compartidos'}`}</Text>
           {o.activities ? (
             <>

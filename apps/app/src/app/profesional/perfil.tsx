@@ -52,6 +52,7 @@ import {
   Text,
   digitsMask,
   TextField,
+  useOverlayTurn,
   useTheme,
 } from '@/ui';
 import { supabase } from '@/lib/supabase';
@@ -542,6 +543,7 @@ function CredentialsCard({ onFinish }: { onFinish: () => void }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [sent, setSent] = useState(false);
+  const sentVisible = useOverlayTurn('credencial-enviada', sent);
 
   const onSent = () => {
     setEditing(null);
@@ -675,7 +677,7 @@ function CredentialsCard({ onFinish }: { onFinish: () => void }) {
         />
       )}
       <GuidePopup
-        visible={sent}
+        visible={sentVisible}
         celebrate
         title="¡Enviada!"
         message="La revisamos en unos días. El resultado lo ves en Mi ficha."
@@ -805,6 +807,7 @@ export default function ProfessionalProfileScreen() {
   // Sin elegir un paso, se arranca donde corresponde (startStep).
   const [chosen, setChosen] = useState<Step | null>(null);
   const [created, setCreated] = useState(false);
+  const createdVisible = useOverlayTurn('perfil-creado', created);
   const [savedKey, setSavedKey] = useState(0);
 
   if (profile.isPending || (profile.data && credentials.isPending)) return <LoadingScreen />;
@@ -877,7 +880,7 @@ export default function ProfessionalProfileScreen() {
       )}
 
       <GuidePopup
-        visible={created}
+        visible={createdVisible}
         celebrate
         title="¡Creaste tu perfil!"
         message="Ahora cargá tu matrícula para aparecer en el directorio."

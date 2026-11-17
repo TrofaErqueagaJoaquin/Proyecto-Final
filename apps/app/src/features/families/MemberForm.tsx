@@ -96,7 +96,6 @@ export function MemberForm({
           mask={monthYearMask}
           maxLength={7}
           returnKeyType="done"
-          onSubmitEditing={() => void submit()}
         />
       ) : (
         <ChipGroup

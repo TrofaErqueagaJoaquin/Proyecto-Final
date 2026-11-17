@@ -42,7 +42,7 @@ export default function AnswerScreen() {
   const [markMissing, setMarkMissing] = useState<string | null>(null);
   // Enviado: se festeja antes de ir al resultado (sin esto, el redireccionamiento lo saltea).
   const [sent, setSent] = useState(false);
-  const popupVisible = useOverlayTurn('resultado', sent && submit.isSuccess);
+  const popupVisible = useOverlayTurn('evaluacion-resultado', sent && submit.isSuccess);
   const goToResult = () => {
     router.replace(`/evaluaciones/${attemptId}/resultado`);
   };

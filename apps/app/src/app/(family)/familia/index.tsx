@@ -11,7 +11,7 @@ import {
   UserPlus,
   UserRound,
 } from 'lucide-react-native';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { View } from 'react-native';
 
 import { useAuth } from '@/features/auth/AuthProvider';
@@ -45,6 +45,7 @@ import {
   Sheet,
   Skeleton,
   Text,
+  useOverlayTurn,
   useTheme,
 } from '@/ui';
 import { minTouchTarget } from '@/ui/tokens';
@@ -168,10 +169,12 @@ function AdultSheet({
   const [nextRole, setNextRole] = useState<FamilyRole>(adult.role as FamilyRole);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const roleChanged = nextRole !== adult.role;
+  const id = useId();
+  const visible = useOverlayTurn(`adulto-${id}`, true);
 
   if (confirmRemove) {
     return (
-      <Sheet visible onClose={onClose} title={`¿Quitar a ${adult.name}?`}>
+      <Sheet visible={visible} onClose={onClose} title={`¿Quitar a ${adult.name}?`}>
         <Text>Va a dejar de ver los datos de la familia. Podés volver a invitarla.</Text>
         <ErrorBanner error={removeAdult.error} />
         <View style={styles.sheetActions}>
@@ -200,7 +203,7 @@ function AdultSheet({
   }
 
   return (
-    <Sheet visible onClose={onClose} title={adult.name}>
+    <Sheet visible={visible} onClose={onClose} title={adult.name}>
       <Badge tone="primary">{`${roleLabel(adult.role)} · ${relationshipLabel(adult.relationship)}`}</Badge>
       {editable ? (
         <>

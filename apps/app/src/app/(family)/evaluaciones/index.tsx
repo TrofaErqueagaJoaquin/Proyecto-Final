@@ -1,7 +1,7 @@
 import { ageInMonths } from '@crecer/domain';
 import { Link, Redirect, useRouter } from 'expo-router';
 import { ClipboardList, Info, Plus } from 'lucide-react-native';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { BAND_LABELS } from '@/features/assessments/labels';
@@ -28,6 +28,7 @@ import {
   Screen,
   Sheet,
   Text,
+  useOverlayTurn,
   useTheme,
 } from '@/ui';
 import { minTouchTarget } from '@/ui/tokens';
@@ -67,6 +68,8 @@ export default function AssessmentsScreen() {
   const definition = useQuestionnaireVersion(questionnaire.data?.id ?? undefined);
   const start = useStartAssessment();
   const [infoOpen, setInfoOpen] = useState(false);
+  const infoId = useId();
+  const infoVisible = useOverlayTurn(`que-es-el-chequeo-${infoId}`, infoOpen);
 
   if (isPending) return <LoadingScreen />;
   if (!family) return <Redirect href="/bienvenida" />;
@@ -227,7 +230,7 @@ export default function AssessmentsScreen() {
       )}
 
       <Sheet
-        visible={infoOpen}
+        visible={infoVisible}
         title="Qué es el chequeo"
         onClose={() => {
           setInfoOpen(false);

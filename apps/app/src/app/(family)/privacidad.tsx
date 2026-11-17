@@ -25,13 +25,8 @@ import {
 
 const DATE = new Intl.DateTimeFormat('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
 
-// Glosario de la app (B-73): sin "contexto" a la vista.
-const PURPOSE_LABELS: Record<string, string> = {
-  ai_personal_context: 'Que el asistente conozca a mi familia',
-};
-
 function purposeLabel(purpose: string): string {
-  return PURPOSE_LABELS[purpose] ?? CONSENT_LABELS[purpose] ?? purpose;
+  return CONSENT_LABELS[purpose] ?? purpose;
 }
 
 function consequence(purpose: string, alias: string | undefined): string {
