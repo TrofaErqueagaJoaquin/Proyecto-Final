@@ -1,11 +1,16 @@
-import type { LucideIcon } from 'lucide-react-native';
+import { Check, type LucideIcon } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, View, type PressableProps } from 'react-native';
 
 import { Text } from './Text';
 import { makeStyles, useTheme } from './theme';
 import { minTouchTarget } from './tokens';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+/** `dangerSoft`: rojo suave para la acción que borra o quita, antes de confirmar. */
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'dangerSoft';
+
+/** Cuánto dura "✓ Guardado" en el botón. */
+export const SAVED_MS = 2000;
 
 export interface ButtonProps extends Omit<PressableProps, 'children' | 'style'> {
   label: string;
@@ -13,6 +18,13 @@ export interface ButtonProps extends Omit<PressableProps, 'children' | 'style'> 
   icon?: LucideIcon;
   loading?: boolean;
   fullWidth?: boolean;
+  /**
+   * Cambiar este número (por ejemplo, `setSaved((n) => n + 1)` al guardar) muestra
+   * "✓ Guardado" en el botón durante 2 s, en lugar de un aviso fijo.
+   */
+  savedKey?: number;
+  /** Texto de confirmación de `savedKey`. */
+  savedLabel?: string;
 }
 
 const useStyles = makeStyles((t) => ({
@@ -42,6 +54,8 @@ const useStyles = makeStyles((t) => ({
   secondary: { backgroundColor: t.colors.surface, borderColor: t.colors.borderStrong },
   ghost: { backgroundColor: 'transparent', borderColor: 'transparent' },
   danger: { backgroundColor: t.colors.danger, borderColor: t.colors.danger },
+  dangerSoft: { backgroundColor: t.colors.dangerSoft, borderColor: t.colors.danger },
+  saved: { backgroundColor: t.colors.successSoft, borderColor: t.colors.success },
   pressed: { opacity: 0.9, transform: [{ scale: 0.97 }] },
   hovered: { opacity: 0.92 },
   focused: {
@@ -63,19 +77,27 @@ export function Button({
   loading = false,
   fullWidth = false,
   disabled,
+  savedKey = 0,
+  savedLabel = 'Guardado',
   ...rest
 }: ButtonProps) {
   const styles = useStyles();
   const { colors } = useTheme();
+  const saved = useSaved(savedKey);
   const isDisabled = disabled === true || loading;
-  const foreground =
-    variant === 'primary'
+  const foreground = saved
+    ? colors.success
+    : variant === 'primary'
       ? colors.onBrand
       : variant === 'danger'
         ? colors.surface
         : variant === 'ghost'
           ? colors.primary
-          : colors.ink;
+          : variant === 'dangerSoft'
+            ? colors.danger
+            : colors.ink;
+  const shownLabel = saved ? savedLabel : label;
+  const ShownIcon = saved ? Check : Icon;
 
   return (
     <Pressable
@@ -83,7 +105,7 @@ export function Button({
       // propias del botón tienen que ganar.
       {...rest}
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={shownLabel}
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
       style={(state) => {
@@ -95,6 +117,7 @@ export function Button({
         return [
           styles.base,
           styles[variant],
+          saved && styles.saved,
           fullWidth && styles.fullWidth,
           hovered === true && styles.hovered,
           state.pressed && styles.pressed,
@@ -103,16 +126,32 @@ export function Button({
         ];
       }}
     >
-      <View style={styles.content}>
+      <View style={styles.content} accessibilityLiveRegion={savedKey > 0 ? 'polite' : undefined}>
         {loading ? (
           <ActivityIndicator color={foreground} />
-        ) : Icon ? (
-          <Icon color={foreground} size={20} aria-hidden />
+        ) : ShownIcon ? (
+          <ShownIcon color={foreground} size={20} aria-hidden />
         ) : null}
         <Text variant="bodyStrong" style={[styles.label, { color: foreground }]}>
-          {label}
+          {shownLabel}
         </Text>
       </View>
     </Pressable>
   );
+}
+
+/** `true` durante `SAVED_MS` cada vez que cambia `key` (salvo en 0). */
+function useSaved(key: number) {
+  // La última clave que ya cumplió sus 2 s: mientras `key` sea otra, se muestra "Guardado".
+  const [expiredKey, setExpiredKey] = useState(0);
+  useEffect(() => {
+    if (key === 0) return;
+    const timer = setTimeout(() => {
+      setExpiredKey(key);
+    }, SAVED_MS);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [key]);
+  return key !== 0 && expiredKey !== key;
 }

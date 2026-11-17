@@ -169,14 +169,19 @@ const useStateStyles = makeStyles((t) => ({
   loading: { alignItems: 'center', gap: t.space.md, paddingVertical: t.space.xl },
 }));
 
-/** Estado vacío con UNA acción clara (UX_AND_NAVIGATION.md §6). */
+/**
+ * Estado vacío con UNA acción clara (UX_AND_NAVIGATION.md §6). `illustration` reemplaza al ícono
+ * (por ejemplo, Brote: ver `BroteEmptyState` en features/brote, que ui/ no puede importar).
+ */
 export function EmptyState({
   icon: Icon,
+  illustration,
   title,
   description,
   action,
 }: {
-  icon: LucideIcon;
+  icon?: LucideIcon;
+  illustration?: ReactNode;
   title: string;
   description?: string;
   action?: ReactNode;
@@ -185,9 +190,12 @@ export function EmptyState({
   const { colors } = useTheme();
   return (
     <View style={styles.container}>
-      <View style={styles.icon}>
-        <Icon color={colors.primary} size={30} aria-hidden />
-      </View>
+      {illustration ??
+        (Icon ? (
+          <View style={styles.icon}>
+            <Icon color={colors.primary} size={30} aria-hidden />
+          </View>
+        ) : null)}
       <View style={styles.text}>
         <Text variant="subheading" center>
           {title}

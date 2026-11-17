@@ -2,22 +2,33 @@ import { useController, type Control, type FieldPath, type FieldValues } from 'r
 
 import { TextField, type TextFieldProps } from './TextField';
 
-/** TextField conectado a react-hook-form: el error viene del esquema zod compartido. */
+/**
+ * TextField conectado a react-hook-form: el error viene del esquema zod compartido. Conecta la
+ * ref, así `handleSubmit` lleva el foco al primer error y `setFocus` funciona. Con `onNext`,
+ * Enter pasa al campo siguiente: `onNext={() => { setFocus('password'); }}`.
+ */
 export function FormTextField<T extends FieldValues>({
   control,
   name,
+  onNext,
   ...props
-}: Omit<TextFieldProps, 'value' | 'onChangeText' | 'error'> & {
+}: Omit<TextFieldProps, 'value' | 'onChangeText' | 'error' | 'ref'> & {
   control: Control<T>;
   name: FieldPath<T>;
+  onNext?: () => void;
 }) {
-  const { field, fieldState } = useController({ control, name });
+  const {
+    field: { ref: inputRef, value, onChange, onBlur },
+    fieldState,
+  } = useController({ control, name });
   return (
     <TextField
+      {...(onNext ? { returnKeyType: 'next' as const, onSubmitEditing: onNext } : null)}
       {...props}
-      value={typeof field.value === 'string' ? field.value : ''}
-      onChangeText={field.onChange}
-      onBlur={field.onBlur}
+      ref={inputRef}
+      value={typeof value === 'string' ? value : ''}
+      onChangeText={onChange}
+      onBlur={onBlur}
       error={fieldState.error?.message}
     />
   );

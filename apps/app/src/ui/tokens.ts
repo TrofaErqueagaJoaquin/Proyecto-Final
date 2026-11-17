@@ -129,10 +129,11 @@ export const typeScale = {
   subheading: { fontSize: 22, lineHeight: 28 },
   body: { fontSize: 18, lineHeight: 27 },
   small: { fontSize: 16, lineHeight: 23 },
-  caption: { fontSize: 13, lineHeight: 18 },
+  // Rótulos, estados y pestañas: nunca menos de 15 px (se leen de un vistazo).
+  caption: { fontSize: 15, lineHeight: 20 },
 } as const;
 
 export const breakpoints = { tablet: 600, desktop: 1024 } as const;
 
-/** Área táctil mínima (WCAG 2.2 y pautas de plataforma). */
-export const minTouchTarget = 44;
+/** Área táctil mínima: 48 px (pauta de Android y Material; supera los 44 de WCAG 2.2 AAA). */
+export const minTouchTarget = 48;

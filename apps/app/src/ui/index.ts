@@ -16,13 +16,14 @@ export {
   type FeedbackAction,
 } from './Feedback';
 export { Sheet } from './Sheet';
+export { StepNav } from './StepNav';
 export { OverlayQueueProvider, useOverlayTurn } from './OverlayQueue';
 export { Disclosure } from './Disclosure';
 export { BrandMark } from './BrandMark';
 export { Card, GrowthLine, Logo, Screen } from './Layout';
 export { Text, type TextTone, type TextVariant } from './Text';
 export { FormTextField } from './FormTextField';
-export { TextField } from './TextField';
+export { TextField, type TextFieldProps } from './TextField';
 export { digitsMask, monthYearMask, type Mask } from './masks';
 export {
   makeStyles,

@@ -1,8 +1,9 @@
-import { Check, type LucideIcon } from 'lucide-react-native';
-import { useState, type ReactNode } from 'react';
+import { Check, Trash2, type LucideIcon } from 'lucide-react-native';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Button } from './Button';
+import { Sheet } from './Sheet';
 import { Text } from './Text';
 import { makeStyles, useTheme } from './theme';
 import { minTouchTarget } from './tokens';
@@ -18,7 +19,8 @@ const useStyles = makeStyles((t) => ({
     paddingHorizontal: t.space.lg,
     borderRadius: t.radius.pill,
     borderWidth: 2,
-    borderColor: t.colors.border,
+    // Contorno de 3:1 como mínimo: sin elegir, el chip igual tiene que verse como botón.
+    borderColor: t.colors.borderStrong,
     backgroundColor: t.colors.surface,
   },
   chipActive: { borderColor: t.colors.brand, backgroundColor: t.colors.primarySoft },
@@ -34,13 +36,7 @@ const useStyles = makeStyles((t) => ({
   },
   badgeCaution: { backgroundColor: t.colors.cautionSoft },
   badgePrimary: { backgroundColor: t.colors.primarySoft },
-  confirm: {
-    gap: t.space.sm,
-    padding: t.space.md,
-    borderRadius: t.radius.md,
-    backgroundColor: t.colors.dangerSoft,
-  },
-  confirmActions: { flexDirection: 'row', flexWrap: 'wrap', gap: t.space.sm },
+  confirmActions: { gap: t.space.sm },
 }));
 
 interface Option<V extends string> {
@@ -141,8 +137,9 @@ export function Badge({
 }
 
 /**
- * Acción destructiva en dos pasos, en línea (Alert.alert no funciona en la web).
- * Primero muestra el botón; al tocarlo, explica la consecuencia y pide confirmar.
+ * Acción que borra o quita, en dos pasos. El botón es rojo suave con ícono (tacho por defecto);
+ * al tocarlo se abre una ventana con una frase y dos botones: confirmar o "Cancelar".
+ * Con `loading`, la ventana queda abierta mientras se hace y se cierra sola al terminar.
  */
 export function ConfirmAction({
   label,
@@ -150,40 +147,67 @@ export function ConfirmAction({
   description,
   onConfirm,
   loading,
+  icon = Trash2,
+  title,
 }: {
   label: string;
   confirmLabel: string;
+  /** Una frase con la consecuencia ("Se borra ya. No se puede deshacer."). */
   description: ReactNode;
   onConfirm: () => void;
   loading?: boolean;
+  /** Ícono del botón (por ejemplo, un candado para "Revocar"). */
+  icon?: LucideIcon;
+  /** Título de la ventana; si no, "¿{label}?". */
+  title?: string;
 }) {
   const styles = useStyles();
   const [open, setOpen] = useState(false);
-  if (!open) {
-    return (
+  const wasLoading = useRef(false);
+
+  // Al terminar la acción (loading pasa de true a false) la ventana se cierra sola.
+  useEffect(() => {
+    if (wasLoading.current && loading !== true) setOpen(false);
+    wasLoading.current = loading === true;
+  }, [loading]);
+
+  const close = () => {
+    if (loading !== true) setOpen(false);
+  };
+
+  return (
+    <>
       <Button
         label={label}
-        variant="ghost"
+        variant="dangerSoft"
+        icon={icon}
         onPress={() => {
           setOpen(true);
         }}
       />
-    );
-  }
-  return (
-    <View style={styles.confirm} role="alert">
-      {typeof description === 'string' ? <Text>{description}</Text> : description}
-      <View style={styles.confirmActions}>
-        <Button label={confirmLabel} variant="danger" loading={loading} onPress={onConfirm} />
-        <Button
-          label="Cancelar"
-          variant="secondary"
-          disabled={loading}
-          onPress={() => {
-            setOpen(false);
-          }}
-        />
-      </View>
-    </View>
+      <Sheet visible={open} onClose={close} title={title ?? `¿${label}?`}>
+        {typeof description === 'string' ? <Text>{description}</Text> : description}
+        <View style={styles.confirmActions}>
+          <Button
+            label={confirmLabel}
+            variant="danger"
+            icon={icon}
+            loading={loading}
+            fullWidth
+            onPress={() => {
+              onConfirm();
+              if (loading === undefined) setOpen(false);
+            }}
+          />
+          <Button
+            label="Cancelar"
+            variant="secondary"
+            disabled={loading}
+            fullWidth
+            onPress={close}
+          />
+        </View>
+      </Sheet>
+    </>
   );
 }

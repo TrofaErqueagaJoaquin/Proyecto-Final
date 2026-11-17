@@ -30,12 +30,12 @@ const MOODS = [
 ] as const;
 type Mood = (typeof MOODS)[number]['value'];
 
+// Lo que dice Brote, corto (hasta unos 60 caracteres) para que el globo no ocupe la pantalla.
 const ANSWERS: Record<Mood, string> = {
-  bien: '¡Qué lindo leer eso! Aprovechá para hacer algo que te guste, aunque sean cinco minutos.',
-  cansancio: 'Criar cansa, y mucho. No tenés que poder con todo hoy: con una sola cosa alcanza.',
-  estres: 'Gracias por contarlo. Vamos a bajar un cambio juntos: respirá conmigo un minuto.',
-  limite:
-    'Lo que sentís es importante. No tenés que atravesarlo en soledad: pedir ayuda también es cuidar.',
+  bien: '¡Qué lindo! Regalate cinco minutos para algo que te guste.',
+  cansancio: 'Criar cansa. Hoy alcanza con una sola cosa.',
+  estres: 'Gracias por contarlo. Respirá conmigo un minuto.',
+  limite: 'Lo que sentís importa. Pedir ayuda también es cuidar.',
 };
 
 const PHRASES = [
@@ -52,15 +52,17 @@ const PHRASES = [
 const PHASES = [
   { label: 'Inhalá', seconds: 4, scale: 1 },
   { label: 'Sostené', seconds: 2, scale: 1 },
-  { label: 'Exhalá', seconds: 6, scale: 0.55 },
+  { label: 'Exhalá', seconds: 6, scale: 0.7 },
 ] as const;
+/** Tamaño chico del círculo: 200 × 0,7 = 140 px, nunca menos. */
+const SMALL = 0.7;
 const CYCLES = 5; // 5 × 12 s = 1 minuto
 
 // Emergencias (911) y la Línea 135: las de la respuesta fija de riesgo del asistente.
 const HELP_LINES = RISK_RESPONSES.self_harm.lines.filter((l) => l.phone !== '102');
 
 const useStyles = makeStyles((t) => ({
-  stage: { alignItems: 'center', justifyContent: 'center', height: 260 },
+  stage: { alignItems: 'center', justifyContent: 'center', height: 250 },
   halo: {
     position: 'absolute',
     width: 240,
@@ -76,7 +78,6 @@ const useStyles = makeStyles((t) => ({
     justifyContent: 'center',
     backgroundColor: t.colors.mint,
   },
-  label: { position: 'absolute', maxWidth: 180 },
   line: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -98,7 +99,7 @@ function Breathing() {
   const reduced = useReducedMotion();
   const [step, setStep] = useState<number | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const scale = useSharedValue(0.55);
+  const scale = useSharedValue(SMALL);
 
   const phase = step === null ? null : PHASES[step % PHASES.length];
   const cycle = step === null ? 0 : Math.floor(step / PHASES.length) + 1;
@@ -134,11 +135,11 @@ function Breathing() {
       <View style={styles.stage}>
         <View style={styles.halo} />
         <Animated.View style={[styles.circle, circleStyle]} />
-        {/* El texto queda fuera del círculo animado para que no se achique al exhalar. */}
-        <Text variant="heading" center accessibilityLiveRegion="polite" style={styles.label}>
-          {finished ? '¡Listo!' : (phase?.label ?? 'Tu minuto')}
-        </Text>
       </View>
+      {/* El texto va debajo del círculo, sobre la tarjeta: se lee igual en modo claro y oscuro. */}
+      <Text variant="subheading" center accessibilityLiveRegion="polite">
+        {finished ? '¡Listo!' : (phase?.label ?? 'Tu minuto')}
+      </Text>
       {step !== null && !finished ? (
         <Text center tone="muted">{`Respiración ${String(cycle)} de ${String(CYCLES)}`}</Text>
       ) : null}
@@ -149,7 +150,7 @@ function Breathing() {
           icon={Play}
           fullWidth
           onPress={() => {
-            scale.set(0.55);
+            scale.set(SMALL);
             setStep(0);
           }}
         />
@@ -161,7 +162,7 @@ function Breathing() {
           fullWidth
           onPress={() => {
             if (timer.current) clearTimeout(timer.current);
-            scale.set(withTiming(0.55));
+            scale.set(withTiming(SMALL));
             setStep(null);
           }}
         />
@@ -180,7 +181,7 @@ export default function PauseScreen() {
     <Screen>
       <Text variant="title">Pausa para vos</Text>
       <BroteSays mood="calma" size={104}>
-        {mood ? ANSWERS[mood] : 'Antes de seguir con los chicos… ¿cómo estás vos hoy?'}
+        {mood ? ANSWERS[mood] : 'Antes de seguir… ¿cómo estás vos hoy?'}
       </BroteSays>
       <ChipGroup
         label="¿Cómo estás hoy?"
