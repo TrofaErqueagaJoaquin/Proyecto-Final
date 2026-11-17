@@ -19,6 +19,87 @@ export const RATINGS = [
 ] as const;
 
 /**
+ * Lo que se pregunta al marcar "Realizado": quiénes participaron y cómo les fue. Es el mismo en
+ * el plan, en Hoy y en la biblioteca. Con `planItemId` completa ese ítem del plan (racha, logros
+ * y plan al día); si no, registra la actividad suelta.
+ */
+export function DoneForm({
+  activityId,
+  planItemId,
+  defaultMemberIds,
+  onDone,
+  onCancel,
+}: {
+  activityId: string;
+  planItemId?: string;
+  /** Quiénes quedan marcados de entrada (por ejemplo, el integrante del plan). */
+  defaultMemberIds?: string[];
+  onDone?: () => void;
+  onCancel: () => void;
+}) {
+  const { family } = useActiveFamily();
+  const members = useMembers(family?.id);
+  const logActivity = useLogActivity(family?.id);
+  const completeItem = useCompleteItem();
+  const log = planItemId ? completeItem : logActivity;
+  const [chosen, setChosen] = useState<string[] | null>(null);
+  const [rating, setRating] = useState<string | null>(null);
+
+  const activeMembers = (members.data ?? []).filter((m) => m.archived_at === null);
+  // Con un solo integrante, ya queda elegido.
+  const participants =
+    chosen ??
+    (defaultMemberIds && defaultMemberIds.length > 0
+      ? defaultMemberIds
+      : activeMembers.length === 1
+        ? [activeMembers[0]!.id]
+        : []);
+
+  return (
+    <View style={{ gap: 14 }}>
+      {activeMembers.length > 1 ? (
+        <ChipGroup
+          multiple
+          label="¿Quiénes participaron?"
+          options={activeMembers.map((m) => ({ value: m.id, label: m.alias }))}
+          value={participants}
+          onChange={setChosen}
+        />
+      ) : null}
+      <ChipGroup
+        label="¿Cómo les fue? (opcional)"
+        options={RATINGS}
+        value={rating as '1' | null}
+        onChange={setRating}
+      />
+      <Button
+        label="Listo"
+        icon={CircleCheck}
+        fullWidth
+        loading={log.isPending}
+        onPress={() => {
+          const input = {
+            memberIds: participants,
+            rating: rating === null ? null : Number(rating),
+          };
+          const after = {
+            onSuccess: () => {
+              // Festejo: sonido y vibración; la ventana "¿Seguimos con otra?" la abre `onDone`.
+              feedback('done');
+              onDone?.();
+            },
+          };
+          if (planItemId) completeItem.mutate({ itemId: planItemId, ...input }, after);
+          else logActivity.mutate({ activityId, ...input }, after);
+        }}
+      />
+      <Button label="Cancelar" variant="ghost" fullWidth onPress={onCancel} />
+      {log.error ? <Banner tone="danger">{friendlyError(log.error)}</Banner> : null}
+    </View>
+  );
+}
+
+/**
  * "Realizado" (registra que la hicieron) y "Hacer más tarde" (la deja en la lista "Para hacer" de
  * Hoy). Solo con sesión y familia.
  */
@@ -36,13 +117,7 @@ export function FamilyActivityActions({
   const { family } = useActiveFamily();
   const saved = useSavedActivities(family?.id);
   const toggle = useToggleSaved(family?.id);
-  const members = useMembers(family?.id);
-  const logActivity = useLogActivity(family?.id);
-  const completeItem = useCompleteItem();
-  const log = planItemId ? completeItem : logActivity;
   const [logging, setLogging] = useState(false);
-  const [chosen, setChosen] = useState<string[] | null>(null);
-  const [rating, setRating] = useState<string | null>(null);
 
   if (auth.status !== 'signedIn') {
     return (
@@ -54,63 +129,23 @@ export function FamilyActivityActions({
   }
   if (!family) return null;
 
-  const isSaved = saved.data?.some((s) => s.activity_id === activityId) ?? false;
-  const activeMembers = (members.data ?? []).filter((m) => m.archived_at === null);
-  // Con un solo integrante, ya queda elegido.
-  const participants = chosen ?? (activeMembers.length === 1 ? [activeMembers[0]!.id] : []);
-
   if (logging) {
     return (
-      <View style={{ gap: 14 }}>
-        {activeMembers.length > 1 ? (
-          <ChipGroup
-            multiple
-            label="¿Quiénes participaron?"
-            options={activeMembers.map((m) => ({ value: m.id, label: m.alias }))}
-            value={participants}
-            onChange={setChosen}
-          />
-        ) : null}
-        <ChipGroup
-          label="¿Cómo les fue? (opcional)"
-          options={RATINGS}
-          value={rating as '1' | null}
-          onChange={setRating}
-        />
-        <Button
-          label="Listo"
-          icon={CircleCheck}
-          fullWidth
-          loading={log.isPending}
-          onPress={() => {
-            const input = {
-              memberIds: participants,
-              rating: rating === null ? null : Number(rating),
-            };
-            const after = {
-              onSuccess: () => {
-                feedback('done');
-                setLogging(false);
-                setChosen(null);
-                setRating(null);
-                onDone?.();
-              },
-            };
-            if (planItemId) completeItem.mutate({ itemId: planItemId, ...input }, after);
-            else logActivity.mutate({ activityId, ...input }, after);
-          }}
-        />
-        <Button
-          label="Cancelar"
-          variant="ghost"
-          onPress={() => {
-            setLogging(false);
-          }}
-        />
-        {log.error ? <Banner tone="danger">{friendlyError(log.error)}</Banner> : null}
-      </View>
+      <DoneForm
+        activityId={activityId}
+        planItemId={planItemId}
+        onDone={() => {
+          setLogging(false);
+          onDone?.();
+        }}
+        onCancel={() => {
+          setLogging(false);
+        }}
+      />
     );
   }
+
+  const isSaved = saved.data?.some((s) => s.activity_id === activityId) ?? false;
 
   return (
     <View style={{ gap: 10 }}>
@@ -122,7 +157,8 @@ export function FamilyActivityActions({
           setLogging(true);
         }}
       />
-      {canManage(family.role) ? (
+      {/* Si ya está en el plan, "Hacer más tarde" sobra. */}
+      {canManage(family.role) && !planItemId ? (
         <Button
           label={isSaved ? 'En tu lista para hacer' : 'Hacer más tarde'}
           variant="secondary"
