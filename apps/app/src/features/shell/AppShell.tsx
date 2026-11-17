@@ -1,10 +1,22 @@
-import { Link, usePathname } from 'expo-router';
-import type { LucideIcon } from 'lucide-react-native';
-import type { ReactNode } from 'react';
+import { Link, router, usePathname, type Href } from 'expo-router';
+import {
+  BriefcaseMedical,
+  Check,
+  ChevronDown,
+  CircleUserRound,
+  House,
+  ShieldCheck,
+  type LucideIcon,
+} from 'lucide-react-native';
+import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Logo, makeStyles, Text, useTheme } from '@/ui';
+import { useMe } from '@/features/auth/queries';
+import { SignOutButton } from '@/features/auth/signOut';
+import { confirmLeave, hasUnsavedChanges } from '@/features/forms/useUnsavedGuard';
+import { useMyProfessionalProfile } from '@/features/professionals/queries';
+import { Button, Logo, makeStyles, Sheet, Text, useOverlayTurn, useTheme } from '@/ui';
 import { minTouchTarget } from '@/ui/tokens';
 
 import { activeHref, spaceFallback } from './backTargets';
@@ -42,6 +54,19 @@ const useStyles = makeStyles((t) => ({
     borderRadius: t.radius.sm,
   },
   sideItemActive: { backgroundColor: t.colors.primarySoft },
+  spaceButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: t.space.sm,
+    minHeight: minTouchTarget,
+    paddingHorizontal: t.space.md,
+    borderRadius: t.radius.sm,
+    borderWidth: 1.5,
+    borderColor: t.colors.border,
+  },
+  spaceButtonPressed: { backgroundColor: t.colors.primarySoft },
+  spaceText: { flex: 1 },
+  menu: { gap: t.space.sm },
   content: { flex: 1 },
   tabBar: {
     flexDirection: 'row',
@@ -59,6 +84,89 @@ const useStyles = makeStyles((t) => ({
   },
 }));
 
+type SpaceName = 'Familia' | 'Profesional' | 'Administración';
+
+/** En qué espacio se está, según la ruta. */
+export function spaceOf(pathname: string): SpaceName {
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) return 'Administración';
+  if (pathname === '/profesional' || pathname.startsWith('/profesional/')) return 'Profesional';
+  return 'Familia';
+}
+
+/**
+ * Si hay un formulario a medio cargar, el enlace no navega solo: primero pregunta
+ * "¿Salir sin guardar?" y, si eligen "Salir", va.
+ */
+function guardedPress(href: string, pathname: string) {
+  return (event: { preventDefault: () => void }) => {
+    if (!hasUnsavedChanges()) return;
+    event.preventDefault();
+    // Ya se está ahí: ni preguntar ni soltar la protección del formulario.
+    if (href === pathname) return;
+    confirmLeave(() => {
+      router.push(href);
+    });
+  };
+}
+
+/**
+ * Contenido del menú de espacios. Se monta solo al abrirlo: así las consultas (cuenta y perfil
+ * profesional) no se hacen en cada pantalla. Cambiar de espacio es solo navegación.
+ */
+function SpaceMenu({ current, onDone }: { current: SpaceName; onDone: () => void }) {
+  const styles = useStyles();
+  const me = useMe();
+  const professional = useMyProfessionalProfile();
+  const pathname = usePathname();
+  const spaces: { href: Href; label: SpaceName; icon: LucideIcon }[] = [];
+  if ((me.data?.families.length ?? 0) > 0 || current === 'Familia') {
+    spaces.push({ href: '/hoy', label: 'Familia', icon: House });
+  }
+  if (professional.data || current === 'Profesional') {
+    spaces.push({ href: '/profesional', label: 'Profesional', icon: BriefcaseMedical });
+  }
+  if ((me.data?.permissions.length ?? 0) > 0 || current === 'Administración') {
+    spaces.push({ href: '/admin', label: 'Administración', icon: ShieldCheck });
+  }
+  const go = (href: Href) => {
+    onDone();
+    if (href === pathname) return;
+    confirmLeave(() => {
+      router.push(href);
+    });
+  };
+  return (
+    <View style={styles.menu} role="navigation" accessibilityLabel="Cambiar de espacio">
+      {spaces.map((space) => {
+        const here = space.label === current;
+        return (
+          <Button
+            key={space.label}
+            label={here ? `${space.label} (estás acá)` : space.label}
+            icon={here ? Check : space.icon}
+            variant={here ? 'primary' : 'secondary'}
+            fullWidth
+            onPress={() => {
+              if (here) onDone();
+              else go(space.href);
+            }}
+          />
+        );
+      })}
+      <Button
+        label="Mi cuenta"
+        icon={CircleUserRound}
+        variant="ghost"
+        fullWidth
+        onPress={() => {
+          go('/perfil');
+        }}
+      />
+      <SignOutButton />
+    </View>
+  );
+}
+
 /**
  * Navegación del espacio: barra lateral desde 1024 px, pestañas inferiores en el teléfono
  * (UX_AND_NAVIGATION.md §3). Mismas rutas en todas las plataformas.
@@ -75,6 +183,11 @@ export function AppShell({ items, children }: { items: NavItem[]; children: Reac
   const current = activeHref(pathname, items, wide);
   // El logo lleva al inicio del espacio en el que se está (no siempre a /hoy).
   const home = items[0];
+  const space = spaceOf(pathname);
+  const [menuOpen, setMenuOpen] = useState(false);
+  // Con turno: si al elegir un espacio hay que preguntar "¿Salir sin guardar?", esa ventana
+  // espera a que el menú termine de cerrarse (dos Modal a la vez fallan en iOS).
+  const menuVisible = useOverlayTurn('menu-espacios', menuOpen);
   const content = (
     <View style={styles.content}>
       {back === null ? null : <ScreenHeader back={back} />}
@@ -87,18 +200,53 @@ export function AppShell({ items, children }: { items: NavItem[]; children: Reac
       <View style={[styles.root, styles.wide]}>
         <View style={styles.sidebar} role="navigation" accessibilityLabel="Navegación principal">
           {home ? (
-            <Link href={home.href} accessibilityLabel={`Ir a ${home.label}`}>
+            <Link
+              href={home.href}
+              accessibilityLabel={`Ir a ${home.label}`}
+              onPress={guardedPress(home.href, pathname)}
+            >
               <Logo />
             </Link>
           ) : (
             <Logo />
           )}
+          {/* En qué espacio se está; al tocarlo, los otros espacios y "Cerrar sesión". */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Espacio: ${space}. Cambiar de espacio o cerrar sesión`}
+            onPress={() => {
+              setMenuOpen(true);
+            }}
+            style={({ pressed }) => [styles.spaceButton, pressed && styles.spaceButtonPressed]}
+          >
+            <Text tone="muted" style={styles.spaceText}>
+              {'Espacio: '}
+              <Text variant="bodyStrong">{space}</Text>
+            </Text>
+            <ChevronDown color={theme.colors.inkMuted} size={20} aria-hidden />
+          </Pressable>
+          <Sheet
+            visible={menuVisible}
+            onClose={() => {
+              setMenuOpen(false);
+            }}
+            title="Cambiar de espacio"
+          >
+            {menuOpen ? (
+              <SpaceMenu
+                current={space}
+                onDone={() => {
+                  setMenuOpen(false);
+                }}
+              />
+            ) : null}
+          </Sheet>
           <View style={styles.sideNav}>
             {items.map((item) => {
               const { href, label, icon: Icon } = item;
               const active = item.href === current;
               return (
-                <Link key={href} href={href} asChild>
+                <Link key={href} href={href} asChild onPress={guardedPress(href, pathname)}>
                   <Pressable
                     accessibilityRole="link"
                     accessibilityState={{ selected: active }}
@@ -139,7 +287,7 @@ export function AppShell({ items, children }: { items: NavItem[]; children: Reac
               const { href, label, icon: Icon } = item;
               const active = item.href === current;
               return (
-                <Link key={href} href={href} asChild>
+                <Link key={href} href={href} asChild onPress={guardedPress(href, pathname)}>
                   <Pressable
                     accessibilityRole="tab"
                     accessibilityState={{ selected: active }}

@@ -19,6 +19,7 @@ import { useCreateActivity, usePermissions } from '@/features/admin/queries';
 import { linesToList, slugify } from '@/features/admin/slug';
 import { ActivityScene, sceneFor } from '@/features/animations';
 import { useFieldErrors } from '@/features/forms/useFieldErrors';
+import { useUnsavedGuard } from '@/features/forms/useUnsavedGuard';
 import { ageRange } from '@/features/library/ActivityDetail';
 import { useCategories } from '@/features/library/queries';
 import {
@@ -180,6 +181,13 @@ export default function NewActivityScreen() {
   } | null>(null);
   const fields = useFieldErrors(
     activityErrors({ title, summary, steps, categories: cats, stages, materials }),
+  );
+  // Si cargó algo y se va sin guardar, se pregunta antes (lo de fábrica no cuenta).
+  const guard = useUnsavedGuard(
+    created === null &&
+      ([title, summary, materials, objective, safety, ...steps].some((t) => t.trim() !== '') ||
+        cats.length > 0 ||
+        sources.length > 0),
   );
 
   const reset = () => {
@@ -395,6 +403,7 @@ export default function NewActivityScreen() {
 
   return (
     <Screen maxWidth={1100}>
+      {guard.dialog}
       <Text variant="title">Nueva actividad</Text>
       <Text tone="muted">Hace falta nombre, de qué se trata, pasos, categoría y edades.</Text>
       <FormWithPreview

@@ -33,15 +33,20 @@ export interface TileActivity {
   categories: readonly string[];
 }
 
-/** Tarjeta simple: el dibujo de la actividad y su nombre. Al tocarla se abre el detalle. */
+/**
+ * Tarjeta simple: el dibujo de la actividad y su nombre. Al tocarla se abre el detalle (o lo que
+ * diga `onPress`, por ejemplo la ventana de una recomendación).
+ */
 export function ActivityTile({
   activity,
   width,
   badge,
+  onPress,
 }: {
   activity: TileActivity;
   width: number;
   badge?: ReactNode;
+  onPress?: () => void;
 }) {
   const styles = useStyles();
   const flow = useActivityFlow();
@@ -53,7 +58,8 @@ export function ActivityTile({
       style={({ pressed }) => [styles.tile, { width, transform: [{ scale: pressed ? 0.97 : 1 }] }]}
       onPress={() => {
         feedback('tap');
-        flow.open(activity.slug, activity.title);
+        if (onPress) onPress();
+        else flow.open(activity.slug, activity.title);
       }}
     >
       <ActivityScene scene={sceneFor(activity.slug, activity.categories)} width={inner} label="" />

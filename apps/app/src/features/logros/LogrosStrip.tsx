@@ -98,8 +98,17 @@ export function StreakChip({ days }: { days: number }) {
   );
 }
 
-/** Logros ganados (a color) y los que faltan (en gris), con festejo cuando aparece uno nuevo. */
-export function LogrosStrip({ familyId }: { familyId: string }) {
+/**
+ * Logros ganados (a color) y los que faltan (en gris), con festejo cuando aparece uno nuevo.
+ * Con `celebrate={false}` no festeja (otro lugar ya lo hace, por ejemplo el chip de Hoy).
+ */
+export function LogrosStrip({
+  familyId,
+  celebrate = true,
+}: {
+  familyId: string;
+  celebrate?: boolean;
+}) {
   const styles = useStyles();
   const { colors } = useTheme();
   const progress = useFamilyProgress(familyId);
@@ -115,7 +124,7 @@ export function LogrosStrip({ familyId }: { familyId: string }) {
 
   // Logro nuevo (no visto en este dispositivo): festejo una sola vez.
   useEffect(() => {
-    if (!earnedIds) return;
+    if (!celebrate || !earnedIds) return;
     let cancelled = false;
     void storage
       .getItem(seenKey(familyId))
@@ -134,7 +143,7 @@ export function LogrosStrip({ familyId }: { familyId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [earnedIds, familyId]);
+  }, [celebrate, earnedIds, familyId]);
 
   if (!progress.data) return null;
 

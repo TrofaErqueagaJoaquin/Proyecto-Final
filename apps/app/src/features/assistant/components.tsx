@@ -1,8 +1,12 @@
 import { RISK_RESPONSES, type HighRiskCategory } from '@crecer/domain';
 import type { AssistantCitation } from '@crecer/shared';
 import { Link } from 'expo-router';
-import { BookOpen, LifeBuoy, Phone } from 'lucide-react-native';
+import { BookOpen, LifeBuoy, Phone, Puzzle } from 'lucide-react-native';
+import { useState } from 'react';
 import { Linking, Pressable, View } from 'react-native';
+
+import { useActivityFlow } from '@/features/library/ActivityFlow';
+import { ContentSheet } from '@/features/library/ContentScreen';
 
 import { EvidenceChip, makeStyles, Text, useTheme } from '@/ui';
 import { minTouchTarget } from '@/ui/tokens';
@@ -24,15 +28,17 @@ const useStyles = makeStyles((t) => ({
     borderColor: t.colors.border,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: t.space.xs },
-  chip: {
+  sources: { gap: t.space.xs },
+  source: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    // Los títulos largos se cortan en líneas dentro del chip en vez de salirse de la burbuja.
+    gap: t.space.sm,
+    // Los títulos largos se cortan en líneas dentro del botón en vez de salirse de la burbuja.
     maxWidth: '100%',
-    minHeight: minTouchTarget - 8,
-    paddingHorizontal: t.space.sm,
-    borderRadius: t.radius.pill,
+    minHeight: minTouchTarget,
+    paddingHorizontal: t.space.md,
+    paddingVertical: t.space.xs,
+    borderRadius: t.radius.md,
     borderWidth: 1,
     borderColor: t.colors.borderStrong,
   },
@@ -72,7 +78,64 @@ export function UserBubble({ text }: { text: string }) {
   );
 }
 
-/** Respuesta con chips de citas (F1, F2…) que abren la ficha (UX_AND_NAVIGATION.md §5.3). */
+/** Qué abre una cita: una actividad, una ficha o etapa (en ventana) o nada si no tiene página. */
+function citationTarget(
+  urlPath: string | null,
+): { kind: 'activity' | 'content'; slug: string } | null {
+  if (!urlPath) return null;
+  const parts = urlPath.split('/').filter(Boolean);
+  const slug = parts[parts.length - 1];
+  if (!slug) return null;
+  return { kind: parts[0] === 'actividades' && parts.length > 1 ? 'activity' : 'content', slug };
+}
+
+/**
+ * Una cita de la respuesta: "Leer la ficha: …" (o "Ver la actividad: …"). Se abre en una ventana,
+ * sin salir de la conversación.
+ */
+function CitationButton({
+  citation,
+  onRead,
+}: {
+  citation: AssistantCitation;
+  onRead: (item: { slug: string; title: string }) => void;
+}) {
+  const styles = useStyles();
+  const { colors } = useTheme();
+  const flow = useActivityFlow();
+  const target = citationTarget(citation.urlPath);
+  const activity = target?.kind === 'activity';
+  const label = `${activity ? 'Ver la actividad' : 'Leer la ficha'}: ${citation.title}`;
+  const Icon = activity ? Puzzle : BookOpen;
+  if (!target) {
+    return (
+      <View style={styles.source}>
+        <BookOpen size={18} color={colors.inkMuted} aria-hidden />
+        <Text variant="small" style={{ flexShrink: 1 }}>
+          {`Fuente: ${citation.title}`}
+        </Text>
+      </View>
+    );
+  }
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => [styles.source, { opacity: pressed ? 0.7 : 1 }]}
+      onPress={() => {
+        if (activity) flow.open(target.slug, citation.title);
+        else onRead({ slug: target.slug, title: citation.title });
+      }}
+    >
+      <Icon size={18} color={colors.primary} aria-hidden />
+      <Text variant="small" tone="primary" style={{ flexShrink: 1 }}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+/** Respuesta con las fuentes citadas, que se abren en una ventana (UX_AND_NAVIGATION.md §5.3). */
 export function AssistantBubble({
   text,
   citations,
@@ -86,7 +149,8 @@ export function AssistantBubble({
   rehearsal?: boolean;
 }) {
   const styles = useStyles();
-  const { colors } = useTheme();
+  // La ficha que se está leyendo en la ventana (una sola por respuesta).
+  const [reading, setReading] = useState<{ slug: string; title: string } | null>(null);
   return (
     <View style={[styles.bubble, styles.assistant]} accessibilityLiveRegion="polite">
       {rehearsal ? (
@@ -108,30 +172,16 @@ export function AssistantBubble({
           : 'Buscando en fichas revisadas…'}
       </Text>
       {citations.length > 0 ? (
-        <View style={styles.chips}>
-          {groupCitations(citations).map((c) =>
-            c.urlPath ? (
-              <Link key={c.ref} href={c.urlPath} asChild>
-                <Pressable
-                  accessibilityRole="link"
-                  accessibilityLabel={`${c.ref}: ${c.title}`}
-                  style={styles.chip}
-                >
-                  <BookOpen size={14} color={colors.primary} aria-hidden />
-                  <Text variant="caption" tone="primary" style={{ flexShrink: 1 }}>
-                    {`${c.ref} · ${c.title}`}
-                  </Text>
-                </Pressable>
-              </Link>
-            ) : (
-              <View key={c.ref} style={styles.chip}>
-                <BookOpen size={14} color={colors.inkMuted} aria-hidden />
-                <Text variant="caption" style={{ flexShrink: 1 }}>
-                  {`${c.ref} · ${c.title}`}
-                </Text>
-              </View>
-            ),
-          )}
+        <View style={styles.sources}>
+          {groupCitations(citations).map((c) => (
+            <CitationButton key={c.ref} citation={c} onRead={setReading} />
+          ))}
+          <ContentSheet
+            item={reading}
+            onClose={() => {
+              setReading(null);
+            }}
+          />
         </View>
       ) : null}
       {citations.length > 0 ? (

@@ -1,4 +1,4 @@
-import { CircleCheck, Clock, ListChecks } from 'lucide-react-native';
+import { Check, CircleCheck, Clock } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
 
@@ -8,7 +8,7 @@ import { TextLink } from '@/features/auth/components';
 import { feedback } from '@/features/feedback/feedback';
 import { canManage, useActiveFamily, useMembers } from '@/features/families/queries';
 import { useCompleteItem } from '@/features/plans/queries';
-import { Banner, Button, ChipGroup, Text } from '@/ui';
+import { Banner, Button, ChipGroup, makeStyles, Text, useTheme } from '@/ui';
 
 import { useLogActivity, useSavedActivities, useToggleSaved } from './queries';
 
@@ -42,6 +42,10 @@ export function DoneForm({
   const logActivity = useLogActivity(family?.id);
   const completeItem = useCompleteItem();
   const log = planItemId ? completeItem : logActivity;
+  // Al hacerla, sale sola de "Para hacer" (si estaba guardada para más tarde).
+  const saved = useSavedActivities(family?.id);
+  const unsave = useToggleSaved(family?.id);
+  const wasSaved = saved.data?.some((s) => s.activity_id === activityId) ?? false;
   const [chosen, setChosen] = useState<string[] | null>(null);
   const [rating, setRating] = useState<string | null>(null);
 
@@ -86,6 +90,7 @@ export function DoneForm({
             onSuccess: () => {
               // Festejo: sonido y vibración; la ventana "¿Seguimos con otra?" la abre `onDone`.
               feedback('done');
+              if (wasSaved) unsave.mutate({ activityId, saved: true });
               onDone?.();
             },
           };
@@ -99,9 +104,23 @@ export function DoneForm({
   );
 }
 
+const useStyles = makeStyles((t) => ({
+  savedRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: t.space.sm,
+    paddingLeft: t.space.md,
+    borderRadius: t.radius.lg,
+    backgroundColor: t.colors.mintSoft,
+  },
+  savedText: { flexDirection: 'row', alignItems: 'center', gap: t.space.sm },
+}));
+
 /**
  * "Realizado" (registra que la hicieron) y "Hacer más tarde" (la deja en la lista "Para hacer" de
- * Hoy). Solo con sesión y familia.
+ * Hoy; ya guardada, se ve "✓ Está en Para hacer" con "Quitar"). Solo con sesión y familia.
  */
 export function FamilyActivityActions({
   activityId,
@@ -118,6 +137,8 @@ export function FamilyActivityActions({
   const saved = useSavedActivities(family?.id);
   const toggle = useToggleSaved(family?.id);
   const [logging, setLogging] = useState(false);
+  const styles = useStyles();
+  const { colors } = useTheme();
 
   if (auth.status !== 'signedIn') {
     return (
@@ -159,17 +180,36 @@ export function FamilyActivityActions({
       />
       {/* Si ya está en el plan, "Hacer más tarde" sobra. */}
       {canManage(family.role) && !planItemId ? (
-        <Button
-          label={isSaved ? 'En tu lista para hacer' : 'Hacer más tarde'}
-          variant="secondary"
-          icon={isSaved ? ListChecks : Clock}
-          fullWidth
-          loading={toggle.isPending}
-          onPress={() => {
-            feedback('tap');
-            toggle.mutate({ activityId, saved: isSaved });
-          }}
-        />
+        isSaved ? (
+          <View style={styles.savedRow}>
+            <View style={styles.savedText} accessibilityRole="text">
+              <Check color={colors.success} size={22} aria-hidden />
+              <Text variant="label">Está en Para hacer</Text>
+            </View>
+            <Button
+              label="Quitar"
+              variant="ghost"
+              accessibilityLabel="Quitar de Para hacer"
+              loading={toggle.isPending}
+              onPress={() => {
+                feedback('tap');
+                toggle.mutate({ activityId, saved: true });
+              }}
+            />
+          </View>
+        ) : (
+          <Button
+            label="Hacer más tarde"
+            variant="secondary"
+            icon={Clock}
+            fullWidth
+            loading={toggle.isPending}
+            onPress={() => {
+              feedback('tap');
+              toggle.mutate({ activityId, saved: false });
+            }}
+          />
+        )
       ) : null}
       {toggle.error ? <Banner tone="danger">{friendlyError(toggle.error)}</Banner> : null}
     </View>

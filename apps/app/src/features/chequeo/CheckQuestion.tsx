@@ -6,7 +6,7 @@ import Animated, { FadeInRight } from 'react-native-reanimated';
 
 import type { AnswerRow } from '@/features/assessments/queries';
 import { feedback } from '@/features/feedback/feedback';
-import { Button, makeStyles, Text, useTheme } from '@/ui';
+import { makeStyles, StepNav, Text, useTheme } from '@/ui';
 import { minTouchTarget } from '@/ui/tokens';
 
 export interface AnswerChange {
@@ -57,22 +57,38 @@ const useStyles = makeStyles((t) => ({
     borderColor: t.colors.sun,
   },
   value: { minWidth: 120, alignItems: 'center' },
+  missing: {
+    borderRadius: t.radius.md,
+    paddingVertical: t.space.sm,
+    paddingHorizontal: t.space.md,
+    backgroundColor: t.colors.cautionSoft,
+  },
 }));
 
 /**
  * Una pregunta del chequeo a pantalla completa: opciones como tarjetas grandes. En las de una
- * sola respuesta, tocar ya responde y avanza; en las de varias y en los números, hay un "Listo".
+ * sola respuesta, tocar ya responde y avanza. Abajo, siempre los mismos botones ("Atrás" y
+ * "Siguiente"): si falta responder una obligatoria, "Siguiente" no avanza y marca "Falta esta".
+ * Los números arrancan en "—": el primer toque de − o + muestra un valor del medio.
  */
 export function CheckQuestion({
   question,
   rows,
   onAnswer,
   onNext,
+  onBack,
+  nextLabel = 'Siguiente',
+  missing: missingFromParent = false,
 }: {
   question: Question;
   rows: AnswerRow[];
   onAnswer: (change: AnswerChange) => void;
   onNext: () => void;
+  /** Sin valor (primera pregunta), no hay "Atrás". */
+  onBack?: (() => void) | undefined;
+  nextLabel?: string;
+  /** La pantalla la marca como pendiente (por ejemplo, al llevar a la primera que falta). */
+  missing?: boolean;
 }) {
   const styles = useStyles();
   const { colors } = useTheme();
@@ -82,7 +98,12 @@ export function CheckQuestion({
   const min = question.number?.min ?? 0;
   const max = question.number?.max ?? 24;
   const step = question.number?.step ?? 1;
-  const [value, setValue] = useState<number>(stored ?? Math.round((min + max) / 2));
+  const typical = Math.min(max, Math.max(min, Math.round((min + max) / 2 / step) * step));
+  // Sin respuesta guardada no se inventa un valor: se ve "—" hasta tocar − o +.
+  const [value, setValue] = useState<number | null>(stored);
+  const [missingHere, setMissingHere] = useState(false);
+  const answered = question.type === 'number' ? value !== null : chosen.size > 0;
+  const showMissing = (missingHere || missingFromParent) && !answered;
   // Un solo avance pendiente: tocar otra opción antes de que pase reemplaza al anterior (si no, dos
   // toques rápidos saltaban una pregunta). Al desmontar se cancela.
   const advance = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -93,46 +114,71 @@ export function CheckQuestion({
     [],
   );
 
+  const change = (delta: number) => {
+    feedback('tap');
+    setValue((v) => (v === null ? typical : Math.min(max, Math.max(min, v + delta))));
+  };
+
+  // En las de número, el valor elegido se guarda al irse (para adelante o para atrás).
+  const saveNumber = () => {
+    if (question.type === 'number' && value !== null && value !== stored) {
+      onAnswer({ questionId, optionIds: [], value });
+    }
+  };
+
+  const next = () => {
+    if (!answered && question.required) {
+      feedback('tap');
+      setMissingHere(true);
+      return;
+    }
+    saveNumber();
+    onNext();
+  };
+
+  const back = onBack
+    ? () => {
+        saveNumber();
+        onBack();
+      }
+    : undefined;
+
   return (
-    <Animated.View entering={FadeInRight.duration(260)}>
+    <Animated.View entering={FadeInRight.duration(260)} style={{ gap: 20 }}>
       {question.type === 'number' ? (
-        <View style={{ gap: 20 }}>
-          <View style={styles.stepper}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Menos"
-              style={styles.stepButton}
-              onPress={() => {
-                feedback('tap');
-                setValue((v) => Math.max(min, v - step));
-              }}
-            >
-              <Minus color={colors.ink} size={28} aria-hidden />
-            </Pressable>
-            <View style={styles.value} accessibilityLiveRegion="polite">
-              <Text variant="display">{String(value).replace('.', ',')}</Text>
-              <Text tone="muted">{question.number?.unit ?? ''}</Text>
-            </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Más"
-              style={styles.stepButton}
-              onPress={() => {
-                feedback('tap');
-                setValue((v) => Math.min(max, v + step));
-              }}
-            >
-              <Plus color={colors.ink} size={28} aria-hidden />
-            </Pressable>
-          </View>
-          <Button
-            label="Listo"
-            fullWidth
+        <View style={styles.stepper}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Menos"
+            style={styles.stepButton}
             onPress={() => {
-              onAnswer({ questionId, optionIds: [], value });
-              onNext();
+              change(-step);
             }}
-          />
+          >
+            <Minus color={colors.ink} size={28} aria-hidden />
+          </Pressable>
+          <View
+            style={styles.value}
+            accessibilityLiveRegion="polite"
+            accessibilityLabel={
+              value === null
+                ? 'Sin elegir todavía'
+                : `${String(value).replace('.', ',')} ${question.number?.unit ?? ''}`
+            }
+          >
+            <Text variant="display">{value === null ? '—' : String(value).replace('.', ',')}</Text>
+            <Text tone="muted">{question.number?.unit ?? ''}</Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Más"
+            style={styles.stepButton}
+            onPress={() => {
+              change(step);
+            }}
+          >
+            <Plus color={colors.ink} size={28} aria-hidden />
+          </Pressable>
         </View>
       ) : (
         <View style={styles.options} role={question.type === 'multi' ? 'group' : 'radiogroup'}>
@@ -148,8 +194,8 @@ export function CheckQuestion({
                   feedback('tap');
                   const id = option.id ?? '';
                   if (question.type === 'multi') {
-                    const next = active ? [...chosen].filter((c) => c !== id) : [...chosen, id];
-                    onAnswer({ questionId, optionIds: next, value: null });
+                    const nextIds = active ? [...chosen].filter((c) => c !== id) : [...chosen, id];
+                    onAnswer({ questionId, optionIds: nextIds, value: null });
                     return;
                   }
                   onAnswer({ questionId, optionIds: [id], value: null });
@@ -170,11 +216,16 @@ export function CheckQuestion({
               </Pressable>
             );
           })}
-          {question.type === 'multi' ? (
-            <Button label="Listo" fullWidth disabled={chosen.size === 0} onPress={onNext} />
-          ) : null}
         </View>
       )}
+      {showMissing ? (
+        <View style={styles.missing} role="alert">
+          <Text variant="bodyStrong">
+            {question.type === 'number' ? 'Falta esta: tocá − o +.' : 'Falta esta: elegí una.'}
+          </Text>
+        </View>
+      ) : null}
+      <StepNav onBack={back} onNext={next} nextLabel={nextLabel} />
     </Animated.View>
   );
 }

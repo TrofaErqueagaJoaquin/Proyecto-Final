@@ -1,10 +1,20 @@
 import { Redirect, useRouter } from 'expo-router';
 import { useState } from 'react';
 
-import { friendlyError } from '@/copy/errors';
+import { GuidePopup } from '@/features/brote/GuidePopup';
 import { MemberForm } from '@/features/families/MemberForm';
 import { canManage, useActiveFamily, useAddMember } from '@/features/families/queries';
-import { Banner, Card, Checkbox, Screen, Skeleton, Text } from '@/ui';
+import { feedback } from '@/features/feedback/feedback';
+import {
+  Card,
+  Checkbox,
+  Disclosure,
+  ErrorBanner,
+  Screen,
+  Skeleton,
+  Text,
+  useOverlayTurn,
+} from '@/ui';
 
 export default function NewMemberScreen() {
   const router = useRouter();
@@ -12,10 +22,18 @@ export default function NewMemberScreen() {
   const addMember = useAddMember(family?.id);
   const [consent, setConsent] = useState(false);
   const [consentError, setConsentError] = useState(false);
+  // Al agregar, Brote propone el paso siguiente: el chequeo de 1 minuto.
+  const [added, setAdded] = useState<{ id: string; alias: string } | null>(null);
+  const addedVisible = useOverlayTurn('integrante-agregado', added !== null);
 
   if (isPending) return <Skeleton height={300} />;
   if (!family) return <Redirect href="/bienvenida" />;
   if (!canManage(family.role)) return <Redirect href="/familia" />;
+
+  const later = () => {
+    setAdded(null);
+    router.replace('/familia');
+  };
 
   return (
     <Screen>
@@ -31,32 +49,49 @@ export default function NewMemberScreen() {
           }}
           onSubmit={(values) => {
             addMember.mutate(values, {
-              onSuccess: () => {
-                router.replace('/familia');
+              onSuccess: (id) => {
+                feedback('done');
+                setAdded({ id, alias: values.alias });
               },
             });
           }}
         >
-          <Banner tone="info" title="Antes de guardar">
-            Guardamos el apodo, el mes y año de nacimiento y los intereses para adaptar las
-            sugerencias a su edad. Solo los ven los adultos de tu familia y los profesionales que
-            vos autorices. Podés revocar este consentimiento cuando quieras desde Privacidad: el
-            integrante se archiva y sus datos dejan de usarse.
-          </Banner>
           <Checkbox
             checked={consent}
             onChange={(value) => {
               setConsent(value);
               setConsentError(false);
             }}
-            label="Doy mi consentimiento para guardar estos datos"
-            error={
-              consentError ? 'Necesitamos tu consentimiento para agregar al integrante.' : undefined
-            }
+            label="Acepto que guarden estos datos"
+            error={consentError ? 'Marcá la casilla para poder agregarlo.' : undefined}
           />
-          {addMember.error ? <Banner tone="danger">{friendlyError(addMember.error)}</Banner> : null}
+          <Disclosure title="¿Qué guardamos?">
+            <Text>
+              Solo el apodo, la edad y lo que le gusta, para sugerir actividades. Lo ven los adultos
+              de tu familia y los profesionales que vos elijas.
+            </Text>
+            <Text>Podés retirar este permiso cuando quieras desde Privacidad.</Text>
+          </Disclosure>
+          <ErrorBanner error={addMember.error} />
         </MemberForm>
       </Card>
+      <GuidePopup
+        visible={addedVisible}
+        celebrate
+        title="¡Listo!"
+        message={added ? `¿Hacemos el chequeo de 1 minuto de ${added.alias}?` : undefined}
+        primary={{
+          label: '¡Dale!',
+          onPress: () => {
+            if (!added) return;
+            const { id } = added;
+            setAdded(null);
+            router.replace(`/chequeo/${id}`);
+          },
+        }}
+        secondary={{ label: 'Más tarde', onPress: later }}
+        onClose={later}
+      />
     </Screen>
   );
 }

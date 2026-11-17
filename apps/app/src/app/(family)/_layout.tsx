@@ -24,7 +24,7 @@ function familyNav(manage: boolean): NavItem[] {
     ...(manage
       ? [
           // En el teléfono no entran más pestañas: se llega desde Familia y desde Hoy.
-          { href: '/evaluaciones', label: 'Evaluaciones', icon: ClipboardList, wideOnly: true },
+          { href: '/evaluaciones', label: 'Chequeos', icon: ClipboardList, wideOnly: true },
           { href: '/profesionales', label: 'Profesionales', icon: HeartHandshake, wideOnly: true },
         ]
       : []),

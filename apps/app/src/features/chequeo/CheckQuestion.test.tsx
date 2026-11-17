@@ -70,15 +70,44 @@ describe('CheckQuestion', () => {
     expect(onNext).toHaveBeenCalledTimes(1);
   });
 
-  it('los números se eligen con − y + y se confirman con "Listo"', async () => {
+  it('los números arrancan en "—" y el primer toque muestra un valor del medio', async () => {
     const onAnswer = jest.fn();
     const onNext = jest.fn();
     await renderWithProviders(
       <CheckQuestion question={hours} rows={[]} onAnswer={onAnswer} onNext={onNext} />,
     );
+    expect(screen.getByText('—')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Siguiente' }));
+    expect(onNext).not.toHaveBeenCalled();
+    expect(screen.getByText('Falta esta: tocá − o +.')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Más' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Listo' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Más' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Siguiente' }));
     expect(onAnswer).toHaveBeenCalledWith({ questionId: 'q2', optionIds: [], value: 11 });
+    expect(onNext).toHaveBeenCalledTimes(1);
+  });
+
+  it('"Siguiente" sin responder una obligatoria marca "Falta esta"', async () => {
+    const onNext = jest.fn();
+    await renderWithProviders(
+      <CheckQuestion question={single} rows={[]} onAnswer={jest.fn()} onNext={onNext} />,
+    );
+    await fireEvent.press(screen.getByRole('button', { name: 'Siguiente' }));
+    expect(onNext).not.toHaveBeenCalled();
+    expect(screen.getByText('Falta esta: elegí una.')).toBeTruthy();
+  });
+
+  it('una opcional se puede saltear', async () => {
+    const onNext = jest.fn();
+    await renderWithProviders(
+      <CheckQuestion
+        question={{ ...single, required: false }}
+        rows={[]}
+        onAnswer={jest.fn()}
+        onNext={onNext}
+      />,
+    );
+    await fireEvent.press(screen.getByRole('button', { name: 'Siguiente' }));
     expect(onNext).toHaveBeenCalledTimes(1);
   });
 });

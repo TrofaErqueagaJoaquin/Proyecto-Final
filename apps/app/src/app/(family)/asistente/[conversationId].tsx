@@ -3,10 +3,11 @@ import { ASSISTANT_QUESTION_MAX } from '@crecer/shared';
 import { RISK_RESPONSES, type HighRiskCategory } from '@crecer/domain';
 import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Clock, MessageCircle, Send } from 'lucide-react-native';
+import { Clock, MessageCircle, MoreHorizontal, Send, Trash2 } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Platform,
+  Pressable,
   ScrollView,
   View,
   type ScrollViewInstance,
@@ -29,16 +30,17 @@ import {
 import { BroteSays } from '@/features/brote/Brote';
 import {
   Button,
-  ConfirmAction,
   EmptyState,
   ErrorBanner,
   ErrorScreen,
   LoadingScreen,
   Screen,
+  Sheet,
   Text,
   TextField,
   useTheme,
 } from '@/ui';
+import { minTouchTarget } from '@/ui/tokens';
 
 /** La respuesta fija guardada empieza con el título de su categoría: así se vuelve a mostrar la tarjeta. */
 function storedRiskCategory(message: StoredMessage): HighRiskCategory | null {
@@ -64,6 +66,80 @@ function retentionLabel(expiresAt: string): string {
   const hours = (new Date(expiresAt).getTime() - Date.now()) / 3_600_000;
   if (hours <= 48) return 'Esta conversación se borra en 24 horas.';
   return `Esta conversación se borra en ${String(Math.round(hours / 24))} días.`;
+}
+
+/**
+ * Menú "…" de la conversación: lo que se usa poco (borrarla) queda guardado acá y no arriba de
+ * todo. Borrar pide confirmación en la misma ventana.
+ */
+function ConversationMenu({ loading, onDelete }: { loading: boolean; onDelete: () => void }) {
+  const { colors } = useTheme();
+  const [open, setOpen] = useState<'menu' | 'confirm' | null>(null);
+  const wasLoading = useRef(false);
+  // Al terminar de borrar, la ventana se cierra sola.
+  useEffect(() => {
+    if (wasLoading.current && !loading) setOpen(null);
+    wasLoading.current = loading;
+  }, [loading]);
+  const close = () => {
+    if (!loading) setOpen(null);
+  };
+  return (
+    <>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Más opciones"
+        hitSlop={4}
+        style={{
+          width: minTouchTarget,
+          height: minTouchTarget,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        onPress={() => {
+          setOpen('menu');
+        }}
+      >
+        <MoreHorizontal size={24} color={colors.ink} aria-hidden />
+      </Pressable>
+      <Sheet
+        visible={open !== null}
+        onClose={close}
+        title={open === 'confirm' ? '¿Borrar la conversación?' : 'Más opciones'}
+      >
+        {open === 'confirm' ? (
+          <>
+            <Text>Se borra ya, con todos sus mensajes. No se puede deshacer.</Text>
+            <Button
+              label="Sí, borrar"
+              variant="danger"
+              icon={Trash2}
+              loading={loading}
+              fullWidth
+              onPress={onDelete}
+            />
+            <Button
+              label="Cancelar"
+              variant="secondary"
+              disabled={loading}
+              fullWidth
+              onPress={close}
+            />
+          </>
+        ) : (
+          <Button
+            label="Borrar conversación"
+            variant="dangerSoft"
+            icon={Trash2}
+            fullWidth
+            onPress={() => {
+              setOpen('confirm');
+            }}
+          />
+        )}
+      </Sheet>
+    </>
+  );
 }
 
 function Message({
@@ -190,19 +266,13 @@ export default function ConversationScreen() {
         onLayout={() => scroll.current?.scrollToEnd({ animated: false })}
         onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: false })}
       >
-        <Text variant="heading">{c.title}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-          <Clock size={14} color={colors.inkMuted} aria-hidden />
-          <Text variant="small" tone="muted" style={{ flexShrink: 1 }}>
-            {retentionLabel(c.expires_at)}
-            {c.use_personal_context ? ' Conoce a tu familia.' : ''}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Text variant="heading" style={{ flex: 1 }}>
+            {c.title}
           </Text>
-          <ConfirmAction
-            label="Borrar conversación"
-            confirmLabel="Sí, borrar"
-            description="Se borra ya, con todos sus mensajes. No se puede deshacer."
+          <ConversationMenu
             loading={remove.isPending}
-            onConfirm={() => {
+            onDelete={() => {
               remove.mutate(conversationId, {
                 onSuccess: () => {
                   router.replace('/asistente');
@@ -210,6 +280,13 @@ export default function ConversationScreen() {
               });
             }}
           />
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <Clock size={14} color={colors.inkMuted} aria-hidden />
+          <Text variant="small" tone="muted" style={{ flexShrink: 1 }}>
+            {retentionLabel(c.expires_at)}
+            {c.use_personal_context ? ' Conoce a tu familia.' : ''}
+          </Text>
         </View>
         {c.messages.length === 0 && !pending ? (
           <BroteSays size={88}>¿Qué te preocupa? Contámelo con tus palabras.</BroteSays>

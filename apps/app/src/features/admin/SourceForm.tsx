@@ -4,6 +4,7 @@ import { View } from 'react-native';
 
 import { friendlyError } from '@/copy/errors';
 import { useFieldErrors } from '@/features/forms/useFieldErrors';
+import { useUnsavedGuard } from '@/features/forms/useUnsavedGuard';
 import { Banner, Button, ChipGroup, TextField } from '@/ui';
 
 import { useCreateSource } from './queries';
@@ -59,6 +60,8 @@ export function SourceForm({
   const [studyType, setStudyType] = useState<(typeof STUDY_TYPES)[number]['value']>('guideline');
   const [confidence, setConfidence] = useState<(typeof CONFIDENCE)[number]['value']>('moderate');
   const fields = useFieldErrors(sourceErrors({ citation, url, year }));
+  // Con algo escrito, salir de la pantalla pregunta antes.
+  const guard = useUnsavedGuard([citation, url, year].some((t) => t.trim() !== ''));
 
   const submit = () => {
     if (!fields.attempt()) return;
@@ -86,6 +89,7 @@ export function SourceForm({
 
   return (
     <View style={{ gap: 16 }}>
+      {guard.dialog}
       <TextField
         label="Cita"
         hint="Autor, título y año. Ej.: OMS. Directrices sobre actividad física (2019)."
