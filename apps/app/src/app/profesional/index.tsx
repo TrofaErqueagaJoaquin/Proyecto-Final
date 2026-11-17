@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { BriefcaseMedical, ChevronRight } from 'lucide-react-native';
 import { Pressable, View } from 'react-native';
 
@@ -61,9 +61,23 @@ export default function CasesScreen() {
       <Text variant="title">Casos</Text>
       {profile.data ? <VerificationBadge status={profile.data.verification_status} /> : null}
       {profile.data && profile.data.verification_status !== 'verified' ? (
-        <Banner tone="caution" title="Todavía no aparecés en el directorio">
-          Cargá tu matrícula o título en Mi perfil y enviala a verificar. Cuando esté verificada,
-          las familias te van a encontrar y te van a poder pedir acompañamiento.
+        <Banner
+          tone="caution"
+          title="Todavía no aparecés en el directorio"
+          action={
+            profile.data.verification_status === 'pending'
+              ? undefined
+              : {
+                  label: 'Cargar mi matrícula',
+                  onPress: () => {
+                    router.push('/profesional/perfil');
+                  },
+                }
+          }
+        >
+          {profile.data.verification_status === 'pending'
+            ? 'Estamos revisando tu matrícula. Cuando esté verificada, las familias te van a encontrar.'
+            : 'Cuando tu matrícula esté verificada, las familias te van a encontrar y te van a poder pedir acompañamiento.'}
         </Banner>
       ) : null}
       {pending > 0 ? (
