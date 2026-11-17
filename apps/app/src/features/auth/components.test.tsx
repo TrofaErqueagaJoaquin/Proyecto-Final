@@ -2,9 +2,11 @@ import { act, fireEvent, renderHook, screen } from '@testing-library/react-nativ
 
 import { renderWithProviders } from '@/test/render';
 
-import { ActionLink, useCooldown } from './components';
+import { ActionLink, InvitationNotice, OAuthButtons, useCooldown } from './components';
+import { signInWithProvider } from './oauth';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
+jest.mock('./oauth', () => ({ signInWithProvider: jest.fn(() => Promise.resolve()) }));
 // Brote usa Reanimated, que no carga en Jest; acá no hace falta.
 jest.mock('@/features/brote/Brote', () => ({ BroteSays: () => null }));
 jest.mock('expo-router', () => ({
@@ -54,5 +56,33 @@ describe('useCooldown', () => {
       });
     }
     expect(result.current.left).toBe(0);
+  });
+});
+
+describe('OAuthButtons', () => {
+  it('muestra Google y deja GitHub y Discord en "Otras opciones"', async () => {
+    await renderWithProviders(<OAuthButtons leading />);
+    expect(screen.getByRole('button', { name: 'Continuar con Google' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Continuar con GitHub' })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Otras opciones' }));
+    expect(screen.getByRole('button', { name: 'Continuar con GitHub' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Continuar con Discord' })).toBeTruthy();
+  });
+
+  it('pasa `next` al ingreso con Google', async () => {
+    await renderWithProviders(<OAuthButtons next="/invitacion?token=abc" />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Continuar con Google' }));
+    expect(signInWithProvider).toHaveBeenCalledWith('google', '/invitacion?token=abc');
+  });
+});
+
+describe('InvitationNotice', () => {
+  it('avisa solo si se llega por una invitación', async () => {
+    const { rerender } = await renderWithProviders(
+      <InvitationNotice next="/invitacion?token=abc">Creá tu cuenta.</InvitationNotice>,
+    );
+    expect(screen.getByText('Te invitaron a una familia')).toBeTruthy();
+    await rerender(<InvitationNotice next="/hoy">Creá tu cuenta.</InvitationNotice>);
+    expect(screen.queryByText('Te invitaron a una familia')).toBeNull();
   });
 });

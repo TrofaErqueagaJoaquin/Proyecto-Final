@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 
 import { supabase } from '@/lib/supabase';
 
+import { rememberInvitation, withNext } from './pendingInvitation';
 import { authRedirectUrl } from './redirect';
 
 export type OAuthProvider = 'google' | 'github' | 'discord';
@@ -11,18 +12,23 @@ WebBrowser.maybeCompleteAuthSession();
 
 /**
  * Ingreso con Google, GitHub o Discord (PKCE).
- * - Web: Supabase redirige el navegador y vuelve a /callback.
- * - Nativo: se abre el navegador del sistema y el deep link vuelve con el código.
+ * - Web: Supabase redirige el navegador y vuelve a /callback, que sigue a `next` (por ejemplo, una
+ *   invitación a una familia).
+ * - Nativo: se abre el navegador del sistema y el deep link vuelve con el código. `next` no viaja
+ *   en el deep link (el navegador compara la dirección de vuelta tal cual): la pantalla que llamó
+ *   sigue a `next` cuando se abre la sesión, y la invitación queda guardada como respaldo.
  */
-export async function signInWithProvider(provider: OAuthProvider): Promise<void> {
-  const redirectTo = authRedirectUrl('/callback');
+export async function signInWithProvider(provider: OAuthProvider, next?: string): Promise<void> {
+  await rememberInvitation(next);
 
   if (Platform.OS === 'web') {
+    const redirectTo = authRedirectUrl(withNext('/callback', next));
     const { error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo } });
     if (error) throw error;
     return;
   }
 
+  const redirectTo = authRedirectUrl('/callback');
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: { redirectTo, skipBrowserRedirect: true },

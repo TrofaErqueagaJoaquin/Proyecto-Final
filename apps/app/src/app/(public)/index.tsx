@@ -12,6 +12,9 @@ import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 
 import { useAuth } from '@/features/auth/AuthProvider';
+import { TextLink } from '@/features/auth/components';
+import { withNext } from '@/features/auth/pendingInvitation';
+import { Brote } from '@/features/brote/Brote';
 import { IconGrid, IconTile, useColumnWidth } from '@/features/library/IconTile';
 import { stageVisual, type Visual } from '@/features/library/libraryVisuals';
 import { Banner, Button, GrowthLine, makeStyles, Screen, Text, useTheme } from '@/ui';
@@ -34,17 +37,30 @@ const SECTIONS: { href: string; title: string; visual: Visual }[] = [
 ];
 
 const VALUES: { icon: LucideIcon; title: string }[] = [
-  { icon: BookOpen, title: 'La evidencia a la vista' },
-  { icon: Puzzle, title: 'Ideas posibles hoy' },
-  { icon: Shield, title: 'Sin vigilancia ni publicidad' },
+  { icon: BookOpen, title: 'Con fuentes' },
+  { icon: Puzzle, title: 'Ideas para hoy' },
+  { icon: Shield, title: 'Sin publicidad' },
 ];
+
+/** Quien se suma como profesional crea la cuenta y sigue directo a su perfil. */
+const PROFESSIONAL_SIGN_UP = withNext('/registrarse', '/profesional/perfil');
 
 const useStyles = makeStyles((t) => ({
   hero: { gap: t.space.lg, paddingVertical: t.space.xl },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: t.space.md },
+  heroTop: { flexDirection: 'row', alignItems: 'center', gap: t.space.lg },
+  headline: { flex: 1, gap: t.space.sm },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: t.space.md },
   section: { gap: t.space.md },
-  values: { flexDirection: 'row', flexWrap: 'wrap', gap: t.space.lg },
-  value: { flexDirection: 'row', alignItems: 'center', gap: t.space.sm },
+  values: { flexDirection: 'row', flexWrap: 'wrap', gap: t.space.md },
+  value: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: t.space.sm,
+    paddingVertical: t.space.sm,
+    paddingHorizontal: t.space.md,
+    borderRadius: t.radius.pill,
+    backgroundColor: t.colors.surface,
+  },
 }));
 
 /** Portada pública: entrada por edad a la biblioteca (UX_AND_NAVIGATION.md §5.1). */
@@ -65,27 +81,34 @@ export default function HomeScreen() {
     <Screen maxWidth={MAX_WIDTH} edges={['bottom']}>
       {bye && !signedIn ? <Banner tone="success">Cerraste sesión. ¡Hasta pronto!</Banner> : null}
       <View style={styles.hero}>
-        <Text variant="display">
-          Qué necesita tu hijo a esta edad, qué podés hacer hoy y cuándo consultar.
-        </Text>
-        <Text variant="subheading" tone="muted">
-          Pantallas, sueño, juego y movimiento. Gratis y con fuentes.
-        </Text>
+        <View style={styles.heroTop}>
+          <Brote mood="hola" size={80} />
+          <View style={styles.headline}>
+            <Text variant="display">Ideas para crecer en casa</Text>
+            <Text variant="subheading" tone="muted">
+              Según la edad de tu hijo. Gratis y con fuentes.
+            </Text>
+          </View>
+        </View>
+        {/* "Ingresar" ya está en la barra: acá, una sola acción. */}
         <View style={styles.actions}>
           {signedIn ? (
             <Link href={'/hoy'} asChild>
               <Button label="Ir a mi espacio" />
             </Link>
           ) : (
-            <>
-              <Link href={'/registrarse'} asChild>
-                <Button label="Crear una cuenta gratis" />
-              </Link>
-              <Link href={'/ingresar'} asChild>
-                <Button label="Ya tengo cuenta" variant="secondary" />
-              </Link>
-            </>
+            <Link href={'/registrarse'} asChild>
+              <Button label="Crear una cuenta gratis" />
+            </Link>
           )}
+        </View>
+        <View style={styles.values}>
+          {VALUES.map(({ icon: Icon, title }) => (
+            <View key={title} style={styles.value}>
+              <Icon color={colors.accent} size={20} aria-hidden />
+              <Text variant="small">{title}</Text>
+            </View>
+          ))}
         </View>
       </View>
       <GrowthLine />
@@ -119,14 +142,11 @@ export default function HomeScreen() {
           ))}
         </IconGrid>
       </View>
-      <View style={styles.values}>
-        {VALUES.map(({ icon: Icon, title }) => (
-          <View key={title} style={styles.value}>
-            <Icon color={colors.accent} size={24} aria-hidden />
-            <Text variant="bodyStrong">{title}</Text>
-          </View>
-        ))}
-      </View>
+      {signedIn ? null : (
+        <TextLink standalone href={PROFESSIONAL_SIGN_UP}>
+          ¿Sos profesional? Sumate al directorio
+        </TextLink>
+      )}
       <Text variant="small" tone="muted">
         Crecer en Casa orienta: no diagnostica ni reemplaza la consulta con profesionales de la
         salud.
