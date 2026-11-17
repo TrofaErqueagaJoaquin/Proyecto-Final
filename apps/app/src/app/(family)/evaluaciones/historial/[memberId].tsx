@@ -55,11 +55,11 @@ export default function HistoryScreen() {
     return (
       <Screen>
         <BroteEmptyState
-          title="Todavía no hay evaluaciones"
+          title="Todavía no hay chequeos"
           description="Después de la primera, acá ves cómo cambia."
           action={
             <Link href="/evaluaciones" asChild>
-              <Button label="Ir a Evaluaciones" variant="secondary" />
+              <Button label="Ir a Chequeos" variant="secondary" />
             </Link>
           }
         />
@@ -80,7 +80,7 @@ export default function HistoryScreen() {
       <Text tone="muted">
         {attempts.length === 1
           ? '1 evaluación. Con la próxima vas a ver la diferencia.'
-          : `${String(attempts.length)} evaluaciones.`}
+          : `${String(attempts.length)} chequeos.`}
       </Text>
 
       {version.data.definition.sections.map((section) => {
@@ -125,7 +125,7 @@ export default function HistoryScreen() {
         );
       })}
 
-      <Text variant="heading">Evaluaciones</Text>
+      <Text variant="heading">Chequeos</Text>
       {[...attempts].reverse().map((a) => (
         <LinkCard
           key={a.id}
