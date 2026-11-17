@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { View } from 'react-native';
 
 import { friendlyError } from '@/copy/errors';
+import { useFieldErrors } from '@/features/forms/useFieldErrors';
 import { Banner, Button, ChipGroup, TextField } from '@/ui';
 
 import { useCreateSource } from './queries';
@@ -23,6 +24,28 @@ const CONFIDENCE = [
   { value: 'low', label: 'Baja' },
 ] as const;
 
+/** Año escrito → número (null si quedó vacío, NaN si no es un número). */
+function parseYear(text: string): number | null {
+  return text.trim() === '' ? null : Number(text);
+}
+
+/** Qué falta o sobra en cada campo (`undefined` = está bien). Igual que admin_create_source. */
+function sourceErrors(input: { citation: string; url: string; year: string }) {
+  const url = input.url.trim();
+  const year = parseYear(input.year);
+  return {
+    citation:
+      input.citation.trim().length < 10
+        ? 'Escribí la cita completa (autor, título, año).'
+        : undefined,
+    url: url !== '' && !/^https:\/\/\S+$/.test(url) ? 'Tiene que empezar con https://' : undefined,
+    year:
+      year !== null && !(Number.isInteger(year) && year >= 1900 && year <= 2100)
+        ? 'Un año entre 1900 y 2100.'
+        : undefined,
+  };
+}
+
 /** Formulario de una fuente nueva. Queda "sin verificar" hasta que alguien la revise. */
 export function SourceForm({
   onCreated,
@@ -35,28 +58,16 @@ export function SourceForm({
   const [year, setYear] = useState('');
   const [studyType, setStudyType] = useState<(typeof STUDY_TYPES)[number]['value']>('guideline');
   const [confidence, setConfidence] = useState<(typeof CONFIDENCE)[number]['value']>('moderate');
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const fields = useFieldErrors(sourceErrors({ citation, url, year }));
 
   const submit = () => {
-    const next: Record<string, string> = {};
-    if (citation.trim().length < 10)
-      next.citation = 'Escribí la cita completa (autor, título, año).';
-    if (url.trim() !== '' && !/^https:\/\/\S+$/.test(url.trim()))
-      next.url = 'Tiene que empezar con https://';
-    const yearNumber = year.trim() === '' ? null : Number(year);
-    if (
-      yearNumber !== null &&
-      !(Number.isInteger(yearNumber) && yearNumber >= 1900 && yearNumber <= 2100)
-    )
-      next.year = 'Un año entre 1900 y 2100.';
-    setErrors(next);
-    if (Object.keys(next).length > 0) return;
+    if (!fields.attempt()) return;
     create.mutate(
       {
         slug: slugify(citation.split(/[.(]/)[0] ?? citation, 'fuente'),
         citation: citation.trim(),
         study_type: studyType,
-        year: yearNumber,
+        year: parseYear(year),
         url: url.trim(),
         confidence,
         notes: '',
@@ -66,6 +77,7 @@ export function SourceForm({
           setCitation('');
           setUrl('');
           setYear('');
+          fields.reset();
           onCreated(source);
         },
       },
@@ -79,14 +91,16 @@ export function SourceForm({
         hint="Autor, título y año. Ej.: OMS. Directrices sobre actividad física (2019)."
         value={citation}
         onChangeText={setCitation}
-        error={errors.citation}
+        onBlur={fields.touch('citation')}
+        error={fields.shown('citation')}
         multiline
       />
       <TextField
         label="Enlace (opcional)"
         value={url}
         onChangeText={setUrl}
-        error={errors.url}
+        onBlur={fields.touch('url')}
+        error={fields.shown('url')}
         autoCapitalize="none"
         keyboardType="url"
       />
@@ -94,13 +108,14 @@ export function SourceForm({
         label="Año (opcional)"
         value={year}
         onChangeText={setYear}
-        error={errors.year}
+        onBlur={fields.touch('year')}
+        error={fields.shown('year')}
         keyboardType="number-pad"
         maxLength={4}
       />
       <ChipGroup label="Tipo" options={STUDY_TYPES} value={studyType} onChange={setStudyType} />
       <ChipGroup
-        label="Confianza"
+        label="¿Cuánto confiás en ella?"
         options={CONFIDENCE}
         value={confidence}
         onChange={setConfidence}
