@@ -6,6 +6,7 @@ import { View } from 'react-native';
 
 import { useFamilyAttempts } from '@/features/assessments/queries';
 import { BroteSays } from '@/features/brote/Brote';
+import { PersonalizeCard } from '@/features/chequeo/PersonalizeCard';
 import { feedback } from '@/features/feedback/feedback';
 import { canManage } from '@/features/families/queries';
 import { useFamilyProgress } from '@/features/logros/LogrosStrip';
@@ -38,7 +39,8 @@ const useStyles = makeStyles((t) => ({
 
 /**
  * Tarjeta "Hoy" (UX_AND_NAVIGATION.md §1.2): UNA sugerencia concreta para el día, del plan de
- * la semana, con "Realizado" y "Otra idea". Debajo, los objetivos en curso.
+ * la semana, con "Realizado" y "Otra idea". Debajo, la invitación a personalizar (solo si ya hay
+ * plan: sin plan, la única llamada grande es "¡Armá mi semana!") y los objetivos en curso.
  */
 export function TodaySection({ familyId, role }: { familyId: string; role: FamilyRole }) {
   const today = localDate();
@@ -130,6 +132,8 @@ export function TodaySection({ familyId, role }: { familyId: string; role: Famil
         </Link>
       ) : null}
 
+      {manage && entries.length > 0 ? <PersonalizeCard familyId={familyId} /> : null}
+
       {activeGoals.length > 0 ? (
         <View style={{ gap: 8 }}>
           <Text variant="heading">Objetivos en curso</Text>
@@ -140,9 +144,7 @@ export function TodaySection({ familyId, role }: { familyId: string; role: Famil
                 key={g.id}
                 href="/objetivos"
                 title={g.title}
-                description={
-                  percent === null ? 'Sin avances anotados' : `Avance: ${String(percent)}%`
-                }
+                description={percent === null ? undefined : `Avance: ${String(percent)}%`}
                 leading={<Target size={24} color={colors.primary} aria-hidden />}
               />
             );
