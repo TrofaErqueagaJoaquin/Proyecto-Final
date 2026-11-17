@@ -1,6 +1,6 @@
 import { Link, Redirect, useRouter } from 'expo-router';
 import { Award, ChevronRight, Wind } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { useMe } from '@/features/auth/queries';
@@ -78,6 +78,8 @@ function LogrosChip({ familyId }: { familyId: string }) {
   const earnedIds = earned.map((b) => b.id).join(',');
   const freshBadge = list.find((b) => b.id === fresh);
   const popupVisible = useOverlayTurn('logro-hoy', freshBadge !== undefined);
+  const sheetId = useId();
+  const sheetVisible = useOverlayTurn(`logros-${sheetId}`, open);
 
   useEffect(() => {
     if (!earnedIds) return;
@@ -118,12 +120,13 @@ function LogrosChip({ familyId }: { familyId: string }) {
         <Text variant="label">{label}</Text>
       </Pressable>
       <Sheet
-        visible={open}
+        visible={sheetVisible}
         onClose={() => {
           setOpen(false);
         }}
       >
-        <LogrosStrip familyId={familyId} />
+        {/* El festejo de un logro nuevo ya lo hace este chip: la tira no lo repite. */}
+        <LogrosStrip familyId={familyId} celebrate={false} />
       </Sheet>
       <GuidePopup
         visible={popupVisible}

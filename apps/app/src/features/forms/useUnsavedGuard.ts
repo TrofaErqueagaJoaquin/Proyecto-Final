@@ -4,6 +4,7 @@ import {
   createElement,
   Fragment,
   useEffect,
+  useId,
   useRef,
   useState,
   type ReactElement,
@@ -11,7 +12,7 @@ import {
 } from 'react';
 import { View } from 'react-native';
 
-import { Button, Sheet, Text } from '@/ui';
+import { Button, Sheet, Text, useOverlayTurn } from '@/ui';
 
 // En un .ts (sin JSX) los hijos van como argumentos de createElement: `children` opcional.
 const DialogSheet = Sheet as (
@@ -100,6 +101,10 @@ export function useUnsavedGuard(dirty: boolean): {
     };
   }, [active, guard]);
 
+  // Con turno: si se pide desde otra ventana (el menú de espacios), espera a que se cierre.
+  const id = useId();
+  const visible = useOverlayTurn(`salir-sin-guardar-${id}`, pending !== null);
+
   const stay = () => {
     setPending(null);
   };
@@ -112,7 +117,7 @@ export function useUnsavedGuard(dirty: boolean): {
 
   const dialog = createElement(
     DialogSheet,
-    { visible: pending !== null, onClose: stay, title: '¿Salir sin guardar?' },
+    { visible, onClose: stay, title: '¿Salir sin guardar?' },
     createElement(
       Fragment,
       null,

@@ -54,6 +54,8 @@ export function MemberForm({
   const birthMonth = useController({ control, name: 'birthMonth' });
   const [exact, setExact] = useState(defaultValues.birthMonth !== '');
   const [age, setAge] = useState<string | null>(null);
+  // Lo cargado en "mes y año" se guarda al pasar a elegir la edad, para devolverlo al volver.
+  const [savedMonth, setSavedMonth] = useState('');
 
   const submit = handleSubmit((values) => {
     if (beforeSubmit && !beforeSubmit()) return;
@@ -103,9 +105,10 @@ export function MemberForm({
         label={exact ? 'Prefiero elegir la edad' : 'Prefiero poner mes y año'}
         variant="ghost"
         onPress={() => {
+          if (exact) setSavedMonth(birthMonth.field.value);
           setExact((value) => !value);
           setAge(null);
-          setValue('birthMonth', exact ? '' : birthMonth.field.value, { shouldValidate: false });
+          setValue('birthMonth', exact ? '' : savedMonth, { shouldValidate: false });
         }}
       />
       <ChipGroup

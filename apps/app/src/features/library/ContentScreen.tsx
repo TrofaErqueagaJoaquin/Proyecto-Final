@@ -1,7 +1,7 @@
 import { AGE_STAGES } from '@crecer/shared';
 import { Link, type Href } from 'expo-router';
 import { BookX, Puzzle, Stethoscope, UserPlus } from 'lucide-react-native';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { View } from 'react-native';
 
 import { useAuth } from '@/features/auth/AuthProvider';
@@ -130,7 +130,9 @@ export function ContentSheet({
   // Se guarda la última ficha para que no se vacíe mientras la ventana se desliza al cerrarse.
   const [shown, setShown] = useState(item);
   if (item !== null && item !== shown) setShown(item);
-  const visible = useOverlayTurn('ficha', item !== null);
+  // Un turno por ventana: si hay dos montadas (pantalla y asistente), una no libera a la otra.
+  const id = useId();
+  const visible = useOverlayTurn(`ficha-${id}`, item !== null);
   return (
     <Sheet visible={visible} title={shown?.title} onClose={onClose}>
       {shown ? <ContentDetail slug={shown.slug} /> : null}

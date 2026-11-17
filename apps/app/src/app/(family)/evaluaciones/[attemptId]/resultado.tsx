@@ -1,7 +1,7 @@
 import { answersFromRows, formatAge, type Band, type Contribution } from '@crecer/domain';
-import { Link, useLocalSearchParams } from 'expo-router';
-import { CalendarDays, ChevronRight, History } from 'lucide-react-native';
-import { useState } from 'react';
+import { Link, router, useLocalSearchParams, type Href } from 'expo-router';
+import { BookOpen, CalendarDays, ChevronRight, History, Puzzle } from 'lucide-react-native';
+import { useId, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import {
@@ -18,24 +18,34 @@ import {
   useAttemptResult,
   useMemberHistory,
   useQuestionnaireVersion,
+  useUpdateRecommendation,
 } from '@/features/assessments/queries';
 import { TextLink } from '@/features/auth/components';
 import { BroteEmptyState, BroteSays } from '@/features/brote/Brote';
+import { useActivityFlow } from '@/features/library/ActivityFlow';
 import { ActivityTile, useTileWidth } from '@/features/library/ActivityTile';
-import { LinkCard } from '@/features/library/LinkCard';
 import {
   Badge,
   Button,
   Disclosure,
+  ErrorBanner,
   ErrorState,
+  EvidenceChip,
   makeStyles,
   Screen,
   Sheet,
   Skeleton,
   Text,
+  useOverlayTurn,
   useTheme,
 } from '@/ui';
 import { minTouchTarget } from '@/ui/tokens';
+
+const STATUS_ACTIONS: { status: RecommendationStatus; label: string }[] = [
+  { status: 'accepted', label: 'La vamos a probar' },
+  { status: 'done', label: 'Ya la hicimos' },
+  { status: 'dismissed', label: 'No es para nosotros' },
+];
 
 /** Dimensiones sin puntaje (por la edad o sin respuestas suficientes). */
 const NO_SCORE_TEXT: Record<string, string> = {
@@ -62,6 +72,16 @@ const useStyles = makeStyles((t) => ({
     justifyContent: 'space-between',
   },
   themeTop: { flexDirection: 'row', alignItems: 'flex-start', gap: t.space.xs },
+  reading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: t.space.lg,
+    padding: t.space.lg,
+    borderRadius: t.radius.lg,
+    borderWidth: 1,
+    borderColor: t.colors.border,
+    backgroundColor: t.colors.surface,
+  },
 }));
 
 interface ThemeDetail {
@@ -84,6 +104,15 @@ export default function ResultScreen() {
   const history = useMemberHistory(attempt.data?.member_id);
   const [opened, setOpened] = useState<ThemeDetail | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const themeId = useId();
+  const themeVisible = useOverlayTurn(`tema-${themeId}`, sheetOpen);
+  // La recomendación abierta (por id: así el estado se ve al día después de cambiarlo).
+  const [recId, setRecId] = useState<string | null>(null);
+  const [recOpen, setRecOpen] = useState(false);
+  const recSheetId = useId();
+  const recVisible = useOverlayTurn(`recomendacion-${recSheetId}`, recOpen);
+  const update = useUpdateRecommendation(attemptId);
+  const flow = useActivityFlow();
 
   if (
     attempt.isPending ||
@@ -175,11 +204,19 @@ export default function ResultScreen() {
       ? [{ rec, activity: { slug: rec.activities.slug, title: rec.activities.title } }]
       : [],
   );
-  const readings = recommendations.flatMap((rec) => {
-    const item = rec.content_items;
-    const href = item ? contentHref(item.type, item.slug) : null;
-    return item && href ? [{ rec, href, title: item.title }] : [];
-  });
+  // Todas las fichas, también las que no tienen pantalla propia (se ven en su ventana).
+  const readings = recommendations.flatMap((rec) =>
+    !rec.activities && rec.content_items ? [{ rec, title: rec.content_items.title }] : [],
+  );
+  const openRec = (id: string) => {
+    setRecId(id);
+    setRecOpen(true);
+  };
+  const shownRec = recommendations.find((rec) => rec.id === recId);
+  const shownStatus = shownRec?.status as RecommendationStatus | undefined;
+  const shownHref = shownRec?.content_items
+    ? contentHref(shownRec.content_items.type, shownRec.content_items.slug)
+    : null;
   const statusBadge = (status: string) =>
     status !== 'new' ? (
       <Badge tone="primary">{RECOMMENDATION_STATUS_LABELS[status as RecommendationStatus]}</Badge>
@@ -235,13 +272,31 @@ export default function ResultScreen() {
                 activity={{ ...activity, categories: [] }}
                 width={tileWidth}
                 badge={statusBadge(rec.status)}
+                onPress={() => {
+                  openRec(rec.id);
+                }}
               />
             ))}
           </View>
         </>
       ) : null}
-      {readings.map(({ rec, href, title }) => (
-        <LinkCard key={rec.id} href={href} title={title} footer={statusBadge(rec.status)} />
+      {readings.map(({ rec, title }) => (
+        <Pressable
+          key={rec.id}
+          accessibilityRole="button"
+          accessibilityLabel={title}
+          accessibilityHint="Abre el detalle"
+          style={({ pressed }) => [styles.reading, { opacity: pressed ? 0.9 : 1 }]}
+          onPress={() => {
+            openRec(rec.id);
+          }}
+        >
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text variant="subheading">{title}</Text>
+            {statusBadge(rec.status)}
+          </View>
+          <ChevronRight color={colors.inkMuted} size={22} aria-hidden />
+        </Pressable>
       ))}
 
       <Link href="/plan" asChild>
@@ -264,7 +319,7 @@ export default function ResultScreen() {
       </Disclosure>
 
       <Sheet
-        visible={sheetOpen}
+        visible={themeVisible}
         title={opened?.title}
         onClose={() => {
           setSheetOpen(false);
@@ -295,6 +350,67 @@ export default function ResultScreen() {
                 setSheetOpen(false);
               }}
             />
+          </>
+        ) : null}
+      </Sheet>
+
+      {/* Una recomendación: por qué, la evidencia, abrirla y cómo les fue. */}
+      <Sheet
+        visible={recVisible}
+        title={shownRec?.activities?.title ?? shownRec?.content_items?.title}
+        onClose={() => {
+          setRecOpen(false);
+        }}
+      >
+        {shownRec ? (
+          <>
+            <Text>{`Por qué: ${shownRec.reason}`}</Text>
+            <EvidenceChip
+              label={
+                shownRec.activities?.evidence_label ?? shownRec.content_items?.evidence_label ?? ''
+              }
+            />
+            {shownRec.activities ? (
+              <Button
+                label="Ver la actividad"
+                icon={Puzzle}
+                fullWidth
+                onPress={() => {
+                  const { slug, title } = shownRec.activities ?? { slug: '', title: '' };
+                  setRecOpen(false);
+                  flow.open(slug, title);
+                }}
+              />
+            ) : shownHref ? (
+              <Button
+                label="Leer la ficha"
+                icon={BookOpen}
+                fullWidth
+                onPress={() => {
+                  setRecOpen(false);
+                  router.push(shownHref as Href);
+                }}
+              />
+            ) : null}
+            <View style={{ gap: 8 }}>
+              <Text variant="label">¿Cómo les fue?</Text>
+              {shownStatus && shownStatus !== 'new' ? (
+                <Badge tone="primary">{RECOMMENDATION_STATUS_LABELS[shownStatus]}</Badge>
+              ) : null}
+              {STATUS_ACTIONS.filter((a) => a.status !== shownStatus).map((action) => (
+                <Button
+                  key={action.status}
+                  label={action.label}
+                  variant="secondary"
+                  fullWidth
+                  disabled={update.isPending}
+                  onPress={() => {
+                    update.mutate({ id: shownRec.id, status: action.status });
+                  }}
+                />
+              ))}
+              <ErrorBanner error={update.error} />
+            </View>
           </>
         ) : null}
       </Sheet>

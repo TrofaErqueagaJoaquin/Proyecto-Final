@@ -16,7 +16,7 @@ import { useMe } from '@/features/auth/queries';
 import { SignOutButton } from '@/features/auth/signOut';
 import { confirmLeave, hasUnsavedChanges } from '@/features/forms/useUnsavedGuard';
 import { useMyProfessionalProfile } from '@/features/professionals/queries';
-import { Button, Logo, makeStyles, Sheet, Text, useTheme } from '@/ui';
+import { Button, Logo, makeStyles, Sheet, Text, useOverlayTurn, useTheme } from '@/ui';
 import { minTouchTarget } from '@/ui/tokens';
 
 import { activeHref, spaceFallback } from './backTargets';
@@ -97,10 +97,12 @@ export function spaceOf(pathname: string): SpaceName {
  * Si hay un formulario a medio cargar, el enlace no navega solo: primero pregunta
  * "¿Salir sin guardar?" y, si eligen "Salir", va.
  */
-function guardedPress(href: Href) {
+function guardedPress(href: string, pathname: string) {
   return (event: { preventDefault: () => void }) => {
     if (!hasUnsavedChanges()) return;
     event.preventDefault();
+    // Ya se está ahí: ni preguntar ni soltar la protección del formulario.
+    if (href === pathname) return;
     confirmLeave(() => {
       router.push(href);
     });
@@ -115,6 +117,7 @@ function SpaceMenu({ current, onDone }: { current: SpaceName; onDone: () => void
   const styles = useStyles();
   const me = useMe();
   const professional = useMyProfessionalProfile();
+  const pathname = usePathname();
   const spaces: { href: Href; label: SpaceName; icon: LucideIcon }[] = [];
   if ((me.data?.families.length ?? 0) > 0 || current === 'Familia') {
     spaces.push({ href: '/hoy', label: 'Familia', icon: House });
@@ -127,6 +130,7 @@ function SpaceMenu({ current, onDone }: { current: SpaceName; onDone: () => void
   }
   const go = (href: Href) => {
     onDone();
+    if (href === pathname) return;
     confirmLeave(() => {
       router.push(href);
     });
@@ -181,6 +185,9 @@ export function AppShell({ items, children }: { items: NavItem[]; children: Reac
   const home = items[0];
   const space = spaceOf(pathname);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Con turno: si al elegir un espacio hay que preguntar "¿Salir sin guardar?", esa ventana
+  // espera a que el menú termine de cerrarse (dos Modal a la vez fallan en iOS).
+  const menuVisible = useOverlayTurn('menu-espacios', menuOpen);
   const content = (
     <View style={styles.content}>
       {back === null ? null : <ScreenHeader back={back} />}
@@ -196,7 +203,7 @@ export function AppShell({ items, children }: { items: NavItem[]; children: Reac
             <Link
               href={home.href}
               accessibilityLabel={`Ir a ${home.label}`}
-              onPress={guardedPress(home.href)}
+              onPress={guardedPress(home.href, pathname)}
             >
               <Logo />
             </Link>
@@ -219,7 +226,7 @@ export function AppShell({ items, children }: { items: NavItem[]; children: Reac
             <ChevronDown color={theme.colors.inkMuted} size={20} aria-hidden />
           </Pressable>
           <Sheet
-            visible={menuOpen}
+            visible={menuVisible}
             onClose={() => {
               setMenuOpen(false);
             }}
@@ -239,7 +246,7 @@ export function AppShell({ items, children }: { items: NavItem[]; children: Reac
               const { href, label, icon: Icon } = item;
               const active = item.href === current;
               return (
-                <Link key={href} href={href} asChild onPress={guardedPress(href)}>
+                <Link key={href} href={href} asChild onPress={guardedPress(href, pathname)}>
                   <Pressable
                     accessibilityRole="link"
                     accessibilityState={{ selected: active }}
@@ -280,7 +287,7 @@ export function AppShell({ items, children }: { items: NavItem[]; children: Reac
               const { href, label, icon: Icon } = item;
               const active = item.href === current;
               return (
-                <Link key={href} href={href} asChild onPress={guardedPress(href)}>
+                <Link key={href} href={href} asChild onPress={guardedPress(href, pathname)}>
                   <Pressable
                     accessibilityRole="tab"
                     accessibilityState={{ selected: active }}

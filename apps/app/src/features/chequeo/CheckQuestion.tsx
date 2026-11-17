@@ -119,17 +119,29 @@ export function CheckQuestion({
     setValue((v) => (v === null ? typical : Math.min(max, Math.max(min, v + delta))));
   };
 
+  // En las de número, el valor elegido se guarda al irse (para adelante o para atrás).
+  const saveNumber = () => {
+    if (question.type === 'number' && value !== null && value !== stored) {
+      onAnswer({ questionId, optionIds: [], value });
+    }
+  };
+
   const next = () => {
     if (!answered && question.required) {
       feedback('tap');
       setMissingHere(true);
       return;
     }
-    if (question.type === 'number' && value !== null && value !== stored) {
-      onAnswer({ questionId, optionIds: [], value });
-    }
+    saveNumber();
     onNext();
   };
+
+  const back = onBack
+    ? () => {
+        saveNumber();
+        onBack();
+      }
+    : undefined;
 
   return (
     <Animated.View entering={FadeInRight.duration(260)} style={{ gap: 20 }}>
@@ -213,7 +225,7 @@ export function CheckQuestion({
           </Text>
         </View>
       ) : null}
-      <StepNav onBack={onBack} onNext={next} nextLabel={nextLabel} />
+      <StepNav onBack={back} onNext={next} nextLabel={nextLabel} />
     </Animated.View>
   );
 }

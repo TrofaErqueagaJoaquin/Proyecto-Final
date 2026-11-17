@@ -10,7 +10,7 @@ import {
   Trophy,
   XCircle,
 } from 'lucide-react-native';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { BroteEmptyState } from '@/features/brote/Brote';
@@ -295,12 +295,14 @@ function GoalSheet({
   // Se guarda de qué objetivo es el formulario: al abrir otro, arranca en el detalle.
   const [writingId, setWritingId] = useState<string | null>(null);
   const writing = goal !== null && writingId === goal.id;
+  const id = useId();
+  const visible = useOverlayTurn(`objetivo-${id}`, goal !== null);
   const setWriting = (on: boolean) => {
     setWritingId(on && goal ? goal.id : null);
   };
 
   return (
-    <Sheet visible={goal !== null} onClose={onClose} title={goal?.title}>
+    <Sheet visible={visible} onClose={onClose} title={goal?.title}>
       {goal === null ? null : writing ? (
         <ProgressForm
           goal={goal}
@@ -368,6 +370,8 @@ function NewGoalSheet({
   onClose: () => void;
 }) {
   const create = useCreateGoal(familyId);
+  const id = useId();
+  const sheetVisible = useOverlayTurn(`nuevo-objetivo-${id}`, visible);
   const [title, setTitle] = useState('');
   const [about, setAbout] = useState(FAMILY);
   const submit = () => {
@@ -401,7 +405,7 @@ function NewGoalSheet({
     { onSubmit: submit },
   );
   return (
-    <Sheet visible={visible} onClose={onClose} title="Nuevo objetivo">
+    <Sheet visible={sheetVisible} onClose={onClose} title="Nuevo objetivo">
       <TextField
         {...fields.field('title')}
         label="¿Qué quieren lograr?"
