@@ -15,7 +15,7 @@ export {
   type ErrorStateProps,
   type FeedbackAction,
 } from './Feedback';
-export { Sheet } from './Sheet';
+export { Sheet, useInSheet } from './Sheet';
 export { StepNav } from './StepNav';
 export { OverlayQueueProvider, useOverlayTurn } from './OverlayQueue';
 export { Disclosure } from './Disclosure';

@@ -19,7 +19,7 @@ export const planKeys = {
 };
 
 export const REASON_LABELS: Record<PlanReason | 'manual', string> = {
-  recommended: 'Recomendada por la evaluación',
+  recommended: 'Recomendada por el chequeo',
   interest: 'Por lo que les gusta',
   variety: 'Para variar',
   quick: 'Con poco tiempo: 10 minutos, sin materiales',

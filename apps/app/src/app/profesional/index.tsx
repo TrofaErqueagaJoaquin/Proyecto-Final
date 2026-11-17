@@ -16,12 +16,13 @@ import {
   Button,
   Card,
   ConfirmAction,
+  Disclosure,
   ErrorBanner,
   ErrorScreen,
   LoadingScreen,
-  makeStyles,
   Screen,
   Text,
+  makeStyles,
   useTheme,
 } from '@/ui';
 import { minTouchTarget } from '@/ui/tokens';
@@ -139,15 +140,18 @@ export default function CasesScreen() {
                 {`De toda la familia: ${c.family_scopes.map((s) => SCOPE_LABELS[s].label).join(', ')}`}
               </Text>
             ) : null}
-            <ConfirmAction
-              label="Finalizar el acompañamiento"
-              confirmLabel="Sí, finalizar"
-              description="Dejás de ver los datos de la familia. Conservás tus propias observaciones."
-              loading={end.isPending && end.variables.assignmentId === c.id}
-              onConfirm={() => {
-                end.mutate({ assignmentId: c.id });
-              }}
-            />
+            {/* Acción delicada: plegada para no tocarla sin querer. */}
+            <Disclosure title="Más opciones">
+              <ConfirmAction
+                label="Terminar el acompañamiento"
+                confirmLabel="Sí, terminar"
+                description="Dejás de ver los datos de la familia. Conservás tus propias observaciones."
+                loading={end.isPending && end.variables.assignmentId === c.id}
+                onConfirm={() => {
+                  end.mutate({ assignmentId: c.id });
+                }}
+              />
+            </Disclosure>
           </Card>
         ))
       )}
@@ -155,7 +159,7 @@ export default function CasesScreen() {
 
       {ended.length > 0 ? (
         <>
-          <Text variant="heading">Finalizados</Text>
+          <Text variant="heading">Terminados</Text>
           {ended.map((c) => (
             <Text key={c.id} tone="muted">
               {`${c.family_name}${c.ended_at ? ` · hasta el ${DATE.format(new Date(c.ended_at))}` : ''}`}
