@@ -49,7 +49,7 @@ export default function AdminHome() {
       </View>
       <View style={{ gap: 8 }}>
         {adminNav(permissions)
-          .filter((item) => item.href !== '/admin' && item.href !== '/hoy')
+          .filter((item) => item.href !== '/admin' && item.href !== '/perfil')
           .map((item) => (
             <LinkCard key={item.href} href={item.href} title={item.label} />
           ))}

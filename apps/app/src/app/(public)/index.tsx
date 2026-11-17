@@ -1,5 +1,5 @@
 import { AGE_STAGES } from '@crecer/shared';
-import { Link } from 'expo-router';
+import { Link, useLocalSearchParams } from 'expo-router';
 import {
   BookOpen,
   LifeBuoy,
@@ -13,7 +13,7 @@ import { View } from 'react-native';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { IconGrid, IconTile, useColumnWidth } from '@/features/library/IconTile';
 import { stageVisual, type Visual } from '@/features/library/libraryVisuals';
-import { Button, GrowthLine, makeStyles, Screen, Text, useTheme } from '@/ui';
+import { Banner, Button, GrowthLine, makeStyles, Screen, Text, useTheme } from '@/ui';
 
 const MAX_WIDTH = 960;
 
@@ -51,10 +51,14 @@ export default function HomeScreen() {
   const styles = useStyles();
   const { colors } = useTheme();
   const signedIn = useAuth().status === 'signedIn';
+  const { salida } = useLocalSearchParams<{ salida?: string }>();
   const stageWidth = useColumnWidth(MAX_WIDTH, { phone: 2, tablet: 3, desktop: 5 });
   const sectionWidth = useColumnWidth(MAX_WIDTH, { phone: 2, tablet: 4, desktop: 4 });
   return (
     <Screen maxWidth={MAX_WIDTH} edges={['bottom']}>
+      {salida === '1' && !signedIn ? (
+        <Banner tone="success">Cerraste sesión. ¡Hasta pronto!</Banner>
+      ) : null}
       <View style={styles.hero}>
         <Text variant="display">
           Qué necesita tu hijo a esta edad, qué podés hacer hoy y cuándo consultar.

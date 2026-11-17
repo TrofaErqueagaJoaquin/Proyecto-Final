@@ -6,6 +6,7 @@ import { ErrorState, Screen, Skeleton } from '@/ui';
 
 import { useAuth } from './AuthProvider';
 import { useAcceptTerms, useTermsConsent } from './queries';
+import { signOutWasRequested } from './signOut';
 
 /** Ruta actual con sus parámetros (por ejemplo, el token de una invitación). */
 function useCurrentUrl(): string {
@@ -50,6 +51,9 @@ export function RequireSession({ children }: { children: ReactNode }) {
 
   if (auth.status === 'loading') return <Loading />;
   if (auth.status === 'signedOut') {
+    // Si la persona cerró la sesión, va a la portada con un aviso (sin `next`: quien entre
+    // después en este dispositivo no cae en la pantalla de la anterior).
+    if (signOutWasRequested()) return <Redirect href="/?salida=1" />;
     return <Redirect href={`/ingresar?next=${encodeURIComponent(currentUrl)}`} />;
   }
   if (terms.isPending || shouldAutoAccept || accept.isPending) return <Loading />;

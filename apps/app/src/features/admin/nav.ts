@@ -3,12 +3,12 @@ import {
   BadgeCheck,
   BookOpen,
   ChartColumn,
+  CircleUserRound,
   FileText,
   LayoutDashboard,
   ScrollText,
   Settings,
   Users,
-  UserRound,
 } from 'lucide-react-native';
 
 /** Secciones visibles según los permisos (lo que un rol no puede usar no aparece). */
@@ -34,7 +34,6 @@ export function adminNav(permissions: Set<string>): NavItem[] {
       label: 'Contenidos',
       icon: FileText,
       permission: 'content.edit',
-      wideOnly: true,
     },
     {
       href: '/admin/conocimiento',
@@ -64,7 +63,8 @@ export function adminNav(permissions: Set<string>): NavItem[] {
       permission: ['settings.manage', 'catalog.manage'],
       wideOnly: true,
     },
-    { href: '/hoy', label: 'Mi espacio', icon: UserRound },
+    // Salida fija a la cuenta (cambiar de espacio, cerrar sesión): /hoy rebotaba a quien no tiene familia.
+    { href: '/perfil', label: 'Mi cuenta', icon: CircleUserRound },
   ];
   return items
     .filter(({ permission }) =>

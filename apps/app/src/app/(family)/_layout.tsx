@@ -28,7 +28,7 @@ function familyNav(manage: boolean): NavItem[] {
           { href: '/profesionales', label: 'Profesionales', icon: HeartHandshake, wideOnly: true },
         ]
       : []),
-    { href: '/perfil', label: 'Perfil', icon: UserRound },
+    { href: '/perfil', label: 'Mi cuenta', icon: UserRound },
   ];
 }
 
