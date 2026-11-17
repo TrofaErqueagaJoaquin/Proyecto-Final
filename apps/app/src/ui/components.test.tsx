@@ -5,7 +5,14 @@ import { renderWithProviders } from '@/test/render';
 
 import { Button } from './Button';
 import { Checkbox } from './Checkbox';
-import { Banner, ErrorBanner, ErrorScreen, ErrorState, LoadingScreen } from './Feedback';
+import {
+  Banner,
+  ErrorBanner,
+  ErrorScreen,
+  ErrorState,
+  LoadingScreen,
+  SignInAgainProvider,
+} from './Feedback';
 import { TextField } from './TextField';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
@@ -128,6 +135,21 @@ describe('ErrorState', () => {
     expect(screen.getByText(/no hay internet/)).toBeOnTheScreen();
     await fireEvent.press(screen.getByRole('button', { name: 'Mi cuenta' }));
     expect(onExit).toHaveBeenCalledTimes(1);
+  });
+
+  it('con la sesión vencida y sin onSignIn usa el "Ingresar de nuevo" de la app', async () => {
+    const signInAgain = jest.fn();
+    const onRetry = jest.fn();
+    await renderWithProviders(
+      <SignInAgainProvider onSignIn={signInAgain}>
+        <ErrorState error={new ApiError(401, 'UNAUTHORIZED', 'x')} onRetry={onRetry} />
+      </SignInAgainProvider>,
+    );
+    expect(screen.getByText('Tu sesión venció')).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Reintentar' })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Ingresar de nuevo' }));
+    expect(signInAgain).toHaveBeenCalledTimes(1);
+    expect(onRetry).not.toHaveBeenCalled();
   });
 });
 

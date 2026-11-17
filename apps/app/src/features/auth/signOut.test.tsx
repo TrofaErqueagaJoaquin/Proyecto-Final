@@ -5,9 +5,17 @@ import { renderWithProviders } from '@/test/render';
 
 import { SignOutButton, signOutWasRequested } from './signOut';
 
-const mockSignOut = jest.fn((_options: { scope: string }) => Promise.resolve({ error: null }));
+const mockSignOut = jest.fn((_options: { scope: string }): Promise<{ error: Error | null }> =>
+  Promise.resolve({ error: null }),
+);
+const mockGetSession = jest.fn(() => Promise.resolve({ data: { session: null } }));
 jest.mock('@/lib/supabase', () => ({
-  supabase: { auth: { signOut: (options: { scope: string }) => mockSignOut(options) } },
+  supabase: {
+    auth: {
+      signOut: (options: { scope: string }) => mockSignOut(options),
+      getSession: () => mockGetSession(),
+    },
+  },
 }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ replace: jest.fn() }) }));
 
@@ -41,5 +49,16 @@ describe('SignOutButton', () => {
     });
     expect(signOutWasRequested()).toBe(true);
     expect(signOutWasRequested(Date.now() + 60_000)).toBe(false);
+  });
+
+  it('sin internet, si la sesión local ya se borró, cuenta como salida pedida', async () => {
+    mockSignOut.mockResolvedValueOnce({ error: new TypeError('Network request failed') });
+    await renderButton();
+    await fireEvent.press(screen.getByRole('button', { name: 'Cerrar sesión' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Sí, salir' }));
+    // El aviso aparece cuando ya terminó el onError de la mutación (que consulta la sesión).
+    expect(await screen.findByRole('button', { name: 'Reintentar' })).toBeOnTheScreen();
+    expect(mockGetSession).toHaveBeenCalled();
+    expect(signOutWasRequested()).toBe(true);
   });
 });

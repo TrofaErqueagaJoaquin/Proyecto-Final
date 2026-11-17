@@ -1,6 +1,6 @@
 import { answersFromRows, visibleQuestions } from '@crecer/domain';
 import { Link, router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 
 import {
@@ -41,15 +41,33 @@ export default function CheckScreen() {
   // Si falla guardar una respuesta, no se avanza: se vuelve a esa pregunta hasta que se guarde.
   const saveFailed = useRef(false);
   type AnswerChange = Parameters<typeof save.mutate>[0];
-  const saveAnswer = (change: AnswerChange, atStep?: number) => {
-    saveFailed.current = false;
-    save.mutate(change, {
-      onError: () => {
-        saveFailed.current = true;
-        if (atStep !== undefined) setStep(atStep);
-      },
-    });
-  };
+  // Respuestas que no se guardaron (por pregunta): con alguna, se avisa y no se ve el resultado.
+  // Se siguen con `mutateAsync` porque los callbacks de `mutate` solo corren para la última llamada.
+  const [failed, setFailed] = useState<
+    ReadonlyMap<string, { change: AnswerChange; error: unknown }>
+  >(new Map());
+  const saveAsync = save.mutateAsync;
+  const saveAnswer = useCallback(
+    (change: AnswerChange, atStep?: number) => {
+      saveFailed.current = false;
+      saveAsync(change).then(
+        () => {
+          setFailed((prev) => {
+            if (!prev.has(change.questionId)) return prev;
+            const next = new Map(prev);
+            next.delete(change.questionId);
+            return next;
+          });
+        },
+        (error: unknown) => {
+          setFailed((prev) => new Map(prev).set(change.questionId, { change, error }));
+          saveFailed.current = true;
+          if (atStep !== undefined) setStep(atStep);
+        },
+      );
+    },
+    [saveAsync],
+  );
   const startAttempt = (versionId: string) => {
     start.mutate(
       { memberId, versionId },
@@ -96,10 +114,10 @@ export default function CheckScreen() {
           o.id && previous.optionCodes.includes(o.code) ? [o.id] : [],
         );
         if (previous.value === null && optionIds.length === 0) continue;
-        save.mutate({ questionId: question.id, optionIds, value: previous.value });
+        saveAnswer({ questionId: question.id, optionIds, value: previous.value });
       }
     }
-  }, [attemptId, version.data, answers.data, quick.data, save]);
+  }, [attemptId, version.data, answers.data, quick.data, saveAnswer]);
 
   const loadError = questionnaire.error ?? attempt.error ?? version.error ?? answers.error;
   if (loadError) {
@@ -175,12 +193,13 @@ export default function CheckScreen() {
   );
   const current = visible[step];
   const isDone = step >= visible.length;
-  const saveError = save.isError ? (
+  const firstFailure = failed.values().next().value;
+  const saveError = firstFailure ? (
     <ErrorBanner
-      error={save.error}
+      error={firstFailure.error}
       retryLoading={save.isPending}
       onRetry={() => {
-        if (save.variables) saveAnswer(save.variables);
+        for (const { change } of failed.values()) saveAnswer(change);
       }}
     />
   ) : null;
@@ -232,7 +251,7 @@ export default function CheckScreen() {
             label="Ver mi resultado"
             fullWidth
             loading={submit.isPending}
-            disabled={save.isPending || save.isError}
+            disabled={save.isPending || failed.size > 0}
             onPress={() => {
               submit.mutate(undefined, {
                 onSuccess: () => void attempt.refetch(),

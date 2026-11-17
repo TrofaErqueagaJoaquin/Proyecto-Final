@@ -278,7 +278,7 @@ export default function ProfileScreen() {
       <Card>
         <Text variant="subheading">Seguridad</Text>
         <View style={styles.actions}>
-          <Link href={'/nueva-clave'} asChild>
+          <Link href={'/nueva-clave?desde=perfil'} asChild>
             <Button label="Cambiar contraseña" variant="secondary" />
           </Link>
           <SignOutButton

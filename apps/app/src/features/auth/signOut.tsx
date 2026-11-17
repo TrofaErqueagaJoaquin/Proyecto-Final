@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { router, useRouter } from 'expo-router';
 import { CircleUserRound, LogOut } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
@@ -27,10 +27,22 @@ export function useSignOut() {
       const { error } = await supabase.auth.signOut({ scope });
       if (error) throw error;
     },
-    onError: () => {
-      requestedAt = 0;
+    onError: async () => {
+      // Sin internet, supabase-js igual borra la sesión local y devuelve error: si ya no hay
+      // sesión, la salida sí ocurrió y se mantiene el aviso de la portada.
+      if ((await supabase.auth.getSession()).data.session) requestedAt = 0;
     },
   });
+}
+
+/** "Ingresar de nuevo" con sesión vencida: cierra la sesión local y va a Ingresar. */
+export function signInAgain() {
+  void supabase.auth
+    .signOut({ scope: 'local' })
+    .catch(() => undefined)
+    .finally(() => {
+      router.replace('/ingresar');
+    });
 }
 
 const useStyles = makeStyles((t) => ({

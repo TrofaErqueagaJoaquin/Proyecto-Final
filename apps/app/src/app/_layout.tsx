@@ -13,11 +13,12 @@ import { useEffect } from 'react';
 import { View } from 'react-native';
 
 import { AuthProvider } from '@/features/auth/AuthProvider';
+import { signInAgain } from '@/features/auth/signOut';
 import { ActivityFlowProvider } from '@/features/library/ActivityFlow';
 import { OverlayQueueProvider } from '@/ui/OverlayQueue';
 import { DemoBanner } from '@/features/demo/DemoBanner';
 import { queryClient } from '@/lib/query';
-import { ThemeProvider, useTheme } from '@/ui';
+import { SignInAgainProvider, ThemeProvider, useTheme } from '@/ui';
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -66,15 +67,17 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          {/* Detalle de actividades y festejo de "Realizado", disponibles en toda la app. */}
-          <OverlayQueueProvider>
-            <ActivityFlowProvider>
-              <View style={{ flex: 1 }}>
-                <DemoBanner />
-                <ThemedNavigation />
-              </View>
-            </ActivityFlowProvider>
-          </OverlayQueueProvider>
+          <SignInAgainProvider onSignIn={signInAgain}>
+            {/* Detalle de actividades y festejo de "Realizado", disponibles en toda la app. */}
+            <OverlayQueueProvider>
+              <ActivityFlowProvider>
+                <View style={{ flex: 1 }}>
+                  <DemoBanner />
+                  <ThemedNavigation />
+                </View>
+              </ActivityFlowProvider>
+            </OverlayQueueProvider>
+          </SignInAgainProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

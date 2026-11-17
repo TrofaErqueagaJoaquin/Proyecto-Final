@@ -6,7 +6,7 @@ import {
   WifiOff,
   type LucideIcon,
 } from 'lucide-react-native';
-import { useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { AccessibilityInfo, Animated, Platform, View, type ViewStyle } from 'react-native';
 
 import { errorKind, friendlyError } from '@/copy/errors';
@@ -43,6 +43,21 @@ const useBannerStyles = makeStyles((t) => ({
   body: { flex: 1, gap: t.space.xs },
   action: { alignItems: 'flex-start', marginTop: t.space.xs },
 }));
+
+// Qué hacer con "Ingresar de nuevo" cuando la pantalla no pasa `onSignIn`. Lo monta
+// app/_layout.tsx (ui/ no puede importar expo-router ni features).
+const SignInAgainContext = createContext<(() => void) | undefined>(undefined);
+
+/** Acción por defecto de "Ingresar de nuevo" con sesión vencida (cerrar sesión e ir a ingresar). */
+export function SignInAgainProvider({
+  onSignIn,
+  children,
+}: {
+  onSignIn: () => void;
+  children: ReactNode;
+}) {
+  return <SignInAgainContext.Provider value={onSignIn}>{children}</SignInAgainContext.Provider>;
+}
 
 /** Botón de un aviso ("Reintentar", "Ingresar de nuevo"…). */
 export interface FeedbackAction {
@@ -96,7 +111,7 @@ export function Banner({
 
 /**
  * Aviso de error listo para usar: elige el texto, el ícono y el botón según el error.
- * Sin internet → "Reintentar"; sesión vencida → "Ingresar de nuevo" (si hay `onSignIn`).
+ * Sin internet → "Reintentar"; sesión vencida → "Ingresar de nuevo" (`onSignIn` o el de la app).
  * Sin `error` no muestra nada.
  */
 export function ErrorBanner({
@@ -111,11 +126,13 @@ export function ErrorBanner({
   /** Muestra "Reintentar" cargando mientras se vuelve a intentar. */
   retryLoading?: boolean;
 }) {
+  const defaultSignIn = useContext(SignInAgainContext);
   if (error === null || error === undefined || error === false) return null;
   const kind = errorKind(error);
+  const signIn = onSignIn ?? defaultSignIn;
   const action: FeedbackAction | undefined =
-    kind === 'session' && onSignIn
-      ? { label: 'Ingresar de nuevo', onPress: onSignIn }
+    kind === 'session' && signIn
+      ? { label: 'Ingresar de nuevo', onPress: signIn }
       : onRetry
         ? { label: 'Reintentar', onPress: onRetry, loading: retryLoading }
         : undefined;
@@ -211,6 +228,8 @@ export function ErrorState({
   secondaryAction,
 }: ErrorStateProps) {
   const styles = useStateStyles();
+  const defaultSignIn = useContext(SignInAgainContext);
+  const signIn = onSignIn ?? defaultSignIn;
   const kind = error === undefined ? 'other' : errorKind(error);
   const text =
     kind !== 'other'
@@ -224,8 +243,8 @@ export function ErrorState({
         ? 'Tu sesión venció'
         : 'Algo salió mal');
   const primary: FeedbackAction | undefined =
-    kind === 'session' && onSignIn
-      ? { label: 'Ingresar de nuevo', onPress: onSignIn }
+    kind === 'session' && signIn
+      ? { label: 'Ingresar de nuevo', onPress: signIn }
       : onRetry
         ? { label: 'Reintentar', onPress: onRetry }
         : undefined;

@@ -1,5 +1,5 @@
 import { AGE_STAGES } from '@crecer/shared';
-import { Link, useLocalSearchParams } from 'expo-router';
+import { Link, router, useLocalSearchParams } from 'expo-router';
 import {
   BookOpen,
   LifeBuoy,
@@ -8,6 +8,7 @@ import {
   Stethoscope,
   type LucideIcon,
 } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 
 import { useAuth } from '@/features/auth/AuthProvider';
@@ -52,13 +53,17 @@ export default function HomeScreen() {
   const { colors } = useTheme();
   const signedIn = useAuth().status === 'signedIn';
   const { salida } = useLocalSearchParams<{ salida?: string }>();
+  // El aviso de salida se muestra una vez y se saca `?salida=1` de la dirección (al recargar no vuelve).
+  const [bye, setBye] = useState(salida === '1');
+  if (salida === '1' && !bye) setBye(true);
+  useEffect(() => {
+    if (salida === '1') router.setParams({ salida: undefined });
+  }, [salida]);
   const stageWidth = useColumnWidth(MAX_WIDTH, { phone: 2, tablet: 3, desktop: 5 });
   const sectionWidth = useColumnWidth(MAX_WIDTH, { phone: 2, tablet: 4, desktop: 4 });
   return (
     <Screen maxWidth={MAX_WIDTH} edges={['bottom']}>
-      {salida === '1' && !signedIn ? (
-        <Banner tone="success">Cerraste sesión. ¡Hasta pronto!</Banner>
-      ) : null}
+      {bye && !signedIn ? <Banner tone="success">Cerraste sesión. ¡Hasta pronto!</Banner> : null}
       <View style={styles.hero}>
         <Text variant="display">
           Qué necesita tu hijo a esta edad, qué podés hacer hoy y cuándo consultar.

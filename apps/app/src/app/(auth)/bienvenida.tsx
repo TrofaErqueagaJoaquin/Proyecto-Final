@@ -6,7 +6,7 @@ import { useAuth } from '@/features/auth/AuthProvider';
 import { ActionLink, AuthScreen, TextLink } from '@/features/auth/components';
 import { useAcceptTerms, useMe, useTermsConsent } from '@/features/auth/queries';
 import { safeNextPath } from '@/features/auth/redirect';
-import { useSignOut } from '@/features/auth/signOut';
+import { signOutWasRequested, useSignOut } from '@/features/auth/signOut';
 import { AGE_OPTIONS, birthMonthFromAge } from '@/features/families/age';
 import { useQuickStart } from '@/features/families/queries';
 import { feedback } from '@/features/feedback/feedback';
@@ -35,7 +35,7 @@ function Terms() {
  * Salida para quien entró con otra cuenta o no quiere seguir ahora: cierra la sesión y la pantalla
  * lleva a la portada.
  */
-function NotMe({ onLeave }: { onLeave: () => void }) {
+function NotMe({ onLeave, onStay }: { onLeave: () => void; onStay: () => void }) {
   const signOut = useSignOut();
   return (
     <>
@@ -44,7 +44,12 @@ function NotMe({ onLeave }: { onLeave: () => void }) {
         disabled={signOut.isPending}
         onPress={() => {
           onLeave();
-          signOut.mutate('local');
+          // Si falló pero la sesión local ya se borró (sin internet), la salida igual ocurrió.
+          signOut.mutate('local', {
+            onError: () => {
+              if (!signOutWasRequested()) onStay();
+            },
+          });
         }}
       >
         {signOut.isPending ? 'Cerrando sesión…' : 'No soy yo · Cerrar sesión'}
@@ -77,6 +82,9 @@ export default function WelcomeScreen() {
   const leave = () => {
     setLeaving(true);
   };
+  const stay = () => {
+    setLeaving(false);
+  };
 
   if (auth.status === 'signedOut') return <Redirect href={leaving ? '/' : '/ingresar'} />;
   if (auth.status === 'loading' || terms.isPending || me.isPending) {
@@ -98,7 +106,7 @@ export default function WelcomeScreen() {
       <AuthScreen
         title={terms.data?.hasAny ? 'Actualizamos los términos' : '¡Qué bueno que llegaste!'}
         greeting="Antes de seguir, un solo paso."
-        footer={<NotMe onLeave={leave} />}
+        footer={<NotMe onLeave={leave} onStay={stay} />}
       >
         <Checkbox
           checked={checked}
@@ -144,7 +152,7 @@ export default function WelcomeScreen() {
     <AuthScreen
       title="Empecemos"
       greeting="¡Hola! Soy Brote. Contame de tu peque y arrancamos."
-      footer={<NotMe onLeave={leave} />}
+      footer={<NotMe onLeave={leave} onStay={stay} />}
     >
       <TextField
         label="¿Cómo le decís?"
