@@ -8,14 +8,26 @@ import {
 } from '@crecer/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as Clipboard from 'expo-clipboard';
-import { Link, Redirect } from 'expo-router';
-import { useState } from 'react';
+import { Redirect } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { useController, useForm } from 'react-hook-form';
 import { Platform, Share, View } from 'react-native';
 
-import { friendlyError } from '@/copy/errors';
+import { GuidePopup } from '@/features/brote/GuidePopup';
 import { canManage, useActiveFamily, useCreateInvitation } from '@/features/families/queries';
-import { Banner, Button, Card, ChipGroup, FormTextField, Screen, Skeleton, Text } from '@/ui';
+import { feedback } from '@/features/feedback/feedback';
+import {
+  Banner,
+  Button,
+  Card,
+  ChipGroup,
+  ErrorBanner,
+  FormTextField,
+  Screen,
+  Skeleton,
+  Text,
+  useOverlayTurn,
+} from '@/ui';
 
 function roleOptions(inviterRole: FamilyRole) {
   // Igual que la política RLS: el owner invita cualquier rol; un guardian, solo cuidadores.
@@ -26,6 +38,15 @@ function roleOptions(inviterRole: FamilyRole) {
 
 function ShareInvitation({ result, email }: { result: CreateInvitationResponse; email: string }) {
   const [copied, setCopied] = useState(false);
+  // Festejo al crear la invitación; al cerrarlo queda la tarjeta para compartir el enlace.
+  const [celebrating, setCelebrating] = useState(true);
+  const celebrateVisible = useOverlayTurn('invitacion-creada', celebrating);
+  useEffect(() => {
+    feedback('done');
+  }, []);
+  const close = () => {
+    setCelebrating(false);
+  };
   const message = `Te invito a nuestra familia en Crecer en Casa: ${result.inviteUrl}`;
   return (
     <Card>
@@ -34,8 +55,7 @@ function ShareInvitation({ result, email }: { result: CreateInvitationResponse; 
         <Banner tone="success">Le enviamos un correo a {email}.</Banner>
       ) : (
         <Banner tone="info">
-          Compartí este enlace con {email} (por ejemplo, por WhatsApp). Vence en 7 días y solo
-          funciona si ingresa con ese mismo correo.
+          Mandale este enlace a {email}, por ejemplo por WhatsApp. Vence en 7 días.
         </Banner>
       )}
       <Text selectable variant="small" tone="muted">
@@ -61,9 +81,18 @@ function ShareInvitation({ result, email }: { result: CreateInvitationResponse; 
           />
         ) : null}
       </View>
-      <Link href="/familia" asChild>
-        <Button label="Volver a Familia" variant="ghost" />
-      </Link>
+      <GuidePopup
+        visible={celebrateVisible}
+        celebrate
+        title="¡Invitación lista!"
+        message={
+          result.emailSent
+            ? `Le mandamos un correo a ${email}.`
+            : `Ahora mandale el enlace a ${email}.`
+        }
+        primary={{ label: 'Seguir', onPress: close }}
+        onClose={close}
+      />
     </Card>
   );
 }
@@ -99,9 +128,7 @@ export default function InviteScreen() {
   return (
     <Screen>
       <Text variant="title">Invitar a otro adulto</Text>
-      <Text tone="muted">
-        Sumá a quienes comparten la crianza. Cada rol ve y puede hacer cosas distintas.
-      </Text>
+      <Text tone="muted">Sumá a quien comparte la crianza con vos.</Text>
       <Card>
         <FormTextField
           control={control}
@@ -122,7 +149,7 @@ export default function InviteScreen() {
         <Text variant="small" tone="muted">
           {FAMILY_ROLE_DESCRIPTIONS[role.field.value]}
         </Text>
-        {invite.error ? <Banner tone="danger">{friendlyError(invite.error)}</Banner> : null}
+        <ErrorBanner error={invite.error} />
         <Button
           label="Crear invitación"
           loading={invite.isPending}

@@ -1,15 +1,16 @@
 import { INTERESTS, type PreferencesInput } from '@crecer/shared';
-import { Redirect } from 'expo-router';
+import { Link, Redirect } from 'expo-router';
+import { CalendarDays } from 'lucide-react-native';
 import { useState } from 'react';
+import { View } from 'react-native';
 
-import { friendlyError } from '@/copy/errors';
 import {
   canManage,
   useActiveFamily,
   usePreferences,
   useUpdatePreferences,
 } from '@/features/families/queries';
-import { Banner, Button, Card, ChipGroup, ErrorState, Screen, Skeleton, Text } from '@/ui';
+import { Button, Card, ChipGroup, ErrorBanner, ErrorState, Screen, Skeleton, Text } from '@/ui';
 
 const MINUTES = [
   { value: '10', label: '10 minutos' },
@@ -31,51 +32,64 @@ const BUDGETS = [
 function PreferencesForm({ familyId, initial }: { familyId: string; initial: PreferencesInput }) {
   const [values, setValues] = useState(initial);
   const update = useUpdatePreferences(familyId);
+  const [savedKey, setSavedKey] = useState(0);
   return (
-    <Card>
-      <ChipGroup
-        label="¿Cuánto tiempo suelen tener en un día de semana?"
-        options={MINUTES}
-        value={values.minutesPerDay === null ? null : (String(values.minutesPerDay) as '10')}
-        onChange={(value) => {
-          setValues({ ...values, minutesPerDay: Number(value) });
-        }}
-      />
-      <ChipGroup
-        label="¿Dónde suelen jugar?"
-        options={SPACES}
-        value={values.space}
-        onChange={(value) => {
-          setValues({ ...values, space: value });
-        }}
-      />
-      <ChipGroup
-        label="Presupuesto para actividades"
-        options={BUDGETS}
-        value={values.budget}
-        onChange={(value) => {
-          setValues({ ...values, budget: value });
-        }}
-      />
-      <ChipGroup
-        multiple
-        label="Intereses de la familia"
-        options={INTERESTS}
-        value={values.interests}
-        onChange={(interests) => {
-          setValues({ ...values, interests });
-        }}
-      />
-      {update.isSuccess ? <Banner tone="success">Guardamos las preferencias.</Banner> : null}
-      {update.error ? <Banner tone="danger">{friendlyError(update.error)}</Banner> : null}
-      <Button
-        label="Guardar preferencias"
-        loading={update.isPending}
-        onPress={() => {
-          update.mutate(values);
-        }}
-      />
-    </Card>
+    <View style={{ gap: 16 }}>
+      <Card>
+        <ChipGroup
+          label="¿Cuánto tiempo suelen tener en un día de semana?"
+          options={MINUTES}
+          value={values.minutesPerDay === null ? null : (String(values.minutesPerDay) as '10')}
+          onChange={(value) => {
+            setValues({ ...values, minutesPerDay: Number(value) });
+          }}
+        />
+        <ChipGroup
+          label="¿Dónde suelen jugar?"
+          options={SPACES}
+          value={values.space}
+          onChange={(value) => {
+            setValues({ ...values, space: value });
+          }}
+        />
+        <ChipGroup
+          label="Presupuesto para actividades"
+          options={BUDGETS}
+          value={values.budget}
+          onChange={(value) => {
+            setValues({ ...values, budget: value });
+          }}
+        />
+        <ChipGroup
+          multiple
+          label="Intereses de la familia"
+          options={INTERESTS}
+          value={values.interests}
+          onChange={(interests) => {
+            setValues({ ...values, interests });
+          }}
+        />
+        <ErrorBanner error={update.error} />
+        <Button
+          label="Guardar preferencias"
+          savedKey={savedKey}
+          savedLabel="Guardamos las preferencias"
+          loading={update.isPending}
+          onPress={() => {
+            update.mutate(values, {
+              onSuccess: () => {
+                setSavedKey((n) => n + 1);
+              },
+            });
+          }}
+        />
+      </Card>
+      {update.isSuccess ? (
+        <Link href="/plan" asChild>
+          <Button label="Rearmar la semana con esto" icon={CalendarDays} fullWidth />
+        </Link>
+      ) : null}
+    </View>
   );
 }
 
@@ -92,9 +106,7 @@ export default function PreferencesScreen() {
   return (
     <Screen>
       <Text variant="title">Preferencias</Text>
-      <Text tone="muted">
-        Las usamos para sugerir actividades posibles con su tiempo, su espacio y su presupuesto.
-      </Text>
+      <Text tone="muted">Las usamos para sugerir actividades que les queden cómodas.</Text>
       <PreferencesForm
         familyId={family.id}
         initial={{

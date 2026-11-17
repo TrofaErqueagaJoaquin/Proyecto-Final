@@ -1,10 +1,9 @@
 import { formatBirthMonth, type InterestSchema } from '@crecer/shared';
-import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { UserRound } from 'lucide-react-native';
+import { Link, Redirect, useLocalSearchParams, useRouter } from 'expo-router';
+import { ClipboardCheck, History, UserMinus, UserRound } from 'lucide-react-native';
 import { View } from 'react-native';
 import type { z } from 'zod';
 
-import { friendlyError } from '@/copy/errors';
 import { interestLabel, memberAge } from '@/features/families/labels';
 import { MemberForm } from '@/features/families/MemberForm';
 import {
@@ -20,7 +19,9 @@ import {
   Button,
   Card,
   ConfirmAction,
+  Disclosure,
   EmptyState,
+  ErrorBanner,
   ErrorState,
   Screen,
   Skeleton,
@@ -33,6 +34,7 @@ export default function MemberScreen() {
   const { isPending, family } = useActiveFamily();
   const members = useMembers(family?.id);
   const update = useUpdateMember(family?.id);
+  const archive = useUpdateMember(family?.id);
   const remove = useDeleteMember(family?.id);
 
   if (isPending || members.isPending) return <Skeleton height={300} />;
@@ -46,7 +48,12 @@ export default function MemberScreen() {
         <EmptyState
           icon={UserRound}
           title="No encontramos a este integrante"
-          description="Puede que lo hayan eliminado o que no tengas acceso."
+          description="Puede que lo hayan borrado."
+          action={
+            <Link href="/familia" asChild>
+              <Button label="Ir a Familia" />
+            </Link>
+          }
         />
       </Screen>
     );
@@ -60,15 +67,24 @@ export default function MemberScreen() {
       <Text variant="title">{member.alias}</Text>
       <Text tone="muted">{memberAge(member.birth_month)}</Text>
       {archived ? (
-        <Banner tone="caution" title="Integrante archivado">
-          Sus datos no se usan para sugerencias ni se comparten. Si querés volver a acompañarlo en
-          la plataforma, agregalo de nuevo con un consentimiento nuevo.
+        <Banner tone="caution" title="Ya no lo siguen">
+          Sus datos no se usan ni se comparten. Para volver a seguirlo, agregalo de nuevo.
         </Banner>
-      ) : null}
+      ) : (
+        <View style={{ gap: 8 }}>
+          {manage ? (
+            <Link href={`/chequeo/${member.id}`} asChild>
+              <Button label="Hacer su chequeo" icon={ClipboardCheck} />
+            </Link>
+          ) : null}
+          <Link href={`/evaluaciones/historial/${member.id}`} asChild>
+            <Button label="Ver su historial" variant="secondary" icon={History} />
+          </Link>
+        </View>
+      )}
 
       {manage && !archived ? (
-        <Card>
-          <Text variant="subheading">Editar</Text>
+        <Disclosure title="Cambiar sus datos">
           <MemberForm
             defaultValues={{
               alias: member.alias,
@@ -89,14 +105,14 @@ export default function MemberScreen() {
             }}
           >
             {update.isSuccess ? <Banner tone="success">Guardamos los cambios.</Banner> : null}
-            {update.error ? <Banner tone="danger">{friendlyError(update.error)}</Banner> : null}
+            <ErrorBanner error={update.error} />
           </MemberForm>
-        </Card>
+        </Disclosure>
       ) : (
         <Card>
-          <Text variant="subheading">Intereses</Text>
+          <Text variant="subheading">Lo que le gusta</Text>
           {member.interests.length === 0 ? (
-            <Text tone="muted">Sin intereses cargados.</Text>
+            <Text tone="muted">Todavía nada.</Text>
           ) : (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {member.interests.map((i) => (
@@ -108,25 +124,29 @@ export default function MemberScreen() {
       )}
 
       {manage ? (
-        <Card>
-          <Text variant="subheading">Otras acciones</Text>
+        <Disclosure title="Más opciones">
           {archived ? null : (
-            <Button
-              label="Archivar"
-              variant="secondary"
-              loading={update.isPending}
-              onPress={() => {
-                update.mutate({
+            <ConfirmAction
+              label={`Dejar de seguir a ${member.alias}`}
+              title={`¿Dejar de seguir a ${member.alias}?`}
+              confirmLabel="Sí, dejar de seguir"
+              icon={UserMinus}
+              description="Sus datos dejan de usarse para sugerencias y de compartirse. No se borra nada."
+              loading={archive.isPending}
+              onConfirm={() => {
+                archive.mutate({
                   id: member.id,
                   changes: { archived_at: new Date().toISOString() },
                 });
               }}
             />
           )}
+          <ErrorBanner error={archive.error} />
           <ConfirmAction
-            label="Eliminar definitivamente"
-            confirmLabel="Sí, eliminar"
-            description={`Se borran ${member.alias} y todos sus datos asociados. Esta acción no se puede deshacer.`}
+            label="Borrar para siempre"
+            title={`¿Borrar a ${member.alias} para siempre?`}
+            confirmLabel="Sí, borrar"
+            description="Se borran sus datos y su historial. No se puede deshacer."
             loading={remove.isPending}
             onConfirm={() => {
               remove.mutate(member.id, {
@@ -136,8 +156,8 @@ export default function MemberScreen() {
               });
             }}
           />
-          {remove.error ? <Banner tone="danger">{friendlyError(remove.error)}</Banner> : null}
-        </Card>
+          <ErrorBanner error={remove.error} />
+        </Disclosure>
       ) : null}
     </Screen>
   );
