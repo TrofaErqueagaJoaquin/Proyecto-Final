@@ -1,10 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Lock, ShieldCheck, Users } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { friendlyError } from '@/copy/errors';
 import { BAND_LABELS } from '@/features/assessments/labels';
 import { ageLabel, GOAL_STATUS_LABELS, type GoalStatus } from '@/features/professionals/labels';
 import {
@@ -19,18 +18,27 @@ import {
 } from '@/features/professionals/queries';
 import {
   Badge,
-  Banner,
   Button,
   Card,
   Checkbox,
   ChipGroup,
   EmptyState,
+  ErrorBanner,
+  ErrorScreen,
+  LoadingScreen,
   Screen,
-  Skeleton,
   Text,
   TextField,
   useTheme,
 } from '@/ui';
+
+/** "Sin acceso" solo cuando el servidor dice que falta el permiso; lo demás se puede reintentar. */
+function isAccessError(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  const { code, message } = error as { code?: unknown; message?: unknown };
+  if (code === '42501') return true;
+  return code === 'P0001' && (message === 'NOT_FOUND' || message === 'FORBIDDEN');
+}
 
 const DATE = new Intl.DateTimeFormat('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -158,8 +166,8 @@ function GoalsSection({
           </Card>
         );
       })}
-      {progress.error ? <Banner tone="danger">{friendlyError(progress.error)}</Banner> : null}
-      {status.error ? <Banner tone="danger">{friendlyError(status.error)}</Banner> : null}
+      <ErrorBanner error={progress.error} />
+      <ErrorBanner error={status.error} />
       <Card>
         <Text variant="subheading">Proponer un objetivo</Text>
         <TextField
@@ -176,7 +184,7 @@ function GoalsSection({
           multiline
           maxLength={600}
         />
-        {propose.error ? <Banner tone="danger">{friendlyError(propose.error)}</Banner> : null}
+        <ErrorBanner error={propose.error} />
         <Button
           label="Proponer a la familia"
           loading={propose.isPending}
@@ -228,7 +236,7 @@ function ObservationsSection({
           onChange={setShared}
           label="Compartirla con la familia (si no, es solo para vos)"
         />
-        {save.error ? <Banner tone="danger">{friendlyError(save.error)}</Banner> : null}
+        <ErrorBanner error={save.error} />
         <Button
           label="Guardar observación"
           loading={save.isPending}
@@ -294,23 +302,29 @@ export default function MemberCaseScreen() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>('resumen');
 
-  if (overview.isPending) {
-    return (
-      <Screen>
-        <Skeleton height={40} width="50%" />
-        <Skeleton height={200} />
-      </Screen>
-    );
-  }
-  if (overview.isError) {
+  if (overview.isPending) return <LoadingScreen />;
+  const toCases = () => {
+    router.replace('/profesional');
+  };
+  if (overview.isError && isAccessError(overview.error)) {
     return (
       <Screen>
         <EmptyState
           icon={ShieldCheck}
           title="No tenés acceso a este integrante"
-          description="Puede que la familia haya revocado el permiso o que el acompañamiento haya terminado."
+          description="La familia quitó el permiso o el acompañamiento terminó."
+          action={<Button label="Ver mis casos" onPress={toCases} />}
         />
       </Screen>
+    );
+  }
+  if (overview.isError) {
+    return (
+      <ErrorScreen
+        error={overview.error}
+        onRetry={() => void overview.refetch()}
+        secondaryAction={{ label: 'Ver mis casos', onPress: toCases }}
+      />
     );
   }
 

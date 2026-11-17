@@ -4,18 +4,18 @@ import { CalendarDays, Sparkles } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { friendlyError } from '@/copy/errors';
 import { canManage, useActiveFamily, useMembers } from '@/features/families/queries';
 import { PlanItemCard } from '@/features/plans/PlanItemCard';
 import { localDate, useGeneratePlan, useWeekPlans } from '@/features/plans/queries';
 import {
-  Banner,
   Button,
   Card,
   ChipGroup,
   EmptyState,
+  ErrorBanner,
   ErrorState,
   GrowthLine,
+  LoadingScreen,
   Screen,
   Skeleton,
   Text,
@@ -40,7 +40,7 @@ export default function PlanScreen() {
   const generate = useGeneratePlan();
   const [chosen, setScope] = useState<string | null>(null);
 
-  if (isPending) return <Skeleton height={300} />;
+  if (isPending) return <LoadingScreen />;
   if (!family) return <Redirect href="/bienvenida" />;
 
   // Sin elección, se abre el plan que ya existe esta semana (primero el de la familia): si no,
@@ -69,13 +69,19 @@ export default function PlanScreen() {
       {plans.isPending ? (
         <Skeleton height={240} />
       ) : plans.isError ? (
-        <ErrorState onRetry={() => void plans.refetch()} />
+        <Card>
+          <ErrorState
+            error={plans.error}
+            title="No pudimos traer tu plan"
+            onRetry={() => void plans.refetch()}
+          />
+        </Card>
       ) : !plan ? (
         <Card>
           <EmptyState
             icon={CalendarDays}
             title="Todavía no hay plan para esta semana"
-            description="Armamos de 5 a 7 ideas con su tiempo, su espacio y su presupuesto, empezando por lo que recomendó la evaluación. Siempre hay una de 10 minutos sin materiales."
+            description="De 5 a 7 ideas cortas, y siempre una de 10 minutos sin materiales."
             action={
               manage ? (
                 <Button
@@ -91,6 +97,7 @@ export default function PlanScreen() {
               )
             }
           />
+          <ErrorBanner error={generate.error} />
           {manage ? (
             <Link href="/familia/preferencias" asChild>
               <Button label="Revisar las preferencias" variant="ghost" />
@@ -121,9 +128,9 @@ export default function PlanScreen() {
               }}
             />
           ) : null}
+          <ErrorBanner error={generate.error} />
         </>
       )}
-      {generate.error ? <Banner tone="danger">{friendlyError(generate.error)}</Banner> : null}
     </Screen>
   );
 }

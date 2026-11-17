@@ -1,9 +1,8 @@
 import { answersFromRows, visibleQuestions } from '@crecer/domain';
-import { Link, useLocalSearchParams } from 'expo-router';
+import { Link, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 
-import { friendlyError } from '@/copy/errors';
 import {
   useAnswers,
   useAttempt,
@@ -16,7 +15,7 @@ import { BroteSays } from '@/features/brote/Brote';
 import { CheckQuestion } from '@/features/chequeo/CheckQuestion';
 import { CheckResult } from '@/features/chequeo/CheckResult';
 import { QUICK_CHECK, useQuestionnaireBySlug, useQuickAnswers } from '@/features/chequeo/queries';
-import { Banner, Button, ErrorState, GrowthLine, Screen, Skeleton, Text } from '@/ui';
+import { Button, ErrorBanner, ErrorScreen, GrowthLine, Screen, Skeleton, Text } from '@/ui';
 
 /**
  * Chequeo corto (rediseño de 2026): una pregunta por pantalla con Brote, y al final un festejo con
@@ -39,6 +38,28 @@ export default function CheckScreen() {
   const isTheme = slug !== QUICK_CHECK;
   const quick = useQuickAnswers(memberId, isTheme);
   const carriedFor = useRef<string | null>(null);
+  // Si falla guardar una respuesta, no se avanza: se vuelve a esa pregunta hasta que se guarde.
+  const saveFailed = useRef(false);
+  type AnswerChange = Parameters<typeof save.mutate>[0];
+  const saveAnswer = (change: AnswerChange, atStep?: number) => {
+    saveFailed.current = false;
+    save.mutate(change, {
+      onError: () => {
+        saveFailed.current = true;
+        if (atStep !== undefined) setStep(atStep);
+      },
+    });
+  };
+  const startAttempt = (versionId: string) => {
+    start.mutate(
+      { memberId, versionId },
+      {
+        onSuccess: (id) => {
+          setAttemptId(id);
+        },
+      },
+    );
+  };
 
   // Empieza (o retoma) el intento apenas se conoce la versión.
   useEffect(() => {
@@ -80,8 +101,22 @@ export default function CheckScreen() {
     }
   }, [attemptId, version.data, answers.data, quick.data, save]);
 
-  if (questionnaire.isError || attempt.isError || version.isError || answers.isError) {
-    return <ErrorState onRetry={() => void questionnaire.refetch()} />;
+  const loadError = questionnaire.error ?? attempt.error ?? version.error ?? answers.error;
+  if (loadError) {
+    return (
+      <ErrorScreen
+        error={loadError}
+        onRetry={() => {
+          void questionnaire.refetch();
+          if (attemptId) {
+            void attempt.refetch();
+            void answers.refetch();
+          }
+          if (questionnaire.data?.id) void version.refetch();
+        }}
+        secondaryAction={{ label: 'Ir a Hoy', onPress: () => router.replace('/hoy') }}
+      />
+    );
   }
   // Sin cuestionario (un tema que no existe) o sin poder empezar: se explica y se vuelve a Hoy, en
   // lugar de quedar cargando para siempre.
@@ -94,7 +129,13 @@ export default function CheckScreen() {
             ? 'No encontré ese chequeo. Probá desde Hoy.'
             : 'No pude abrir el chequeo. Probá de nuevo en un rato.'}
         </BroteSays>
-        {start.isError ? <Banner tone="danger">{friendlyError(start.error)}</Banner> : null}
+        <ErrorBanner
+          error={start.error}
+          retryLoading={start.isPending}
+          onRetry={() => {
+            if (questionnaire.data?.id) startAttempt(questionnaire.data.id);
+          }}
+        />
         <Link href="/hoy" asChild>
           <Button label="Volver a Hoy" fullWidth />
         </Link>
@@ -134,6 +175,15 @@ export default function CheckScreen() {
   );
   const current = visible[step];
   const isDone = step >= visible.length;
+  const saveError = save.isError ? (
+    <ErrorBanner
+      error={save.error}
+      retryLoading={save.isPending}
+      onRetry={() => {
+        if (save.variables) saveAnswer(save.variables);
+      }}
+    />
+  ) : null;
 
   return (
     <Screen>
@@ -152,12 +202,13 @@ export default function CheckScreen() {
             question={current.question}
             rows={answers.data.filter((r) => r.question_id === current.question.id)}
             onAnswer={(change) => {
-              save.mutate(change);
+              saveAnswer(change, step);
             }}
             onNext={() => {
-              setStep((s) => s + 1);
+              setStep((s) => (saveFailed.current ? s : s + 1));
             }}
           />
+          {saveError}
           {step > 0 ? (
             <Button
               label="Volver a la anterior"
@@ -166,17 +217,22 @@ export default function CheckScreen() {
                 setStep((s) => Math.max(0, s - 1));
               }}
             />
-          ) : null}
+          ) : (
+            <Link href="/hoy" replace asChild>
+              <Button label="Ahora no, ir a Hoy" variant="ghost" />
+            </Link>
+          )}
         </View>
       ) : (
         <View style={{ gap: 20 }}>
           <BroteSays mood="feliz">¡Eso es todo! ¿Vemos qué encontramos?</BroteSays>
-          {submit.error ? <Banner tone="danger">{friendlyError(submit.error)}</Banner> : null}
+          {saveError}
+          <ErrorBanner error={submit.error} />
           <Button
             label="Ver mi resultado"
             fullWidth
             loading={submit.isPending}
-            disabled={save.isPending}
+            disabled={save.isPending || save.isError}
             onPress={() => {
               submit.mutate(undefined, {
                 onSuccess: () => void attempt.refetch(),

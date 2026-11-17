@@ -7,7 +7,6 @@ import { Clock, MessageCircle, Send } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import { ScrollView, View, type ScrollViewInstance } from 'react-native';
 
-import { friendlyError } from '@/copy/errors';
 import {
   AssistantBubble,
   RiskCard,
@@ -22,13 +21,13 @@ import {
   type StoredMessage,
 } from '@/features/assistant/queries';
 import {
-  Banner,
   Button,
   ConfirmAction,
   EmptyState,
-  ErrorState,
+  ErrorBanner,
+  ErrorScreen,
+  LoadingScreen,
   Screen,
-  Skeleton,
   Text,
   TextField,
   useTheme,
@@ -85,10 +84,19 @@ export default function ConversationScreen() {
   const scroll = useRef<ScrollViewInstance>(null);
   const [question, setQuestion] = useState('');
   const [pending, setPending] = useState<{ question: string; answer: string } | null>(null);
-  const [error, setError] = useState<unknown>(null);
+  // El error del envío guarda la pregunta que falló: "Reintentar" la manda igual.
+  const [failed, setFailed] = useState<{ error: unknown; text: string } | null>(null);
 
-  if (conversation.isPending) return <Skeleton height={300} />;
-  if (conversation.isError) return <ErrorState onRetry={() => void conversation.refetch()} />;
+  if (conversation.isPending) return <LoadingScreen />;
+  if (conversation.isError) {
+    return (
+      <ErrorScreen
+        error={conversation.error}
+        onRetry={() => void conversation.refetch()}
+        secondaryAction={{ label: 'Ir al asistente', onPress: () => router.replace('/asistente') }}
+      />
+    );
+  }
   if (!conversation.data) {
     return (
       <Screen>
@@ -102,11 +110,11 @@ export default function ConversationScreen() {
   }
 
   const c = conversation.data;
-  const send = () => {
-    const text = question.trim();
+  const send = (retryText?: string) => {
+    const text = (retryText ?? question).trim();
     if (!text || pending) return;
     setQuestion('');
-    setError(null);
+    setFailed(null);
     setPending({ question: text, answer: '' });
     void sendQuestion(conversationId, text, (event) => {
       if (event.type === 'delta') {
@@ -115,7 +123,7 @@ export default function ConversationScreen() {
       }
     })
       .catch((e: unknown) => {
-        setError(e);
+        setFailed({ error: e, text });
         setQuestion(text);
       })
       .finally(() => {
@@ -145,7 +153,7 @@ export default function ConversationScreen() {
           <Clock size={14} color={colors.inkMuted} aria-hidden />
           <Text variant="small" tone="muted" style={{ flexShrink: 1 }}>
             {retentionLabel(c.expires_at)}
-            {c.use_personal_context ? ' Usa el contexto de la familia.' : ''}
+            {c.use_personal_context ? ' Conoce a tu familia.' : ''}
           </Text>
           <ConfirmAction
             label="Borrar conversación"
@@ -187,7 +195,14 @@ export default function ConversationScreen() {
         ) : null}
       </ScrollView>
 
-      {error ? <Banner tone="danger">{friendlyError(error)}</Banner> : null}
+      <ErrorBanner error={remove.error} />
+      <ErrorBanner
+        error={failed?.error}
+        retryLoading={pending !== null}
+        onRetry={() => {
+          if (failed) send(failed.text);
+        }}
+      />
       <TextField
         label="Tu pregunta"
         value={question}
@@ -195,7 +210,9 @@ export default function ConversationScreen() {
         multiline
         maxLength={ASSISTANT_QUESTION_MAX}
         editable={!pending}
-        onSubmitEditing={send}
+        onSubmitEditing={() => {
+          send();
+        }}
       />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
         <Button
@@ -203,7 +220,9 @@ export default function ConversationScreen() {
           icon={Send}
           loading={pending !== null}
           disabled={question.trim() === ''}
-          onPress={send}
+          onPress={() => {
+            send();
+          }}
         />
         <Text variant="small" tone="muted" style={{ flexShrink: 1, flexBasis: 160, flexGrow: 1 }}>
           Orienta, no diagnostica. Si hay riesgo inmediato, llamá al 911.
