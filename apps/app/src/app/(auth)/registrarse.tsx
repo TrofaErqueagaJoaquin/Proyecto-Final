@@ -4,13 +4,18 @@ import { Redirect, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { friendlyError } from '@/copy/errors';
 import { useAuth } from '@/features/auth/AuthProvider';
-import { AuthScreen, OAuthButtons, TextLink } from '@/features/auth/components';
+import {
+  ActionLink,
+  AuthScreen,
+  OAuthButtons,
+  TextLink,
+  useCooldown,
+} from '@/features/auth/components';
 import { emailRedirectUrl } from '@/features/auth/redirect';
 import { BroteSays } from '@/features/brote/Brote';
 import { supabase } from '@/lib/supabase';
-import { Banner, Button, FormTextField, Text } from '@/ui';
+import { Banner, Button, ErrorBanner, FormTextField, Text } from '@/ui';
 
 /**
  * Registro mínimo (rediseño de 2026): redes sociales primero y, si no, correo y contraseña. Nada
@@ -19,8 +24,11 @@ import { Banner, Button, FormTextField, Text } from '@/ui';
 export default function SignUpScreen() {
   const auth = useAuth();
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const [sentTo, setSentTo] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
+  const cooldown = useCooldown(60);
   const { control, handleSubmit, formState } = useForm<SignUpInput>({
     resolver: zodResolver(SignUpSchema),
     // Valida cada campo al salir de él y después mientras se corrige.
@@ -38,7 +46,7 @@ export default function SignUpScreen() {
       options: { emailRedirectTo: emailRedirectUrl('/callback?tipo=confirmacion') },
     });
     if (signUpError) {
-      setError(friendlyError(signUpError));
+      setError(signUpError);
       return;
     }
     // Si el proyecto no pide confirmar el correo, la sesión ya está abierta: directo a la bienvenida.
@@ -47,18 +55,63 @@ export default function SignUpScreen() {
       return;
     }
     // Mismo mensaje exista o no la cuenta: no se revela qué correos están registrados.
+    setResent(false);
+    cooldown.start();
     setSentTo(email);
   });
 
+  async function resend(email: string) {
+    setError(null);
+    setResent(false);
+    setResending(true);
+    try {
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: { emailRedirectTo: emailRedirectUrl('/callback?tipo=confirmacion') },
+      });
+      if (resendError) throw resendError;
+      setResent(true);
+      cooldown.start();
+    } catch (cause) {
+      setError(cause);
+    } finally {
+      setResending(false);
+    }
+  }
+
   if (sentTo) {
+    const waiting = cooldown.left > 0;
     return (
       <AuthScreen title="¡Ya casi!">
         <BroteSays mood="feliz">{`Te mandé un enlace a ${sentTo}. Tocalo y seguimos.`}</BroteSays>
-        <Text tone="muted">
-          Si no lo ves en un minuto, mirá en spam o en promociones. Con Google entrás sin esperar.
-        </Text>
+        <Text tone="muted">Si no lo ves en un minuto, mirá en spam o en promociones.</Text>
+        {resent ? <Banner tone="success">Te lo mandé de nuevo.</Banner> : null}
+        <ErrorBanner error={error} />
+        <Button
+          label={
+            waiting ? `Reenviar el correo en ${String(cooldown.left)} s` : 'Reenviar el correo'
+          }
+          variant="secondary"
+          fullWidth
+          loading={resending}
+          disabled={waiting}
+          onPress={() => void resend(sentTo)}
+        />
+        <ActionLink
+          onPress={() => {
+            // Vuelve al formulario con el correo cargado para corregirlo.
+            setError(null);
+            setResent(false);
+            setSentTo(null);
+          }}
+        >
+          Me equivoqué de correo
+        </ActionLink>
         <OAuthButtons />
-        <TextLink href="/ingresar">Volver a ingresar</TextLink>
+        <TextLink standalone href="/ingresar">
+          Ya lo confirmé: ingresar
+        </TextLink>
       </AuthScreen>
     );
   }
@@ -69,9 +122,9 @@ export default function SignUpScreen() {
       subtitle="Gratis, sin publicidad y en menos de un minuto."
       greeting="¡Hola! Soy Brote. Te acompaño a armar rutinas más lindas en casa."
       footer={
-        <Text>
-          ¿Ya tenés cuenta? <TextLink href="/ingresar">Ingresar</TextLink>
-        </Text>
+        <TextLink standalone href="/ingresar">
+          ¿Ya tenés cuenta? Ingresar
+        </TextLink>
       }
     >
       <OAuthButtons leading />
@@ -95,7 +148,7 @@ export default function SignUpScreen() {
         secureTextEntry
         onSubmitEditing={() => void onSubmit()}
       />
-      {error ? <Banner tone="danger">{error}</Banner> : null}
+      <ErrorBanner error={error} />
       <Button
         label="Crear cuenta"
         variant="secondary"

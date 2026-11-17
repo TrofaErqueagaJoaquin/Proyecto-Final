@@ -6,8 +6,9 @@ import { Text } from '@/ui';
 
 import { AppShell, type NavItem } from './AppShell';
 
+let mockPathname = '/familia/integrante/1';
 jest.mock('expo-router', () => ({
-  usePathname: () => '/familia/integrante/1',
+  usePathname: () => mockPathname,
   Link: ({ children }: { children: React.ReactNode }) => children,
 }));
 
@@ -38,6 +39,30 @@ describe('AppShell', () => {
     expect(screen.getByRole('tab', { name: 'Familia' })).toBeSelected();
     expect(screen.getByRole('tab', { name: 'Hoy' })).not.toBeSelected();
     expect(screen.getByText('contenido')).toBeOnTheScreen();
+  });
+
+  it('una pantalla interna tiene la flecha "Volver"', async () => {
+    mockWidth(390);
+    mockPathname = '/familia/integrante/1';
+    await renderWithProviders(
+      <AppShell items={ITEMS}>
+        <Text>contenido</Text>
+      </AppShell>,
+    );
+    expect(screen.getByRole('button', { name: 'Volver' })).toBeOnTheScreen();
+  });
+
+  it('la raíz del espacio no tiene "Volver"', async () => {
+    mockWidth(390);
+    mockPathname = '/hoy';
+    await renderWithProviders(
+      <AppShell items={ITEMS}>
+        <Text>contenido</Text>
+      </AppShell>,
+    );
+    expect(screen.queryByRole('button', { name: 'Volver' })).toBeNull();
+    expect(screen.getByRole('tab', { name: 'Hoy' })).toBeSelected();
+    mockPathname = '/familia/integrante/1';
   });
 
   it('en escritorio muestra la barra lateral con enlaces', async () => {

@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { Banner, Button, Card, ConfirmAction, digitsMask, Text, TextField } from '@/ui';
 
 import { authKeys } from './queries';
+import { SpaceExits } from './signOut';
 
 // Verificación en dos pasos (TOTP) con Supabase Auth. Es obligatoria para usar la
 // administración: las políticas exigen aal2 (SECURITY_AND_PRIVACY.md §2).
@@ -44,7 +45,7 @@ function useAfterMfaChange() {
   };
 }
 
-/** Pide el código de la app autenticadora para elevar la sesión a aal2. */
+/** Pide el código de la app autenticadora para elevar la sesión a aal2. Debajo, las salidas. */
 export function MfaChallenge({ factorId }: { factorId: string }) {
   const after = useAfterMfaChange();
   const [code, setCode] = useState('');
@@ -56,30 +57,33 @@ export function MfaChallenge({ factorId }: { factorId: string }) {
     onSuccess: after,
   });
   return (
-    <Card>
-      <Text variant="subheading">Verificación en dos pasos</Text>
-      <Text tone="muted">Escribí el código de 6 dígitos de tu app autenticadora.</Text>
-      <TextField
-        label="Código"
-        value={code}
-        onChangeText={setCode}
-        hint="Son 6 números; se renuevan cada 30 segundos."
-        inputMode="numeric"
-        mask={digitsMask(6)}
-        maxLength={6}
-        autoComplete="one-time-code"
-      />
-      {verify.error ? <Banner tone="danger">{friendlyError(verify.error)}</Banner> : null}
-      <Button
-        label="Verificar"
-        icon={ShieldCheck}
-        disabled={code.trim().length !== 6}
-        loading={verify.isPending}
-        onPress={() => {
-          verify.mutate();
-        }}
-      />
-    </Card>
+    <>
+      <Card>
+        <Text variant="subheading">Verificación en dos pasos</Text>
+        <Text tone="muted">Escribí el código de 6 dígitos de tu app autenticadora.</Text>
+        <TextField
+          label="Código"
+          value={code}
+          onChangeText={setCode}
+          hint="Son 6 números; se renuevan cada 30 segundos."
+          inputMode="numeric"
+          mask={digitsMask(6)}
+          maxLength={6}
+          autoComplete="one-time-code"
+        />
+        {verify.error ? <Banner tone="danger">{friendlyError(verify.error)}</Banner> : null}
+        <Button
+          label="Verificar"
+          icon={ShieldCheck}
+          disabled={code.trim().length !== 6}
+          loading={verify.isPending}
+          onPress={() => {
+            verify.mutate();
+          }}
+        />
+      </Card>
+      <SpaceExits />
+    </>
   );
 }
 

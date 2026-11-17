@@ -1,13 +1,14 @@
 import { Link, Redirect, Slot, usePathname } from 'expo-router';
-import { ShieldAlert } from 'lucide-react-native';
+import { CircleUserRound, ShieldAlert } from 'lucide-react-native';
 
 import { adminNav } from '@/features/admin/nav';
 import { useIsDemo, usePermissions } from '@/features/admin/queries';
 import { useMe } from '@/features/auth/queries';
 import { MfaChallenge, useMfaStatus } from '@/features/auth/mfa';
 import { RequireSession } from '@/features/auth/RequireSession';
+import { SpaceExits } from '@/features/auth/signOut';
 import { AppShell } from '@/features/shell/AppShell';
-import { Button, EmptyState, ErrorState, Screen, Skeleton } from '@/ui';
+import { Button, EmptyState, ErrorState, LoadingScreen, Screen } from '@/ui';
 
 const CONTENT_PERMISSIONS = ['content.edit', 'content.review', 'content.publish'];
 
@@ -34,27 +35,22 @@ function AdminShell() {
   const demo = useIsDemo(canEditContent && mfa.data?.level !== 'aal2' && !mfa.data?.factorId);
 
   if (me.isPending || mfa.isPending || (demo.fetchStatus === 'fetching' && demo.isPending)) {
+    return <LoadingScreen lines={2} />;
+  }
+  if (me.isError || mfa.isError) {
+    const failed = me.isError ? me : mfa;
     return (
       <Screen>
-        <Skeleton height={32} width="50%" />
-        <Skeleton height={160} />
+        <ErrorState error={failed.error} onRetry={() => void failed.refetch()} />
+        <SpaceExits />
       </Screen>
     );
   }
-  if (me.isError) return <ErrorState onRetry={() => void me.refetch()} />;
-  if (mfa.isError) return <ErrorState onRetry={() => void mfa.refetch()} />;
   if (permissions.size === 0) {
     return (
       <Screen>
-        <EmptyState
-          icon={ShieldAlert}
-          title="No tenés acceso a esta sección"
-          action={
-            <Link href="/hoy" asChild>
-              <Button label="Volver a mi espacio" />
-            </Link>
-          }
-        />
+        <EmptyState icon={ShieldAlert} title="No tenés acceso a esta sección" />
+        <SpaceExits />
       </Screen>
     );
   }
@@ -69,16 +65,19 @@ function AdminShell() {
         {mfa.data.factorId ? (
           <MfaChallenge factorId={mfa.data.factorId} />
         ) : (
-          <EmptyState
-            icon={ShieldAlert}
-            title="Activá la verificación en dos pasos"
-            description="La administración solo se usa con un código de tu teléfono además de la contraseña. Activala en Perfil y volvé."
-            action={
-              <Link href="/perfil" asChild>
-                <Button label="Ir a Perfil" />
-              </Link>
-            }
-          />
+          <>
+            <EmptyState
+              icon={ShieldAlert}
+              title="Activá la verificación en dos pasos"
+              description="La administración pide un código de tu teléfono además de la contraseña. Activala en Mi cuenta, en Opciones avanzadas."
+              action={
+                <Link href="/perfil" asChild>
+                  <Button label="Ir a Mi cuenta" icon={CircleUserRound} />
+                </Link>
+              }
+            />
+            <SpaceExits account={false} />
+          </>
         )}
       </Screen>
     );

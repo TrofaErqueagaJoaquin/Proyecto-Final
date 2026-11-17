@@ -2,16 +2,16 @@ import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { friendlyError } from '@/copy/errors';
 import { useAuth } from '@/features/auth/AuthProvider';
-import { AuthScreen, TextLink } from '@/features/auth/components';
+import { ActionLink, AuthScreen, TextLink } from '@/features/auth/components';
 import { useAcceptTerms, useMe, useTermsConsent } from '@/features/auth/queries';
 import { safeNextPath } from '@/features/auth/redirect';
+import { signOutWasRequested, useSignOut } from '@/features/auth/signOut';
 import { AGE_OPTIONS, birthMonthFromAge } from '@/features/families/age';
 import { useQuickStart } from '@/features/families/queries';
 import { feedback } from '@/features/feedback/feedback';
 import { aliasError as validateAlias } from '@/features/forms/validators';
-import { Banner, Button, Checkbox, ChipGroup, Skeleton, Text, TextField } from '@/ui';
+import { Button, Checkbox, ChipGroup, ErrorBanner, Skeleton, Text, TextField } from '@/ui';
 
 const RELATIONSHIPS = [
   { value: 'madre', label: 'Mamá' },
@@ -28,6 +28,33 @@ function Terms() {
       <TextLink href="/legal/privacidad">política de privacidad</TextLink>, y que se guarden estos
       datos para darme ideas.
     </Text>
+  );
+}
+
+/**
+ * Salida para quien entró con otra cuenta o no quiere seguir ahora: cierra la sesión y la pantalla
+ * lleva a la portada.
+ */
+function NotMe({ onLeave, onStay }: { onLeave: () => void; onStay: () => void }) {
+  const signOut = useSignOut();
+  return (
+    <>
+      <ErrorBanner error={signOut.error} />
+      <ActionLink
+        disabled={signOut.isPending}
+        onPress={() => {
+          onLeave();
+          // Si falló pero la sesión local ya se borró (sin internet), la salida igual ocurrió.
+          signOut.mutate('local', {
+            onError: () => {
+              if (!signOutWasRequested()) onStay();
+            },
+          });
+        }}
+      >
+        {signOut.isPending ? 'Cerrando sesión…' : 'No soy yo · Cerrar sesión'}
+      </ActionLink>
+    </>
   );
 }
 
@@ -50,8 +77,16 @@ export default function WelcomeScreen() {
   const [checked, setChecked] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [aliasTouched, setAliasTouched] = useState(false);
+  // Si la persona tocó "No soy yo", al cerrarse la sesión va a la portada y no a "Ingresar".
+  const [leaving, setLeaving] = useState(false);
+  const leave = () => {
+    setLeaving(true);
+  };
+  const stay = () => {
+    setLeaving(false);
+  };
 
-  if (auth.status === 'signedOut') return <Redirect href="/ingresar" />;
+  if (auth.status === 'signedOut') return <Redirect href={leaving ? '/' : '/ingresar'} />;
   if (auth.status === 'loading' || terms.isPending || me.isPending) {
     return <Skeleton height={320} />;
   }
@@ -71,6 +106,7 @@ export default function WelcomeScreen() {
       <AuthScreen
         title={terms.data?.hasAny ? 'Actualizamos los términos' : '¡Qué bueno que llegaste!'}
         greeting="Antes de seguir, un solo paso."
+        footer={<NotMe onLeave={leave} onStay={stay} />}
       >
         <Checkbox
           checked={checked}
@@ -86,7 +122,7 @@ export default function WelcomeScreen() {
             <TextLink href="/legal/privacidad">política de privacidad</TextLink>.
           </Text>
         </Checkbox>
-        {accept.error ? <Banner tone="danger">{friendlyError(accept.error)}</Banner> : null}
+        <ErrorBanner error={accept.error} />
         <Button
           label="Continuar"
           fullWidth
@@ -113,7 +149,11 @@ export default function WelcomeScreen() {
   const termsError = showErrors && !checked ? 'Necesitamos tu aceptación.' : undefined;
 
   return (
-    <AuthScreen title="Empecemos" greeting="¡Hola! Soy Brote. Contame de tu peque y arrancamos.">
+    <AuthScreen
+      title="Empecemos"
+      greeting="¡Hola! Soy Brote. Contame de tu peque y arrancamos."
+      footer={<NotMe onLeave={leave} onStay={stay} />}
+    >
       <TextField
         label="¿Cómo le decís?"
         hint="Un apodo alcanza: no hace falta el nombre real."
@@ -152,7 +192,7 @@ export default function WelcomeScreen() {
       >
         <Terms />
       </Checkbox>
-      {start.error ? <Banner tone="danger">{friendlyError(start.error)}</Banner> : null}
+      <ErrorBanner error={start.error} />
       <View style={{ gap: 8 }}>
         <Button
           label="¡Empezar!"
@@ -182,9 +222,9 @@ export default function WelcomeScreen() {
         <Text variant="small" tone="muted" center>
           Después te hago 6 preguntas rápidas para darte una idea para hoy.
         </Text>
-        <Text variant="small" tone="muted" center>
-          ¿Sos profesional? <TextLink href="/profesional/perfil">Creá tu perfil</TextLink>
-        </Text>
+        <TextLink standalone href="/profesional/perfil">
+          ¿Sos profesional? Creá tu perfil
+        </TextLink>
       </View>
     </AuthScreen>
   );

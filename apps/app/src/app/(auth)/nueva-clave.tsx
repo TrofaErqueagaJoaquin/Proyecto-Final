@@ -1,20 +1,27 @@
 import { NewPasswordSchema, type NewPasswordInput } from '@crecer/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { friendlyError } from '@/copy/errors';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { AuthScreen } from '@/features/auth/components';
+import { BroteSays } from '@/features/brote/Brote';
+import { feedback } from '@/features/feedback/feedback';
 import { supabase } from '@/lib/supabase';
-import { Banner, Button, FormTextField, Skeleton } from '@/ui';
+import { Button, ErrorBanner, FormTextField, Skeleton } from '@/ui';
 
-/** Llega acá desde el enlace de recuperación (con sesión temporal) o desde el perfil. */
+/**
+ * Llega acá desde el enlace de recuperación (con sesión temporal) o desde Perfil (`?desde=perfil`).
+ * Desde Perfil, "Cancelar" y el "Listo" vuelven ahí; desde el enlace se sigue a Hoy.
+ */
 export default function NewPasswordScreen() {
   const auth = useAuth();
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
+  // Explícito en el enlace de Mi cuenta: el historial no sirve si el correo abre la app ya abierta.
+  const fromProfile = useLocalSearchParams<{ desde?: string }>().desde === 'perfil';
+  const [error, setError] = useState<unknown>(null);
+  const [saved, setSaved] = useState(false);
   const { control, handleSubmit, formState } = useForm<NewPasswordInput>({
     resolver: zodResolver(NewPasswordSchema),
     // Valida cada campo al salir de él y después mientras se corrige.
@@ -25,14 +32,30 @@ export default function NewPasswordScreen() {
   if (auth.status === 'loading') return <Skeleton height={200} />;
   if (auth.status === 'signedOut') return <Redirect href="/recuperar" />;
 
+  const leave = () => {
+    if (!fromProfile) router.replace('/hoy');
+    else if (router.canGoBack()) router.back();
+    else router.replace('/perfil');
+  };
+
+  if (saved) {
+    return (
+      <AuthScreen title="¡Contraseña cambiada!">
+        <BroteSays mood="feliz">Listo: la próxima vez entrás con la nueva.</BroteSays>
+        <Button label={fromProfile ? 'Volver a Perfil' : 'Seguir'} fullWidth onPress={leave} />
+      </AuthScreen>
+    );
+  }
+
   const onSubmit = handleSubmit(async ({ password }) => {
     setError(null);
     const { error: updateError } = await supabase.auth.updateUser({ password });
     if (updateError) {
-      setError(friendlyError(updateError));
+      setError(updateError);
       return;
     }
-    router.replace('/hoy');
+    feedback('done');
+    setSaved(true);
   });
 
   return (
@@ -52,12 +75,21 @@ export default function NewPasswordScreen() {
         label="Repetí la contraseña"
         autoComplete="new-password"
         secureTextEntry
+        onSubmitEditing={() => void onSubmit()}
       />
-      {error ? <Banner tone="danger">{error}</Banner> : null}
+      <ErrorBanner error={error} />
       <Button
         label="Guardar contraseña"
+        fullWidth
         loading={formState.isSubmitting}
         onPress={() => void onSubmit()}
+      />
+      <Button
+        label="Cancelar"
+        variant="ghost"
+        fullWidth
+        disabled={formState.isSubmitting}
+        onPress={leave}
       />
     </AuthScreen>
   );

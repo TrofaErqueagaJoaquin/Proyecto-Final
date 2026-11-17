@@ -1,61 +1,57 @@
 import { Link, Slot, usePathname } from 'expo-router';
-import { View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useWindowDimensions, View } from 'react-native';
 
 import { useAuth } from '@/features/auth/AuthProvider';
-import { BackButton } from '@/features/shell/BackButton';
 import { publicFallback } from '@/features/shell/backTargets';
-import { Button, Logo, makeStyles } from '@/ui';
+import { ScreenHeader } from '@/features/shell/ScreenHeader';
+import { BrandMark, Button, Logo, makeStyles } from '@/ui';
 
 const useStyles = makeStyles((t) => ({
-  safe: { flex: 1, backgroundColor: t.colors.bg },
-  bar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    gap: t.space.md,
-    paddingHorizontal: t.space.lg,
-    paddingVertical: t.space.md,
-    borderBottomWidth: 1,
-    borderBottomColor: t.colors.border,
-    backgroundColor: t.colors.surface,
-  },
-  start: { flexDirection: 'row', alignItems: 'center', gap: t.space.xs, flexShrink: 1 },
+  root: { flex: 1, backgroundColor: t.colors.bg },
   content: { flex: 1 },
 }));
+
+/** Por debajo de este ancho, con flecha y botón, el logo se muestra sin el nombre. */
+const COMPACT_WIDTH = 440;
 
 export default function PublicLayout() {
   const styles = useStyles();
   const auth = useAuth();
   const pathname = usePathname();
+  const { width } = useWindowDimensions();
   const signedIn = auth.status === 'signedIn';
+  const home = pathname === '/';
+  // En el teléfono, flecha + logo completo + botón no entran en un renglón.
+  const compact = !home && width < COMPACT_WIDTH;
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.bar}>
-        <View style={styles.start}>
-          {pathname === '/' ? null : <BackButton fallback={publicFallback(pathname)} />}
-          {/* Con sesión, el logo lleva al espacio de la familia, no a la portada de bienvenida. */}
+    <View style={styles.root}>
+      <ScreenHeader
+        bar
+        back={home ? null : publicFallback(pathname)}
+        start={
+          // Con sesión, el logo lleva al espacio de la familia, no a la portada de bienvenida.
           <Link
             href={signedIn ? '/hoy' : '/'}
             accessibilityLabel={signedIn ? 'Ir a mi espacio' : 'Ir al inicio'}
           >
-            <Logo />
+            {compact ? <BrandMark size={36} /> : <Logo />}
           </Link>
-        </View>
-        {signedIn ? (
-          <Link href={'/hoy'} asChild>
-            <Button label="Mi espacio" />
-          </Link>
-        ) : (
-          <Link href={'/ingresar'} asChild>
-            <Button label="Ingresar" variant="secondary" />
-          </Link>
-        )}
-      </View>
+        }
+        end={
+          signedIn ? (
+            <Link href={'/hoy'} asChild>
+              <Button label="Mi espacio" />
+            </Link>
+          ) : (
+            <Link href={'/ingresar'} asChild>
+              <Button label="Ingresar" variant="secondary" />
+            </Link>
+          )
+        }
+      />
       <View style={styles.content}>
         <Slot />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

@@ -1,13 +1,21 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'expo-router';
-import { BriefcaseMedical, LogOut, Monitor, Moon, Sun, type LucideIcon } from 'lucide-react-native';
+import { Link, type Href } from 'expo-router';
+import {
+  BriefcaseMedical,
+  House,
+  Monitor,
+  Moon,
+  ShieldCheck,
+  Sun,
+  type LucideIcon,
+} from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
-import { friendlyError } from '@/copy/errors';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { authKeys, useMe } from '@/features/auth/queries';
 import { MfaSettingsCard } from '@/features/auth/mfa';
+import { SignOutButton } from '@/features/auth/signOut';
 import { feedback, setFeedbackSettings, useFeedbackSettings } from '@/features/feedback/feedback';
 import { useMyProfessionalProfile } from '@/features/professionals/queries';
 import { supabase } from '@/lib/supabase';
@@ -16,6 +24,8 @@ import {
   Button,
   Card,
   Checkbox,
+  Disclosure,
+  ErrorBanner,
   ErrorState,
   makeStyles,
   Screen,
@@ -48,6 +58,7 @@ const useStyles = makeStyles((t) => ({
   },
   optionActive: { borderColor: t.colors.primary, backgroundColor: t.colors.primarySoft },
   actions: { gap: t.space.sm },
+  spaces: { flexDirection: 'row', flexWrap: 'wrap', gap: t.space.sm },
 }));
 
 function useSaveProfile() {
@@ -66,24 +77,53 @@ function useSaveProfile() {
   });
 }
 
-/** Selector de espacio: solo navegación, no otorga permisos (ROLES_AND_PERMISSIONS.md §1). */
-function ProfessionalSpaceCard() {
+interface Space {
+  href: Href;
+  label: string;
+  icon: LucideIcon;
+}
+
+/**
+ * Cambio de espacio: solo navegación, no otorga permisos (ROLES_AND_PERMISSIONS.md §1).
+ * Aparece si hay algún espacio además de Familia (si no, no hay adónde cambiar).
+ */
+function SpaceSwitcher({ hasFamily, isStaff }: { hasFamily: boolean; isStaff: boolean }) {
+  const styles = useStyles();
+  const professional = useMyProfessionalProfile();
+  const spaces: Space[] = [];
+  if (hasFamily) spaces.push({ href: '/hoy', label: 'Familia', icon: House });
+  if (professional.data) {
+    spaces.push({ href: '/profesional', label: 'Profesional', icon: BriefcaseMedical });
+  }
+  if (isStaff) spaces.push({ href: '/admin', label: 'Administración', icon: ShieldCheck });
+  if (!spaces.some((space) => space.label !== 'Familia')) return null;
+  return (
+    <View style={styles.actions} role="navigation" accessibilityLabel="Cambiar de espacio">
+      <Text variant="bodyStrong">Ir a:</Text>
+      <View style={styles.spaces}>
+        {spaces.map((space) => (
+          <Link key={space.label} href={space.href} asChild>
+            <Button label={space.label} variant="secondary" icon={space.icon} />
+          </Link>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+/** Crear el perfil profesional (quien ya lo tiene, entra desde "Ir a"). */
+function CreateProfessionalCard() {
   const profile = useMyProfessionalProfile();
-  if (profile.isPending || profile.isError) return null;
+  if (profile.isPending || profile.isError || profile.data) return null;
   return (
     <Card>
       <Text variant="subheading">Espacio profesional</Text>
       <Text tone="muted">
-        {profile.data
-          ? 'Tus casos, las solicitudes de las familias y tu perfil en el directorio.'
-          : '¿Sos psicóloga, psicopedagogo, pediatra o terapeuta? Creá tu perfil para que las familias te encuentren.'}
+        ¿Sos psicóloga, psicopedagogo, pediatra o terapeuta? Creá tu perfil para que las familias te
+        encuentren.
       </Text>
-      <Link href={profile.data ? '/profesional' : '/profesional/perfil'} asChild>
-        <Button
-          label={profile.data ? 'Ir al espacio profesional' : 'Crear mi perfil profesional'}
-          variant="secondary"
-          icon={BriefcaseMedical}
-        />
+      <Link href="/profesional/perfil" asChild>
+        <Button label="Crear mi perfil profesional" variant="secondary" icon={BriefcaseMedical} />
       </Link>
     </Card>
   );
@@ -92,6 +132,7 @@ function ProfessionalSpaceCard() {
 /** Arranca con el nombre ya cargado: no hace falta sincronizarlo con un efecto. */
 function NameCard({ initialName, email }: { initialName: string; email: string | null }) {
   const [name, setName] = useState(initialName);
+  const [touched, setTouched] = useState(false);
   const saveProfile = useSaveProfile();
   const trimmed = name.trim();
   const nameError =
@@ -103,12 +144,16 @@ function NameCard({ initialName, email }: { initialName: string; email: string |
 
   return (
     <Card>
-      <Text variant="subheading">Tus datos</Text>
+      <Text variant="subheading">Mis datos</Text>
       <TextField
         label="Nombre"
         value={name}
         onChangeText={setName}
-        error={nameError}
+        onBlur={() => {
+          setTouched(true);
+        }}
+        // El error aparece al salir del campo, no mientras se escribe.
+        error={touched ? nameError : undefined}
         autoComplete="name"
       />
       <Text variant="small" tone="muted">
@@ -124,19 +169,55 @@ function NameCard({ initialName, email }: { initialName: string; email: string |
         }}
       />
       {saveProfile.isSuccess ? <Banner tone="success">Guardamos tus cambios.</Banner> : null}
-      {saveProfile.error ? <Banner tone="danger">{friendlyError(saveProfile.error)}</Banner> : null}
+      <ErrorBanner
+        error={saveProfile.error}
+        onRetry={() => {
+          saveProfile.mutate({ display_name: trimmed });
+        }}
+        retryLoading={saveProfile.isPending}
+      />
     </Card>
   );
 }
 
-/** Sonidos y vibraciones (rediseño de 2026): se guardan en este dispositivo. */
-function FeedbackCard() {
+/** Tema y sonidos (rediseño de 2026): sonidos y vibraciones se guardan en este dispositivo. */
+function LookAndSoundCard() {
+  const styles = useStyles();
+  const theme = useTheme();
+  const { preference, setPreference } = useThemeContext();
+  const saveProfile = useSaveProfile();
   const settings = useFeedbackSettings();
   return (
     <Card>
-      <Text variant="subheading">Sonidos y vibraciones</Text>
+      <Text variant="subheading">Cómo se ve y suena</Text>
+      <View style={styles.options} role="radiogroup" accessibilityLabel="Tema de colores">
+        {THEME_OPTIONS.map(({ value, label, icon: Icon }) => {
+          const active = preference === value;
+          return (
+            <Pressable
+              key={value}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: active }}
+              accessibilityLabel={label}
+              style={[styles.option, active && styles.optionActive]}
+              onPress={() => {
+                setPreference(value);
+                saveProfile.mutate({ theme_pref: value });
+              }}
+            >
+              <Icon
+                color={active ? theme.colors.primary : theme.colors.inkMuted}
+                size={18}
+                aria-hidden
+              />
+              <Text variant={active ? 'bodyStrong' : 'body'}>{label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
       <Text tone="muted">
-        Festejan las actividades hechas y los logros. Con el teléfono en silencio, no suenan.
+        Sonidos y vibraciones festejan las actividades hechas y los logros. Con el teléfono en
+        silencio, no suenan.
       </Text>
       <Checkbox
         checked={settings.sound}
@@ -158,19 +239,10 @@ function FeedbackCard() {
   );
 }
 
+/** Mi cuenta: cambiar de espacio y cerrar sesión arriba; lo demás, en tres grupos. */
 export default function ProfileScreen() {
   const styles = useStyles();
-  const theme = useTheme();
-  const { preference, setPreference } = useThemeContext();
   const me = useMe();
-  const saveProfile = useSaveProfile();
-
-  const signOut = useMutation({
-    mutationFn: async (scope: 'local' | 'global') => {
-      const { error } = await supabase.auth.signOut({ scope });
-      if (error) throw error;
-    },
-  });
 
   if (me.isPending)
     return (
@@ -182,22 +254,18 @@ export default function ProfileScreen() {
   if (me.isError)
     return (
       <Screen>
-        <ErrorState onRetry={() => void me.refetch()} />
-        <Button
-          label="Cerrar sesión"
-          variant="secondary"
-          icon={LogOut}
-          loading={signOut.isPending}
-          onPress={() => {
-            signOut.mutate('local');
-          }}
-        />
+        <ErrorState error={me.error} onRetry={() => void me.refetch()} />
+        <SignOutButton />
       </Screen>
     );
 
+  const isStaff = me.data.permissions.length > 0;
   return (
     <Screen>
-      <Text variant="title">Perfil</Text>
+      <Text variant="title">Mi cuenta</Text>
+
+      <SpaceSwitcher hasFamily={me.data.families.length > 0} isStaff={isStaff} />
+      <SignOutButton />
 
       <NameCard
         key={me.data.profile.displayName}
@@ -205,79 +273,27 @@ export default function ProfileScreen() {
         email={me.data.email}
       />
 
-      <Card>
-        <Text variant="subheading">Apariencia</Text>
-        <View style={styles.options} role="radiogroup" accessibilityLabel="Tema de colores">
-          {THEME_OPTIONS.map(({ value, label, icon: Icon }) => {
-            const active = preference === value;
-            return (
-              <Pressable
-                key={value}
-                accessibilityRole="radio"
-                accessibilityState={{ checked: active }}
-                accessibilityLabel={label}
-                style={[styles.option, active && styles.optionActive]}
-                onPress={() => {
-                  setPreference(value);
-                  saveProfile.mutate({ theme_pref: value });
-                }}
-              >
-                <Icon
-                  color={active ? theme.colors.primary : theme.colors.inkMuted}
-                  size={18}
-                  aria-hidden
-                />
-                <Text variant={active ? 'bodyStrong' : 'body'}>{label}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </Card>
-
-      <FeedbackCard />
-
-      <ProfessionalSpaceCard />
-
-      <MfaSettingsCard />
-
-      {me.data.permissions.length > 0 ? (
-        <Card>
-          <Text variant="subheading">Administración</Text>
-          <Text tone="muted">
-            Tenés un rol administrativo. Se usa con verificación en dos pasos.
-          </Text>
-          <Link href="/admin" asChild>
-            <Button label="Ir a la administración" variant="secondary" />
-          </Link>
-        </Card>
-      ) : null}
+      <LookAndSoundCard />
 
       <Card>
         <Text variant="subheading">Seguridad</Text>
         <View style={styles.actions}>
-          <Link href={'/nueva-clave'} asChild>
+          <Link href={'/nueva-clave?desde=perfil'} asChild>
             <Button label="Cambiar contraseña" variant="secondary" />
           </Link>
-          <Button
-            label="Cerrar sesión"
-            variant="secondary"
-            icon={LogOut}
-            loading={signOut.isPending && signOut.variables === 'local'}
-            onPress={() => {
-              signOut.mutate('local');
-            }}
-          />
-          <Button
+          <SignOutButton
+            scope="global"
             label="Cerrar sesión en todos los dispositivos"
             variant="ghost"
-            loading={signOut.isPending && signOut.variables === 'global'}
-            onPress={() => {
-              signOut.mutate('global');
-            }}
           />
         </View>
-        {signOut.error ? <Banner tone="danger">{friendlyError(signOut.error)}</Banner> : null}
       </Card>
+
+      {/* Quien administra necesita la verificación en dos pasos: se muestra abierto. */}
+      <Disclosure title="Opciones avanzadas" initiallyOpen={isStaff}>
+        <MfaSettingsCard />
+        <CreateProfessionalCard />
+      </Disclosure>
     </Screen>
   );
 }

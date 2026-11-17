@@ -1,14 +1,30 @@
 import { Redirect, Slot, usePathname } from 'expo-router';
-import { BriefcaseMedical, Inbox, UserRound, Users } from 'lucide-react-native';
+import {
+  BriefcaseMedical,
+  CircleUserRound,
+  IdCard,
+  Inbox,
+  UserRoundPlus,
+} from 'lucide-react-native';
 
 import { RequireSession } from '@/features/auth/RequireSession';
+import { SpaceExits } from '@/features/auth/signOut';
 import { useMyProfessionalProfile, useProCases } from '@/features/professionals/queries';
 import { AppShell, type NavItem } from '@/features/shell/AppShell';
-import { ErrorState, Screen, Skeleton } from '@/ui';
+import { ErrorState, LoadingScreen, Screen } from '@/ui';
 
-// Espacio profesional (UX_AND_NAVIGATION.md §4.1): Casos · Solicitudes · Perfil.
-// Requiere un perfil profesional; sin él, solo se puede crear el perfil.
-function proNav(pending: number): NavItem[] {
+/** "Mi cuenta" siempre está: es la salida a Perfil (cambiar de espacio, cerrar sesión). */
+const ACCOUNT_ITEM: NavItem = { href: '/perfil', label: 'Mi cuenta', icon: CircleUserRound };
+
+// Espacio profesional (UX_AND_NAVIGATION.md §4.1): Casos · Solicitudes · Mi ficha · Mi cuenta.
+// Requiere un perfil profesional; sin él, solo se puede crear el perfil o ir a la cuenta.
+function proNav(hasProfile: boolean, pending: number): NavItem[] {
+  if (!hasProfile) {
+    return [
+      { href: '/profesional/perfil', label: 'Crear perfil', icon: UserRoundPlus },
+      ACCOUNT_ITEM,
+    ];
+  }
   return [
     { href: '/profesional', label: 'Casos', icon: BriefcaseMedical, exact: true },
     {
@@ -16,8 +32,8 @@ function proNav(pending: number): NavItem[] {
       label: pending > 0 ? `Solicitudes (${String(pending)})` : 'Solicitudes',
       icon: Inbox,
     },
-    { href: '/profesional/perfil', label: 'Mi perfil', icon: UserRound },
-    { href: '/hoy', label: 'Mi familia', icon: Users },
+    { href: '/profesional/perfil', label: 'Mi ficha', icon: IdCard },
+    ACCOUNT_ITEM,
   ];
 }
 
@@ -26,21 +42,21 @@ function ProShell() {
   const profile = useMyProfessionalProfile();
   const cases = useProCases();
 
-  if (profile.isPending) {
+  if (profile.isPending) return <LoadingScreen lines={2} />;
+  if (profile.isError) {
     return (
       <Screen>
-        <Skeleton height={32} width="50%" />
-        <Skeleton height={160} />
+        <ErrorState error={profile.error} onRetry={() => void profile.refetch()} />
+        <SpaceExits />
       </Screen>
     );
   }
-  if (profile.isError) return <ErrorState onRetry={() => void profile.refetch()} />;
   if (!profile.data && pathname !== '/profesional/perfil') {
     return <Redirect href="/profesional/perfil" />;
   }
   const pending = (cases.data ?? []).filter((c) => c.status === 'requested').length;
   return (
-    <AppShell items={proNav(pending)}>
+    <AppShell items={proNav(Boolean(profile.data), pending)}>
       <Slot />
     </AppShell>
   );

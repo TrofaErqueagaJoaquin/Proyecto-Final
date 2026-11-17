@@ -7,8 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Logo, makeStyles, Text, useTheme } from '@/ui';
 import { minTouchTarget } from '@/ui/tokens';
 
-import { BackButton } from './BackButton';
-import { familyFallback } from './backTargets';
+import { activeHref, spaceFallback } from './backTargets';
+import { ScreenHeader } from './ScreenHeader';
 
 export interface NavItem {
   href: string;
@@ -43,11 +43,6 @@ const useStyles = makeStyles((t) => ({
   },
   sideItemActive: { backgroundColor: t.colors.primarySoft },
   content: { flex: 1 },
-  backBar: {
-    paddingHorizontal: t.space.sm,
-    paddingTop: t.space.xs,
-    alignItems: 'flex-start',
-  },
   tabBar: {
     flexDirection: 'row',
     backgroundColor: t.colors.surface,
@@ -64,13 +59,6 @@ const useStyles = makeStyles((t) => ({
   },
 }));
 
-function isActive(pathname: string, { href, exact }: NavItem, items: NavItem[]): boolean {
-  if (pathname === href) return true;
-  if (exact === true || !pathname.startsWith(`${href}/`)) return false;
-  // Si otra sección más específica coincide, esa es la activa.
-  return !items.some((other) => other.href.length > href.length && pathname.startsWith(other.href));
-}
-
 /**
  * Navegación del espacio: barra lateral desde 1024 px, pestañas inferiores en el teléfono
  * (UX_AND_NAVIGATION.md §3). Mismas rutas en todas las plataformas.
@@ -81,20 +69,15 @@ export function AppShell({ items, children }: { items: NavItem[]; children: Reac
   const pathname = usePathname();
   const { width } = useWindowDimensions();
   const wide = width >= theme.breakpoints.desktop;
-  // Las pantallas internas (un integrante, un resultado...) tienen "Volver"; las secciones no.
-  // Lo que no está en la navegación visible (en el teléfono, las secciones solo de escritorio)
-  // es una pantalla interna y lleva "Volver".
-  const back = familyFallback(
-    pathname,
-    items.filter((item) => wide || item.wideOnly !== true).map((item) => item.href),
-  );
+  // Las pantallas internas (un integrante, un resultado...) tienen "Volver"; la raíz del espacio
+  // y las secciones visibles no. El encabezado envuelve el área segura de arriba.
+  const back = spaceFallback(pathname, items, wide);
+  const current = activeHref(pathname, items, wide);
+  // El logo lleva al inicio del espacio en el que se está (no siempre a /hoy).
+  const home = items[0];
   const content = (
     <View style={styles.content}>
-      {back === null ? null : (
-        <View style={styles.backBar}>
-          <BackButton fallback={back} />
-        </View>
-      )}
+      {back === null ? null : <ScreenHeader back={back} />}
       {children}
     </View>
   );
@@ -103,13 +86,17 @@ export function AppShell({ items, children }: { items: NavItem[]; children: Reac
     return (
       <View style={[styles.root, styles.wide]}>
         <View style={styles.sidebar} role="navigation" accessibilityLabel="Navegación principal">
-          <Link href="/hoy" accessibilityLabel="Ir a Hoy">
+          {home ? (
+            <Link href={home.href} accessibilityLabel={`Ir a ${home.label}`}>
+              <Logo />
+            </Link>
+          ) : (
             <Logo />
-          </Link>
+          )}
           <View style={styles.sideNav}>
             {items.map((item) => {
               const { href, label, icon: Icon } = item;
-              const active = isActive(pathname, item, items);
+              const active = item.href === current;
               return (
                 <Link key={href} href={href} asChild>
                   <Pressable
@@ -150,7 +137,7 @@ export function AppShell({ items, children }: { items: NavItem[]; children: Reac
             .filter((item) => item.wideOnly !== true)
             .map((item) => {
               const { href, label, icon: Icon } = item;
-              const active = isActive(pathname, item, items);
+              const active = item.href === current;
               return (
                 <Link key={href} href={href} asChild>
                   <Pressable

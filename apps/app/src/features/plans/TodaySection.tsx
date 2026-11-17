@@ -4,7 +4,6 @@ import { Link } from 'expo-router';
 import { CalendarDays, Sparkles, Target } from 'lucide-react-native';
 import { View } from 'react-native';
 
-import { friendlyError } from '@/copy/errors';
 import { useFamilyAttempts } from '@/features/assessments/queries';
 import { BroteSays } from '@/features/brote/Brote';
 import { feedback } from '@/features/feedback/feedback';
@@ -12,7 +11,17 @@ import { canManage } from '@/features/families/queries';
 import { useFamilyProgress } from '@/features/logros/LogrosStrip';
 import { latestProgress, useGoals } from '@/features/goals/queries';
 import { LinkCard } from '@/features/library/LinkCard';
-import { Banner, Button, Card, EmptyState, makeStyles, Skeleton, Text, useTheme } from '@/ui';
+import {
+  Button,
+  Card,
+  EmptyState,
+  ErrorBanner,
+  ErrorState,
+  makeStyles,
+  Skeleton,
+  Text,
+  useTheme,
+} from '@/ui';
 
 import { PlanItemCard } from './PlanItemCard';
 import { localDate, useGeneratePlan, useWeekPlans } from './queries';
@@ -43,6 +52,18 @@ export function TodaySection({ familyId, role }: { familyId: string; role: Famil
   const progress = useFamilyProgress(familyId);
 
   if (plans.isPending) return <Skeleton height={180} />;
+  // Si falla la carga no se muestra "sin plan" (invitaría a armar otro): se ofrece reintentar.
+  if (plans.isError) {
+    return (
+      <Card>
+        <ErrorState
+          error={plans.error}
+          title="No pudimos traer tu plan"
+          onRetry={() => void plans.refetch()}
+        />
+      </Card>
+    );
+  }
 
   const entries = (plans.data ?? []).flatMap((plan) => plan.items.map((item) => ({ plan, item })));
   const { forToday, doneToday, next } = pickToday(
@@ -79,7 +100,6 @@ export function TodaySection({ familyId, role }: { familyId: string; role: Famil
               ? '¿Te armo ideas para esta semana? Una por día, cortitas.'
               : 'Te armo ideas para esta semana. Si después hacés el chequeo, las ajusto.'}
           </BroteSays>
-          {generate.error ? <Banner tone="danger">{friendlyError(generate.error)}</Banner> : null}
           <Button
             label="¡Armá mi semana!"
             icon={Sparkles}
@@ -92,6 +112,7 @@ export function TodaySection({ familyId, role }: { familyId: string; role: Famil
               );
             }}
           />
+          <ErrorBanner error={generate.error} />
         </View>
       ) : (
         <Card>

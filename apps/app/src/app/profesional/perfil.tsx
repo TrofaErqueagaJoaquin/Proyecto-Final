@@ -3,7 +3,6 @@ import { FileBadge, Paperclip, Send } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { friendlyError } from '@/copy/errors';
 import {
   contactError,
   displayNameError,
@@ -38,7 +37,10 @@ import {
   Checkbox,
   ChipGroup,
   ConfirmAction,
+  ErrorBanner,
+  ErrorScreen,
   ErrorState,
+  LoadingScreen,
   Screen,
   Skeleton,
   Text,
@@ -114,7 +116,16 @@ function ProfileForm({ initial }: { initial: ProfessionalProfile | null }) {
         error={shown('name')}
         maxLength={80}
       />
-      {specialties.data ? (
+      {specialties.isPending ? (
+        <Skeleton height={96} />
+      ) : specialties.isError ? (
+        // Sin la lista no se puede elegir especialidad ni guardar: se ofrece reintentar.
+        <ErrorState
+          error={specialties.error}
+          title="No pudimos traer las especialidades"
+          onRetry={() => void specialties.refetch()}
+        />
+      ) : (
         <ChipGroup
           multiple
           label="Especialidades"
@@ -123,7 +134,7 @@ function ProfileForm({ initial }: { initial: ProfessionalProfile | null }) {
           onChange={setChosen}
           error={shown('specialties')}
         />
-      ) : null}
+      )}
       <ChipGroup
         multiple
         label="Modalidad"
@@ -187,7 +198,7 @@ function ProfileForm({ initial }: { initial: ProfessionalProfile | null }) {
         <Banner tone="danger">Revisá los campos marcados antes de guardar.</Banner>
       ) : null}
       {save.isSuccess ? <Banner tone="success">Guardamos tu perfil.</Banner> : null}
-      {save.error ? <Banner tone="danger">{friendlyError(save.error)}</Banner> : null}
+      <ErrorBanner error={save.error} />
       <Button
         label={initial ? 'Guardar cambios' : 'Crear mi perfil'}
         loading={save.isPending}
@@ -292,7 +303,7 @@ function AddCredential() {
         El archivo queda en un espacio privado: solo lo ve quien verifica tus credenciales. Máximo 5
         MB.
       </Text>
-      {add.error ? <Banner tone="danger">{friendlyError(add.error)}</Banner> : null}
+      <ErrorBanner error={add.error} />
       <Button
         label="Guardar credencial"
         loading={add.isPending}
@@ -334,7 +345,9 @@ function CredentialsCard() {
         en Casa lo revisa (por ejemplo, en REFEPS o con el colegio profesional).
       </Text>
       {credentials.isPending ? <Skeleton height={80} /> : null}
-      {credentials.isError ? <ErrorState onRetry={() => void credentials.refetch()} /> : null}
+      {credentials.isError ? (
+        <ErrorState error={credentials.error} onRetry={() => void credentials.refetch()} />
+      ) : null}
       {credentials.data?.map((c) => (
         <View key={c.id} style={{ gap: 6 }}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
@@ -379,8 +392,8 @@ function CredentialsCard() {
           </View>
         </View>
       ))}
-      {submit.error ? <Banner tone="danger">{friendlyError(submit.error)}</Banner> : null}
-      {remove.error ? <Banner tone="danger">{friendlyError(remove.error)}</Banner> : null}
+      <ErrorBanner error={submit.error} />
+      <ErrorBanner error={remove.error} />
       <AddCredential />
     </Card>
   );
@@ -389,8 +402,10 @@ function CredentialsCard() {
 export default function ProfessionalProfileScreen() {
   const profile = useMyProfessionalProfile();
 
-  if (profile.isPending) return <Skeleton height={300} />;
-  if (profile.isError) return <ErrorState onRetry={() => void profile.refetch()} />;
+  if (profile.isPending) return <LoadingScreen />;
+  if (profile.isError) {
+    return <ErrorScreen error={profile.error} onRetry={() => void profile.refetch()} />;
+  }
 
   return (
     <Screen>
@@ -398,10 +413,7 @@ export default function ProfessionalProfileScreen() {
       {profile.data ? (
         <VerificationBadge status={profile.data.verification_status} />
       ) : (
-        <Text tone="muted">
-          Las familias te encuentran en el directorio y te piden acompañamiento. Vos ves solo lo que
-          cada familia elige compartir, y todo acceso queda registrado.
-        </Text>
+        <Text tone="muted">Las familias te encuentran en el directorio.</Text>
       )}
       <ProfileForm key={profile.data?.user_id ?? 'new'} initial={profile.data} />
       {profile.data ? <CredentialsCard /> : null}
