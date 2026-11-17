@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as DocumentPicker from 'expo-document-picker';
 import { router } from 'expo-router';
-import { FileBadge, Paperclip, Send } from 'lucide-react-native';
+import { BriefcaseMedical, FileBadge, Paperclip, Pencil, Plus, Send } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
 
@@ -14,6 +14,7 @@ import {
   requiredError,
 } from '@/features/forms/validators';
 import { useFieldErrors } from '@/features/forms/useFieldErrors';
+import { confirmLeave, useUnsavedGuard } from '@/features/forms/useUnsavedGuard';
 import { VerificationBadge } from '@/features/professionals/components';
 import {
   CREDENTIAL_KIND_LABELS,
@@ -44,8 +45,10 @@ import {
   ErrorScreen,
   ErrorState,
   LoadingScreen,
+  makeStyles,
   Screen,
   Skeleton,
+  StepNav,
   Text,
   digitsMask,
   TextField,
@@ -63,7 +66,56 @@ const KIND_OPTIONS = (
 
 const blank = (s: string) => (s.trim() === '' ? null : s.trim());
 
-function ProfileForm({ initial }: { initial: ProfessionalProfile | null }) {
+const useStyles = makeStyles((t) => ({
+  progress: { gap: t.space.xs },
+  bars: { flexDirection: 'row', gap: t.space.xs },
+  bar: { flex: 1, height: 8, borderRadius: t.radius.pill, backgroundColor: t.colors.border },
+  barDone: { backgroundColor: t.colors.primary },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: t.space.sm, alignItems: 'center' },
+}));
+
+type Step = 'datos' | 'matricula' | 'listo';
+
+const STEPS: { key: Step; label: string }[] = [
+  { key: 'datos', label: 'Tus datos' },
+  { key: 'matricula', label: 'Tu matrícula' },
+  { key: 'listo', label: 'Listo' },
+];
+
+/** Barra de avance: "Tus datos → Tu matrícula → Listo". */
+function StepProgress({ step }: { step: Step }) {
+  const styles = useStyles();
+  const index = STEPS.findIndex((s) => s.key === step);
+  const label = STEPS[index]?.label ?? '';
+  return (
+    <View
+      style={styles.progress}
+      accessibilityRole="progressbar"
+      accessibilityLabel={`Paso ${String(index + 1)} de ${String(STEPS.length)}: ${label}`}
+      accessibilityValue={{ min: 1, max: STEPS.length, now: index + 1 }}
+    >
+      <View style={styles.bars}>
+        {STEPS.map((s, i) => (
+          <View key={s.key} style={[styles.bar, i <= index && styles.barDone]} />
+        ))}
+      </View>
+      <Text variant="small" tone="muted">
+        {`Paso ${String(index + 1)} de ${String(STEPS.length)} · ${label}`}
+      </Text>
+    </View>
+  );
+}
+
+function ProfileForm({
+  initial,
+  onSaved,
+  onCancel,
+}: {
+  initial: ProfessionalProfile | null;
+  /** `created` es true si recién se creó el perfil. */
+  onSaved: (created: boolean) => void;
+  onCancel?: () => void;
+}) {
   const specialties = useSpecialties();
   const save = useSaveProfessionalProfile();
   const [name, setName] = useState(initial?.display_name ?? '');
@@ -107,10 +159,15 @@ function ProfileForm({ initial }: { initial: ProfessionalProfile | null }) {
     is_listed: listed,
     specialties: chosen,
   };
+  // Lo último guardado (o lo que vino): si el formulario difiere, salir pregunta antes.
+  const [baseline, setBaseline] = useState(() => JSON.stringify(input));
+  const current = JSON.stringify(input);
+  const guard = useUnsavedGuard(current !== baseline);
 
   return (
     <Card>
-      <Text variant="subheading">{initial ? 'Tu perfil' : 'Crear tu perfil profesional'}</Text>
+      {guard.dialog}
+      <Text variant="subheading">Tus datos</Text>
       <TextField
         label="Nombre profesional"
         placeholder="Por ejemplo: Lic. Paula Ríos"
@@ -201,16 +258,34 @@ function ProfileForm({ initial }: { initial: ProfessionalProfile | null }) {
       {attempted && hasErrors ? (
         <Banner tone="danger">Revisá los campos marcados antes de guardar.</Banner>
       ) : null}
-      {save.isSuccess ? <Banner tone="success">Guardamos tu perfil.</Banner> : null}
       <ErrorBanner error={save.error} />
       <Button
         label={initial ? 'Guardar cambios' : 'Crear mi perfil'}
         loading={save.isPending}
+        fullWidth
         onPress={() => {
           if (!attempt()) return;
-          save.mutate({ ...input, exists: initial !== null });
+          save.mutate(
+            { ...input, exists: initial !== null },
+            {
+              onSuccess: () => {
+                setBaseline(current);
+                onSaved(initial === null);
+              },
+            },
+          );
         }}
       />
+      {onCancel ? (
+        <Button
+          label="Cancelar"
+          variant="ghost"
+          disabled={save.isPending}
+          onPress={() => {
+            guard.confirm(onCancel);
+          }}
+        />
+      ) : null}
     </Card>
   );
 }
@@ -325,6 +400,14 @@ function CredentialForm({
       issuer.trim() !== '' && issuer.trim().length < 2 ? 'Escribí quién la emite.' : undefined,
   };
   const { touch, shown, attempt, reset: resetErrors } = useFieldErrors(errors);
+  // Con algo cargado (o cambiado, al corregir), salir pregunta antes.
+  const guard = useUnsavedGuard(
+    file !== null ||
+      profession !== (editing?.profession ?? '') ||
+      jurisdiction !== (editing?.jurisdiction ?? '') ||
+      number !== (editing?.license_number ?? '') ||
+      issuer !== (editing?.issuer ?? ''),
+  );
 
   const reset = () => {
     setProfession('');
@@ -342,6 +425,7 @@ function CredentialForm({
 
   return (
     <View style={{ gap: 12 }}>
+      {guard.dialog}
       <Text variant="bodyStrong">
         {editing ? 'Corregí tu credencial' : 'Agregar una credencial'}
       </Text>
@@ -443,33 +527,41 @@ function CredentialForm({
         }}
       />
       {onCancel ? (
-        <Button label="Cancelar" variant="ghost" disabled={send.isPending} onPress={onCancel} />
+        <Button
+          label="Cancelar"
+          variant="ghost"
+          disabled={send.isPending}
+          onPress={() => {
+            guard.confirm(onCancel);
+          }}
+        />
       ) : null}
     </View>
   );
 }
 
-function CredentialsCard() {
+/** Paso 2: cargar la matrícula (o corregirla) y enviarla a verificar. */
+function CredentialsCard({ onFinish }: { onFinish: () => void }) {
   const credentials = useMyCredentials();
   const reviews = useCredentialReviews();
   const submit = useSubmitCredential();
   const remove = useDeleteCredential();
   const { colors } = useTheme();
   const [editing, setEditing] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
   const [sent, setSent] = useState(false);
 
   const onSent = () => {
     setEditing(null);
+    setAdding(false);
     setSent(true);
   };
+  const hasAny = (credentials.data?.length ?? 0) > 0;
 
   return (
     <Card>
-      <Text variant="subheading">Credenciales</Text>
-      <Text tone="muted">
-        Para aparecer en el directorio, cargá tu matrícula o tu título. Crecer en Casa la revisa
-        (por ejemplo, en REFEPS o con el colegio profesional).
-      </Text>
+      <Text variant="subheading">Tu matrícula</Text>
+      <Text tone="muted">Para aparecer en el directorio. La revisamos en unos días.</Text>
       {credentials.isPending ? <Skeleton height={80} /> : null}
       {credentials.isError ? (
         <ErrorState error={credentials.error} onRetry={() => void credentials.refetch()} />
@@ -569,50 +661,249 @@ function CredentialsCard() {
       })}
       <ErrorBanner error={submit.error} />
       <ErrorBanner error={remove.error} />
-      {editing === null ? <CredentialForm onSent={onSent} /> : null}
+      {editing !== null || credentials.isPending ? null : !hasAny || adding ? (
+        <CredentialForm
+          onSent={onSent}
+          onCancel={
+            hasAny
+              ? () => {
+                  setAdding(false);
+                }
+              : undefined
+          }
+        />
+      ) : (
+        <Button
+          label="Agregar otra credencial"
+          variant="secondary"
+          icon={Plus}
+          onPress={() => {
+            setAdding(true);
+          }}
+        />
+      )}
       <GuidePopup
         visible={sent}
-        title="¡Listo!"
-        message="La revisamos en unos días. El resultado lo ves acá, en Mi perfil."
+        celebrate
+        title="¡Enviada!"
+        message="La revisamos en unos días. El resultado lo ves en Mi ficha."
         primary={{
+          label: 'Ver mi ficha',
+          onPress: () => {
+            setSent(false);
+            onFinish();
+          },
+        }}
+        secondary={{
           label: 'Ir a mis casos',
           onPress: () => {
             setSent(false);
             router.push('/profesional');
           },
         }}
-        secondary={{
-          label: 'Seguir en mi perfil',
-          onPress: () => {
-            setSent(false);
-          },
-        }}
         onClose={() => {
           setSent(false);
+          onFinish();
         }}
       />
     </Card>
   );
 }
 
+type Credentials = NonNullable<ReturnType<typeof useMyCredentials>['data']>;
+
+/** ¿Ya mandó alguna credencial (en revisión o aprobada)? */
+function hasSentCredential(credentials: Credentials | undefined): boolean {
+  return (credentials ?? []).some((c) => c.status === 'submitted' || c.status === 'verified');
+}
+
+/** Dónde arranca la pantalla: con la matrícula enviada (o verificado), en "Listo". */
+function startStep(profile: ProfessionalProfile, credentials: Credentials | undefined): Step {
+  if (profile.verification_status === 'verified' || hasSentCredential(credentials)) return 'listo';
+  return 'matricula';
+}
+
+/** Paso 3 (y modo lectura si ya está verificado): lo cargado, con "Editar" en cada parte. */
+function Summary({
+  profile,
+  onEdit,
+}: {
+  profile: ProfessionalProfile;
+  onEdit: (step: Step) => void;
+}) {
+  const styles = useStyles();
+  const { colors } = useTheme();
+  const specialties = useSpecialties();
+  const credentials = useMyCredentials();
+  const sent = hasSentCredential(credentials.data);
+  const specialtyLabels = profile.specialties.map(
+    (code) => specialties.data?.find((s) => s.code === code)?.label ?? code,
+  );
+  const place = [profile.city, profile.province].filter(Boolean).join(', ');
+  return (
+    <>
+      <Card>
+        <Text variant="subheading">Tus datos</Text>
+        <Text variant="bodyStrong">{profile.display_name}</Text>
+        {specialtyLabels.length > 0 ? <Text>{specialtyLabels.join(' · ')}</Text> : null}
+        <Text tone="muted">
+          {[profile.modalities.map((m) => MODALITY_LABELS[m]).join(' y '), place]
+            .filter(Boolean)
+            .join(' · ')}
+        </Text>
+        <Button
+          label="Editar mis datos"
+          variant="secondary"
+          icon={Pencil}
+          onPress={() => {
+            onEdit('datos');
+          }}
+        />
+      </Card>
+      <Card>
+        <Text variant="subheading">Tu matrícula</Text>
+        {credentials.isPending ? <Skeleton height={48} /> : null}
+        {credentials.isError ? (
+          <ErrorState error={credentials.error} onRetry={() => void credentials.refetch()} />
+        ) : null}
+        {credentials.data?.length === 0 ? <Text tone="muted">Todavía no la cargaste.</Text> : null}
+        {credentials.data?.map((c) => (
+          <View key={c.id} style={styles.row}>
+            <FileBadge size={18} color={colors.primary} aria-hidden />
+            <Text variant="bodyStrong">{c.profession}</Text>
+            <Badge tone={c.status === 'verified' ? 'primary' : 'neutral'}>
+              {c.status === 'declared' ? 'Sin enviar' : CREDENTIAL_STATUS_LABELS[c.status]}
+            </Badge>
+          </View>
+        ))}
+        <Button
+          label={sent ? 'Ver o agregar' : 'Cargar mi matrícula'}
+          variant={sent ? 'secondary' : 'primary'}
+          icon={sent ? Pencil : FileBadge}
+          onPress={() => {
+            onEdit('matricula');
+          }}
+        />
+      </Card>
+      {sent ? (
+        <Button
+          label="Ir a mis casos"
+          icon={BriefcaseMedical}
+          fullWidth
+          onPress={() => {
+            router.push('/profesional');
+          }}
+        />
+      ) : null}
+    </>
+  );
+}
+
+/**
+ * Mi ficha profesional en tres pasos: Tus datos → Tu matrícula → Listo. Ya verificada, se ve
+ * en modo lectura y cada parte tiene su "Editar".
+ */
 export default function ProfessionalProfileScreen() {
   const profile = useMyProfessionalProfile();
+  const credentials = useMyCredentials();
+  // Sin elegir un paso, se arranca donde corresponde (startStep).
+  const [chosen, setChosen] = useState<Step | null>(null);
+  const [created, setCreated] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  if (profile.isPending) return <LoadingScreen />;
+  if (profile.isPending || (profile.data && credentials.isPending)) return <LoadingScreen />;
   if (profile.isError) {
     return <ErrorScreen error={profile.error} onRetry={() => void profile.refetch()} />;
   }
 
+  const data = profile.data;
+  const step: Step = data ? (chosen ?? startStep(data, credentials.data)) : 'datos';
+  const verified = data?.verification_status === 'verified';
+  // Cambiar de paso desarma el formulario abierto: si tiene cambios, pregunta antes.
+  const goTo = (next: Step) => {
+    confirmLeave(() => {
+      setSaved(false);
+      setChosen(next);
+    });
+  };
+
   return (
-    <Screen>
-      <Text variant="title">Mi perfil profesional</Text>
-      {profile.data ? (
-        <VerificationBadge status={profile.data.verification_status} />
+    <Screen scrollKey={step}>
+      <Text variant="title">{data ? 'Mi ficha' : 'Crear tu perfil profesional'}</Text>
+      {data ? (
+        <VerificationBadge status={data.verification_status} />
       ) : (
         <Text tone="muted">Las familias te encuentran en el directorio.</Text>
       )}
-      <ProfileForm key={profile.data?.user_id ?? 'new'} initial={profile.data} />
-      {profile.data ? <CredentialsCard /> : null}
+      {/* Ya verificada, la ficha se lee y se edita por partes: sin pasos. */}
+      {verified && step === 'listo' ? null : <StepProgress step={step} />}
+      {saved && step === 'listo' ? <Banner tone="success">Guardamos tus datos.</Banner> : null}
+
+      {step === 'datos' || !data ? (
+        <ProfileForm
+          key={data?.user_id ?? 'new'}
+          initial={data}
+          onSaved={(isNew) => {
+            if (isNew) {
+              setCreated(true);
+              setChosen('matricula');
+            } else {
+              setSaved(true);
+              setChosen('listo');
+            }
+          }}
+          onCancel={
+            data
+              ? () => {
+                  setChosen('listo');
+                }
+              : undefined
+          }
+        />
+      ) : step === 'matricula' ? (
+        <>
+          <CredentialsCard
+            onFinish={() => {
+              setChosen('listo');
+            }}
+          />
+          <StepNav
+            onBack={() => {
+              goTo('datos');
+            }}
+            nextLabel={hasSentCredential(credentials.data) ? 'Ver mi ficha' : 'Lo hago después'}
+            onNext={() => {
+              goTo('listo');
+            }}
+          />
+        </>
+      ) : (
+        <Summary profile={data} onEdit={goTo} />
+      )}
+
+      <GuidePopup
+        visible={created}
+        celebrate
+        title="¡Creaste tu perfil!"
+        message="Ahora cargá tu matrícula para aparecer en el directorio."
+        primary={{
+          label: 'Cargar mi matrícula',
+          onPress: () => {
+            setCreated(false);
+            setChosen('matricula');
+          },
+        }}
+        secondary={{
+          label: 'Más tarde',
+          onPress: () => {
+            setCreated(false);
+            setChosen('listo');
+          },
+        }}
+        onClose={() => {
+          setCreated(false);
+        }}
+      />
     </Screen>
   );
 }

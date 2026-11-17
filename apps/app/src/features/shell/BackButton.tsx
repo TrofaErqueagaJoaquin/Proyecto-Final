@@ -2,6 +2,7 @@ import { router, type Href } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import { Pressable } from 'react-native';
 
+import { confirmLeave } from '@/features/forms/useUnsavedGuard';
 import { makeStyles, useTheme } from '@/ui';
 
 /** Lado de la flecha: más que el mínimo de 44 px, porque es la salida de cada pantalla. */
@@ -26,7 +27,8 @@ const useStyles = makeStyles((t) => ({
 
 /**
  * "Volver": una flecha sola. Vuelve a la pantalla anterior y, si no hay historial (se entró
- * por un enlace o se recargó la página), va a `fallback`. Nunca saca de la app.
+ * por un enlace o se recargó la página), va a `fallback`. Nunca saca de la app. Si hay un
+ * formulario a medio cargar, antes pregunta "¿Salir sin guardar?" (`useUnsavedGuard`).
  */
 export function BackButton({ fallback }: { fallback: Href }) {
   const styles = useStyles();
@@ -37,8 +39,10 @@ export function BackButton({ fallback }: { fallback: Href }) {
       accessibilityLabel="Volver"
       hitSlop={4}
       onPress={() => {
-        if (router.canGoBack()) router.back();
-        else router.replace(fallback);
+        confirmLeave(() => {
+          if (router.canGoBack()) router.back();
+          else router.replace(fallback);
+        });
       }}
       style={(state) => {
         // `hovered` y `focused` solo existen en web (react-native-web).

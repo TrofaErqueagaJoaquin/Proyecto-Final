@@ -1,11 +1,23 @@
-import { router } from 'expo-router';
-import { Inbox } from 'lucide-react-native';
+import { router, type Href } from 'expo-router';
+import { Check, Inbox, X } from 'lucide-react-native';
+import { useState } from 'react';
 import { View } from 'react-native';
 
 import { friendlyError } from '@/copy/errors';
+import { GuidePopup } from '@/features/brote/GuidePopup';
 import { ageLabel, SCOPE_LABELS } from '@/features/professionals/labels';
 import { useProCases, useRespondCare } from '@/features/professionals/queries';
-import { Banner, Button, Card, EmptyState, ErrorState, Screen, Skeleton, Text } from '@/ui';
+import {
+  Banner,
+  Button,
+  Card,
+  ConfirmAction,
+  EmptyState,
+  ErrorScreen,
+  LoadingScreen,
+  Screen,
+  Text,
+} from '@/ui';
 
 const DATE = new Intl.DateTimeFormat('es-AR', { day: 'numeric', month: 'long' });
 
@@ -13,9 +25,13 @@ const DATE = new Intl.DateTimeFormat('es-AR', { day: 'numeric', month: 'long' })
 export default function RequestsScreen() {
   const cases = useProCases();
   const respond = useRespondCare();
+  // Después de aceptar: festejo de Brote con "Ver el caso" (la tarjeta ya no está en la lista).
+  const [accepted, setAccepted] = useState<{ family: string; href: Href } | null>(null);
 
-  if (cases.isPending) return <Skeleton height={300} />;
-  if (cases.isError) return <ErrorState onRetry={() => void cases.refetch()} />;
+  if (cases.isPending) return <LoadingScreen />;
+  if (cases.isError) {
+    return <ErrorScreen error={cases.error} onRetry={() => void cases.refetch()} />;
+  }
 
   const requests = cases.data.filter((c) => c.status === 'requested');
   return (
@@ -52,6 +68,7 @@ export default function RequestsScreen() {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               <Button
                 label="Aceptar"
+                icon={Check}
                 loading={
                   respond.isPending &&
                   respond.variables.assignmentId === c.id &&
@@ -62,21 +79,28 @@ export default function RequestsScreen() {
                     { assignmentId: c.id, accept: true },
                     {
                       onSuccess: () => {
-                        router.push('/profesional');
+                        const first = c.members[0];
+                        setAccepted({
+                          family: c.family_name,
+                          href: first ? `/profesional/casos/${c.id}/${first.id}` : '/profesional',
+                        });
                       },
                     },
                   );
                 }}
               />
-              <Button
+              <ConfirmAction
                 label="Rechazar"
-                variant="secondary"
+                confirmLabel="Sí, rechazar"
+                title={`¿Rechazar a la familia ${c.family_name}?`}
+                description="La solicitud se cierra y sale de esta lista."
+                icon={X}
                 loading={
                   respond.isPending &&
                   respond.variables.assignmentId === c.id &&
                   !respond.variables.accept
                 }
-                onPress={() => {
+                onConfirm={() => {
                   respond.mutate({ assignmentId: c.id, accept: false });
                 }}
               />
@@ -85,6 +109,29 @@ export default function RequestsScreen() {
         ))
       )}
       {respond.error ? <Banner tone="danger">{friendlyError(respond.error)}</Banner> : null}
+      <GuidePopup
+        visible={accepted !== null}
+        celebrate
+        title={`¡Aceptaste a la familia ${accepted?.family ?? ''}!`}
+        message="Ya podés ver lo que te autorizaron."
+        primary={{
+          label: 'Ver el caso',
+          onPress: () => {
+            const href = accepted?.href ?? '/profesional';
+            setAccepted(null);
+            router.push(href);
+          },
+        }}
+        secondary={{
+          label: 'Seguir con las solicitudes',
+          onPress: () => {
+            setAccepted(null);
+          },
+        }}
+        onClose={() => {
+          setAccepted(null);
+        }}
+      />
     </Screen>
   );
 }

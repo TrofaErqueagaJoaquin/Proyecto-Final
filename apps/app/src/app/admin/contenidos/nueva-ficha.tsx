@@ -16,6 +16,7 @@ import {
 import { useCreateContentItem, usePermissions } from '@/features/admin/queries';
 import { slugify } from '@/features/admin/slug';
 import { useFieldErrors } from '@/features/forms/useFieldErrors';
+import { useUnsavedGuard } from '@/features/forms/useUnsavedGuard';
 import { Markdown } from '@/features/library/Markdown';
 import { Banner, Button, Card, ChipGroup, Disclosure, Screen, Text, TextField } from '@/ui';
 
@@ -73,6 +74,13 @@ export default function NewContentScreen() {
     published: boolean;
   } | null>(null);
   const fields = useFieldErrors(cardErrors({ title, summary, body }));
+  // Si cargó algo y se va sin guardar, se pregunta antes.
+  const guard = useUnsavedGuard(
+    created === null &&
+      ([title, summary, body].some((t) => t.trim() !== '') ||
+        stages.length > 0 ||
+        sources.length > 0),
+  );
 
   if (created) {
     return (
@@ -189,6 +197,7 @@ export default function NewContentScreen() {
 
   return (
     <Screen maxWidth={1100}>
+      {guard.dialog}
       <Text variant="title">Nueva ficha</Text>
       <Text tone="muted">Aparece en Biblioteca → Situaciones.</Text>
       <FormWithPreview
