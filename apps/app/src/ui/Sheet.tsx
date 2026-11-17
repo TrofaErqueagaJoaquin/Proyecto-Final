@@ -1,5 +1,5 @@
 import { X } from 'lucide-react-native';
-import type { ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -47,6 +47,16 @@ const useStyles = makeStyles((t) => ({
   },
   content: { paddingHorizontal: t.space.lg, gap: t.space.lg },
 }));
+
+const InSheetContext = createContext(false);
+
+/**
+ * ¿Está adentro de una ventana (`Sheet`)? Sirve para no abrir otra encima: dos Modal a la vez
+ * se apilan en Android y web, y en iOS el segundo no se llega a presentar.
+ */
+export function useInSheet(): boolean {
+  return useContext(InSheetContext);
+}
 
 /**
  * Ventana que sube desde abajo con el detalle de algo (una actividad, una ficha). Lo principal
@@ -98,7 +108,7 @@ export function Sheet({
             contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}
             keyboardShouldPersistTaps="handled"
           >
-            {children}
+            <InSheetContext.Provider value>{children}</InSheetContext.Provider>
           </ScrollView>
         </View>
       </KeyboardAvoidingView>

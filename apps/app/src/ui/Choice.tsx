@@ -1,9 +1,10 @@
 import { Check, Trash2, type LucideIcon } from 'lucide-react-native';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Button } from './Button';
-import { Sheet } from './Sheet';
+import { useOverlayTurn } from './OverlayQueue';
+import { Sheet, useInSheet } from './Sheet';
 import { Text } from './Text';
 import { makeStyles, useTheme } from './theme';
 import { minTouchTarget } from './tokens';
@@ -37,6 +38,14 @@ const useStyles = makeStyles((t) => ({
   badgeCaution: { backgroundColor: t.colors.cautionSoft },
   badgePrimary: { backgroundColor: t.colors.primarySoft },
   confirmActions: { gap: t.space.sm },
+  confirmInline: {
+    gap: t.space.md,
+    padding: t.space.lg,
+    borderRadius: t.radius.lg,
+    borderWidth: 2,
+    borderColor: t.colors.borderStrong,
+    backgroundColor: t.colors.surface,
+  },
 }));
 
 interface Option<V extends string> {
@@ -138,8 +147,12 @@ export function Badge({
 
 /**
  * Acción que borra o quita, en dos pasos. El botón es rojo suave con ícono (tacho por defecto);
- * al tocarlo se abre una ventana con una frase y dos botones: confirmar o "Cancelar".
- * Con `loading`, la ventana queda abierta mientras se hace y se cierra sola al terminar.
+ * al tocarlo aparece una frase y dos botones: confirmar o "Cancelar".
+ * - Suelta en una pantalla, la pregunta se abre en su propia ventana, con turno en la cola de
+ *   ventanas (`useOverlayTurn`).
+ * - Adentro de un `Sheet` (o con `inline`), la pregunta reemplaza al botón en el mismo lugar:
+ *   no se abre una ventana encima de otra.
+ * Con `loading`, la pregunta queda a la vista mientras se hace y se cierra sola al terminar.
  */
 export function ConfirmAction({
   label,
@@ -149,6 +162,7 @@ export function ConfirmAction({
   loading,
   icon = Trash2,
   title,
+  inline,
 }: {
   label: string;
   confirmLabel: string;
@@ -160,10 +174,16 @@ export function ConfirmAction({
   icon?: LucideIcon;
   /** Título de la ventana; si no, "¿{label}?". */
   title?: string;
+  /** Pregunta en el mismo lugar, sin ventana. Por defecto, sí cuando está adentro de un `Sheet`. */
+  inline?: boolean;
 }) {
   const styles = useStyles();
+  const inSheet = useInSheet();
+  const isInline = inline ?? inSheet;
   const [open, setOpen] = useState(false);
   const wasLoading = useRef(false);
+  const id = useId();
+  const visible = useOverlayTurn(`confirmar-${id}`, open && !isInline);
 
   // Al terminar la acción (loading pasa de true a false) la ventana se cierra sola.
   useEffect(() => {
@@ -175,38 +195,54 @@ export function ConfirmAction({
     if (loading !== true) setOpen(false);
   };
 
-  return (
-    <>
+  const question = title ?? `¿${label}?`;
+  const body = typeof description === 'string' ? <Text>{description}</Text> : description;
+  const actions = (
+    <View style={styles.confirmActions}>
       <Button
-        label={label}
-        variant="dangerSoft"
+        label={confirmLabel}
+        variant="danger"
         icon={icon}
+        loading={loading}
+        fullWidth
         onPress={() => {
-          setOpen(true);
+          onConfirm();
+          if (loading === undefined) setOpen(false);
         }}
       />
-      <Sheet visible={open} onClose={close} title={title ?? `¿${label}?`}>
-        {typeof description === 'string' ? <Text>{description}</Text> : description}
-        <View style={styles.confirmActions}>
-          <Button
-            label={confirmLabel}
-            variant="danger"
-            icon={icon}
-            loading={loading}
-            fullWidth
-            onPress={() => {
-              onConfirm();
-              if (loading === undefined) setOpen(false);
-            }}
-          />
-          <Button
-            label="Cancelar"
-            variant="secondary"
-            disabled={loading}
-            fullWidth
-            onPress={close}
-          />
-        </View>
+      <Button label="Cancelar" variant="secondary" disabled={loading} fullWidth onPress={close} />
+    </View>
+  );
+  const trigger = (
+    <Button
+      label={label}
+      variant="dangerSoft"
+      icon={icon}
+      onPress={() => {
+        setOpen(true);
+      }}
+    />
+  );
+
+  if (isInline) {
+    if (!open) return trigger;
+    return (
+      <View style={styles.confirmInline} accessibilityLiveRegion="polite">
+        <Text variant="bodyStrong" role="heading">
+          {question}
+        </Text>
+        {body}
+        {actions}
+      </View>
+    );
+  }
+
+  return (
+    <>
+      {trigger}
+      <Sheet visible={visible} onClose={close} title={question}>
+        {body}
+        {actions}
       </Sheet>
     </>
   );

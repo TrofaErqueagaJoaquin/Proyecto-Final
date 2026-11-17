@@ -6,6 +6,7 @@ import { renderWithProviders } from '@/test/render';
 import { Button } from './Button';
 import { ConfirmAction } from './Choice';
 import { EmptyState } from './Feedback';
+import { Sheet } from './Sheet';
 import { StepNav } from './StepNav';
 
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
@@ -65,6 +66,32 @@ describe('ConfirmAction', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Cancelar' }));
     expect(screen.queryByRole('button', { name: 'Sí, revocar' })).toBeNull();
     expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it('adentro de un Sheet pregunta en el mismo lugar, sin abrir otra ventana', async () => {
+    const onConfirm = jest.fn();
+    await renderWithProviders(
+      <Sheet visible onClose={jest.fn()} title="Objetivo">
+        <ConfirmAction
+          label="Dejar de lado"
+          confirmLabel="Sí, dejar de lado"
+          description="Pasa a la lista de cerrados."
+          onConfirm={onConfirm}
+        />
+      </Sheet>,
+    );
+    const closers = screen.getAllByRole('button', { name: 'Cerrar' }).length;
+    await fireEvent.press(screen.getByRole('button', { name: 'Dejar de lado' }));
+    // El botón se reemplaza por la pregunta: no queda el disparador ni hay un segundo "Cerrar".
+    expect(screen.queryByRole('button', { name: 'Dejar de lado' })).toBeNull();
+    expect(screen.getByText('¿Dejar de lado?')).toBeOnTheScreen();
+    expect(screen.getAllByRole('button', { name: 'Cerrar' })).toHaveLength(closers);
+    await fireEvent.press(screen.getByRole('button', { name: 'Cancelar' }));
+    expect(screen.getByRole('button', { name: 'Dejar de lado' })).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole('button', { name: 'Dejar de lado' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Sí, dejar de lado' }));
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Objetivo')).toBeOnTheScreen();
   });
 });
 
