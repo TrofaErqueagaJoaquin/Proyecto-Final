@@ -1,7 +1,11 @@
+import { ageInMonths } from '@crecer/domain';
 import { AGE_STAGES, SPACE_LABELS } from '@crecer/shared';
-import { Puzzle } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
+import { Puzzle, X } from 'lucide-react-native';
+import { useMemo, useState, type ComponentProps } from 'react';
+import { Pressable, View } from 'react-native';
+
+import { useActiveFamily, useMembers } from '@/features/families/queries';
 
 import {
   activeFilterCount,
@@ -22,7 +26,10 @@ import {
   Skeleton,
   Text,
   TextField,
+  makeStyles,
+  useTheme,
 } from '@/ui';
+import { minTouchTarget } from '@/ui/tokens';
 
 const STAGE_OPTIONS = AGE_STAGES.map((s) => ({ value: s.slug, label: s.label }));
 const MINUTE_OPTIONS = [
@@ -35,10 +42,85 @@ const SPACE_OPTIONS = (Object.keys(SPACE_LABELS) as (keyof typeof SPACE_LABELS)[
   label: SPACE_LABELS[value],
 }));
 
-export default function ActivitiesScreen() {
+type Stage = ActivityFilters['stage'];
+
+const useStyles = makeStyles((t) => ({
+  kidChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: t.space.sm,
+    minHeight: minTouchTarget,
+    paddingHorizontal: t.space.lg,
+    borderRadius: t.radius.pill,
+    backgroundColor: t.colors.primarySoft,
+  },
+}));
+
+function stageForMonths(months: number): Stage {
+  return AGE_STAGES.find((s) => months >= s.minMonths && months <= s.maxMonths)?.slug ?? null;
+}
+
+function isStage(value: string | undefined): value is NonNullable<Stage> {
+  return AGE_STAGES.some((s) => s.slug === value);
+}
+
+/** Edad corta para el chip: "8 meses", "1 año", "3 años". */
+function shortAge(months: number): string {
+  if (months < 12) return months === 1 ? '1 mes' : `${String(months)} meses`;
+  const years = Math.floor(months / 12);
+  return years === 1 ? '1 año' : `${String(years)} años`;
+}
+
+/** El integrante más chico de la familia (con sesión) y la etapa que le corresponde. */
+function useYoungestKid() {
+  const { family } = useActiveFamily();
+  const members = useMembers(family?.id);
+  return useMemo(() => {
+    const now = new Date();
+    const youngest = (members.data ?? [])
+      .filter((m) => m.archived_at === null)
+      .sort((a, b) => b.birth_month.localeCompare(a.birth_month))[0];
+    if (!youngest) return null;
+    try {
+      const months = ageInMonths(youngest.birth_month, now);
+      const stage = stageForMonths(months);
+      return stage ? { alias: youngest.alias, age: shortAge(months), stage } : null;
+    } catch {
+      return null;
+    }
+  }, [members.data]);
+}
+
+/**
+ * El catálogo de actividades. Se usa en la portada pública y, con sesión, dentro del espacio de la
+ * familia (`/catalogo`), donde arranca filtrado por la edad del más chico.
+ * `?etapa=etapa-3-5` lo abre en esa edad (llega desde la lectura de una etapa).
+ */
+export function ActivityCatalog({ edges }: { edges?: ComponentProps<typeof Screen>['edges'] }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const activities = useActivities();
   const categories = useCategories();
-  const [filters, setFilters] = useState<ActivityFilters>(EMPTY_FILTERS);
+  const { etapa } = useLocalSearchParams<{ etapa?: string }>();
+  const paramStage = isStage(etapa) ? etapa : null;
+  const kid = useYoungestKid();
+  const [filters, setFilters] = useState<ActivityFilters>(() => ({
+    ...EMPTY_FILTERS,
+    stage: paramStage,
+  }));
+  // Si llega otra etapa por el enlace, se aplica; si no llega ninguna, la del más chico (una vez).
+  const [seenParam, setSeenParam] = useState(paramStage);
+  const [kidApplied, setKidApplied] = useState(false);
+  if (paramStage !== seenParam) {
+    setSeenParam(paramStage);
+    if (paramStage) setFilters((current) => ({ ...current, stage: paramStage }));
+  }
+  if (!kidApplied && kid && paramStage === null) {
+    setKidApplied(true);
+    setFilters((current) => ({ ...current, stage: kid.stage }));
+  }
+  const kidFilter = kid !== null && filters.stage === kid.stage;
   const [showFilters, setShowFilters] = useState(false);
   const set = (changes: Partial<ActivityFilters>) => {
     setFilters((current) => ({ ...current, ...changes }));
@@ -51,7 +133,7 @@ export default function ActivitiesScreen() {
   const active = activeFilterCount(filters);
 
   return (
-    <Screen edges={['bottom']} maxWidth={960}>
+    <Screen edges={edges} maxWidth={960}>
       <Text variant="title">Actividades</Text>
       <Text tone="muted">Tocá una para ver cómo se hace.</Text>
 
@@ -85,6 +167,21 @@ export default function ActivitiesScreen() {
           />
         ) : null}
       </View>
+      {kidFilter ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Quitar el filtro para ${kid.alias}`}
+          style={styles.kidChip}
+          onPress={() => {
+            set({ stage: null });
+          }}
+        >
+          <Text variant="bodyStrong" tone="primary">
+            {`Para ${kid.alias} (${kid.age})`}
+          </Text>
+          <X size={18} color={colors.primary} aria-hidden />
+        </Pressable>
+      ) : null}
 
       {showFilters ? (
         <Card>
@@ -169,4 +266,8 @@ export default function ActivitiesScreen() {
       )}
     </Screen>
   );
+}
+
+export default function ActivitiesScreen() {
+  return <ActivityCatalog edges={['bottom']} />;
 }

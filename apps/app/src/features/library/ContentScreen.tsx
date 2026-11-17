@@ -1,9 +1,14 @@
-import { BookX } from 'lucide-react-native';
+import { AGE_STAGES } from '@crecer/shared';
+import { Link, type Href } from 'expo-router';
+import { BookX, Puzzle, Stethoscope, UserPlus } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
 
+import { useAuth } from '@/features/auth/AuthProvider';
+import { BroteSays } from '@/features/brote/Brote';
 import {
   Banner,
+  Button,
   Card,
   EmptyState,
   ErrorState,
@@ -133,6 +138,45 @@ export function ContentSheet({
   );
 }
 
+/**
+ * El paso siguiente después de leer: actividades para esa edad (si es una etapa) y, sin sesión,
+ * crear la cuenta. Con sesión, el catálogo se abre dentro del espacio de la familia.
+ */
+function NextStep({ slug }: { slug: string }) {
+  const auth = useAuth();
+  const signedIn = auth.status === 'signedIn';
+  if (slug === 'cuando-consultar') {
+    // Después de "Cuándo consultar", el paso es buscar a quién consultar.
+    return (
+      <Link href="/directorio" asChild>
+        <Button label="Buscar un profesional" icon={Stethoscope} fullWidth />
+      </Link>
+    );
+  }
+  const stage = AGE_STAGES.some((s) => s.slug === slug) ? slug : null;
+  const base = signedIn ? '/catalogo' : '/actividades';
+  const href = (stage ? `${base}?etapa=${stage}` : base) as Href;
+  return (
+    <Card>
+      <BroteSays mood="feliz" size={88}>
+        {stage ? '¿Probamos algo pensado para esta edad?' : '¿Probamos una actividad juntos?'}
+      </BroteSays>
+      <Link href={href} asChild>
+        <Button
+          label={stage ? 'Ver actividades para esta edad' : 'Ver actividades'}
+          icon={Puzzle}
+          fullWidth
+        />
+      </Link>
+      {auth.status === 'signedOut' ? (
+        <Link href="/registrarse" asChild>
+          <Button label="Crear cuenta gratis" icon={UserPlus} variant="secondary" fullWidth />
+        </Link>
+      ) : null}
+    </Card>
+  );
+}
+
 /** Pantalla de un contenido de la biblioteca: etapa, ficha o "cuándo consultar". */
 export function ContentScreen({
   slug,
@@ -183,6 +227,7 @@ export function ContentScreen({
         <Text variant="title">{content.title}</Text>
       )}
       <ContentBody content={content} collapseSections={collapseSections} />
+      <NextStep slug={content.slug} />
     </Screen>
   );
 }

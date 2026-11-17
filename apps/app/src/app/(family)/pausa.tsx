@@ -1,6 +1,6 @@
 import { RISK_RESPONSES } from '@crecer/domain';
 import { Link } from 'expo-router';
-import { HeartHandshake, Phone, Play, RefreshCw, Square } from 'lucide-react-native';
+import { HeartHandshake, House, Phone, Play, RefreshCw, Square } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { Linking, Pressable, View } from 'react-native';
 import Animated, {
@@ -143,10 +143,26 @@ function Breathing() {
       {step !== null && !finished ? (
         <Text center tone="muted">{`Respiración ${String(cycle)} de ${String(CYCLES)}`}</Text>
       ) : null}
-      {finished ? <Text center>Bien hecho. Ese minuto fue tuyo.</Text> : null}
-      {step === null || finished ? (
+      {finished ? (
+        <>
+          <Text center>¿Mejor? Cuando quieras seguimos.</Text>
+          <Link href="/hoy" asChild>
+            <Button label="Volver a Hoy" icon={House} fullWidth />
+          </Link>
+          <Button
+            label="Otra vez"
+            icon={RefreshCw}
+            variant="secondary"
+            fullWidth
+            onPress={() => {
+              scale.set(SMALL);
+              setStep(0);
+            }}
+          />
+        </>
+      ) : step === null ? (
         <Button
-          label={finished ? 'Otra vez' : 'Empezar'}
+          label="Empezar"
           icon={Play}
           fullWidth
           onPress={() => {
@@ -181,7 +197,7 @@ export default function PauseScreen() {
     <Screen>
       <Text variant="title">Pausa para vos</Text>
       <BroteSays mood="calma" size={104}>
-        {mood ? ANSWERS[mood] : 'Antes de seguir… ¿cómo estás vos hoy?'}
+        {mood ? ANSWERS[mood] : 'Antes de seguir, un momento para vos.'}
       </BroteSays>
       <ChipGroup
         label="¿Cómo estás hoy?"
@@ -242,7 +258,6 @@ export default function PauseScreen() {
       <Breathing />
 
       <View style={styles.phrase}>
-        <Text variant="caption">UNA FRASE PARA HOY</Text>
         <Animated.View key={phrase} entering={FadeIn.duration(500)}>
           <Text variant="heading">{PHRASES[phrase]}</Text>
         </Animated.View>
