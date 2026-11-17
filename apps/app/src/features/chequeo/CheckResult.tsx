@@ -53,7 +53,9 @@ export function CheckResult({
   }, [celebrate]);
 
   if (result.isPending) return <Skeleton height={280} />;
-  if (result.isError) return <ErrorState onRetry={() => void result.refetch()} />;
+  if (result.isError) {
+    return <ErrorState error={result.error} onRetry={() => void result.refetch()} />;
+  }
 
   const scores = [...result.data.scores].sort(
     (a, b) => ORDER[a.band as keyof typeof ORDER] - ORDER[b.band as keyof typeof ORDER],

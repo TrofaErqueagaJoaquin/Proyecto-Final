@@ -15,7 +15,6 @@ import {
 import { useState, type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 
-import { friendlyError } from '@/copy/errors';
 import {
   useAdminContent,
   useAdminSources,
@@ -25,6 +24,7 @@ import {
 } from '@/features/admin/queries';
 import { ActivityScene, sceneFor } from '@/features/animations';
 import { useMfaStatus } from '@/features/auth/mfa';
+import { BroteEmptyState } from '@/features/brote/Brote';
 import { IconBadge } from '@/features/library/IconTile';
 import { situationVisual } from '@/features/library/libraryVisuals';
 import {
@@ -34,7 +34,10 @@ import {
   Card,
   ChipGroup,
   ConfirmAction,
+  ErrorBanner,
+  ErrorScreen,
   ErrorState,
+  LoadingScreen,
   Screen,
   Skeleton,
   Text,
@@ -199,8 +202,10 @@ export default function ContentAdminScreen() {
   const withoutMfa = mfa.data !== undefined && mfa.data.level !== 'aal2';
   const otherAdmin = [...permissions].some((p) => !p.startsWith('content.'));
 
-  if (content.isPending) return <Skeleton height={300} />;
-  if (content.isError) return <ErrorState onRetry={() => void content.refetch()} />;
+  if (content.isPending) return <LoadingScreen />;
+  if (content.isError) {
+    return <ErrorScreen error={content.error} onRetry={() => void content.refetch()} />;
+  }
 
   const q = normalize(query.trim());
   const matches = (text: string) => q === '' || normalize(text).includes(q);
@@ -306,21 +311,20 @@ export default function ContentAdminScreen() {
           {notice}
         </Banner>
       ) : null}
-      {(setStatus.error ?? publishVersion.error) ? (
-        <Banner tone="danger">{friendlyError(setStatus.error ?? publishVersion.error)}</Banner>
-      ) : null}
+      <ErrorBanner error={setStatus.error ?? publishVersion.error} />
 
       {tab === 'source' && sources.isPending ? <Skeleton height={200} /> : null}
       {tab === 'source' && sources.isError ? (
-        <ErrorState onRetry={() => void sources.refetch()} />
+        <ErrorState error={sources.error} onRetry={() => void sources.refetch()} />
       ) : null}
       {tab === 'source' && !sources.isSuccess
         ? null
-        : shownCount === 0 && (
-            <Text tone="muted">
-              {q === '' ? 'Todavía no hay nada acá.' : 'No hay coincidencias.'}
-            </Text>
-          )}
+        : shownCount === 0 &&
+          (q === '' ? (
+            <BroteEmptyState title="Todavía no hay nada acá" />
+          ) : (
+            <Text tone="muted">No hay coincidencias.</Text>
+          ))}
 
       {tab === 'source'
         ? shownSources.map((source) => (

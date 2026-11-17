@@ -3,7 +3,7 @@ import { ASSISTANT_QUESTION_MAX } from '@crecer/shared';
 import { RISK_RESPONSES, type HighRiskCategory } from '@crecer/domain';
 import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Clock, MessageCircle, MoreHorizontal, Send, Trash2 } from 'lucide-react-native';
+import { Clock, MoreHorizontal, Send, Trash2 } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Platform,
@@ -27,10 +27,9 @@ import {
   useDeleteConversation,
   type StoredMessage,
 } from '@/features/assistant/queries';
-import { BroteSays } from '@/features/brote/Brote';
+import { BroteEmptyState, BroteSays } from '@/features/brote/Brote';
 import {
   Button,
-  EmptyState,
   ErrorBanner,
   ErrorScreen,
   LoadingScreen,
@@ -243,10 +242,10 @@ export default function ConversationScreen() {
   if (!conversation.data) {
     return (
       <Screen>
-        <EmptyState
-          icon={MessageCircle}
+        <BroteEmptyState
           title="Esta conversación ya no está"
-          description="Puede que se haya borrado o que haya vencido su tiempo de guardado."
+          description="Se borró o venció su tiempo de guardado."
+          action={<Button label="Ir al asistente" onPress={() => router.replace('/asistente')} />}
         />
       </Screen>
     );

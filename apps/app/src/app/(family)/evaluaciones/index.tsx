@@ -21,12 +21,12 @@ import {
   Button,
   Card,
   ErrorBanner,
-  ErrorState,
+  ErrorScreen,
   EvidenceChip,
+  LoadingScreen,
   makeStyles,
   Screen,
   Sheet,
-  Skeleton,
   Text,
   useTheme,
 } from '@/ui';
@@ -68,7 +68,7 @@ export default function AssessmentsScreen() {
   const start = useStartAssessment();
   const [infoOpen, setInfoOpen] = useState(false);
 
-  if (isPending) return <Skeleton height={300} />;
+  if (isPending) return <LoadingScreen />;
   if (!family) return <Redirect href="/bienvenida" />;
   if (!manage) {
     // ROLES_AND_PERMISSIONS.md §3: la caregiver no ve los chequeos.
@@ -82,11 +82,11 @@ export default function AssessmentsScreen() {
     );
   }
   if (members.isPending || attempts.isPending || questionnaire.isPending) {
-    return <Skeleton height={300} />;
+    return <LoadingScreen />;
   }
   if (members.isError || attempts.isError || questionnaire.isError) {
     return (
-      <ErrorState
+      <ErrorScreen
         error={members.error ?? attempts.error ?? questionnaire.error}
         onRetry={() => {
           void members.refetch();

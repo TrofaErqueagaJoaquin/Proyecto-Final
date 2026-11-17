@@ -10,12 +10,12 @@ import {
   UserMinus,
   UserPlus,
   UserRound,
-  Users,
 } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
 
 import { useAuth } from '@/features/auth/AuthProvider';
+import { BroteEmptyState } from '@/features/brote/Brote';
 import { relationshipLabel, roleLabel } from '@/features/families/labels';
 import {
   canManage,
@@ -37,9 +37,9 @@ import {
   ChipGroup,
   ConfirmAction,
   Disclosure,
-  EmptyState,
   ErrorBanner,
   ErrorState,
+  LoadingScreen,
   makeStyles,
   Screen,
   Sheet,
@@ -81,7 +81,9 @@ function MembersSection({ familyId, manage }: { familyId: string; manage: boolea
   const [showArchived, setShowArchived] = useState(false);
 
   if (members.isPending) return <Skeleton height={160} />;
-  if (members.isError) return <ErrorState onRetry={() => void members.refetch()} />;
+  if (members.isError) {
+    return <ErrorState error={members.error} onRetry={() => void members.refetch()} />;
+  }
 
   const active = members.data.filter((m) => m.archived_at === null);
   const archived = members.data.filter((m) => m.archived_at !== null);
@@ -90,7 +92,7 @@ function MembersSection({ familyId, manage }: { familyId: string; manage: boolea
     <View style={styles.section}>
       <Text variant="heading">Chicos</Text>
       {active.length === 0 ? (
-        <EmptyState icon={Users} title="Todavía no agregaste a nadie" />
+        <BroteEmptyState title="Todavía no agregaste a nadie" />
       ) : (
         <IconGrid>
           {active.map((member, index) => (
@@ -258,7 +260,9 @@ function AdultsSection({
   const isOwner = myRole === 'owner';
 
   if (adults.isPending) return <Skeleton height={160} />;
-  if (adults.isError) return <ErrorState onRetry={() => void adults.refetch()} />;
+  if (adults.isError) {
+    return <ErrorState error={adults.error} onRetry={() => void adults.refetch()} />;
+  }
 
   const list: Adult[] = adults.data.map((a) => ({
     user_id: a.user_id,
@@ -345,22 +349,14 @@ export default function FamilyScreen() {
   const theme = useTheme();
   const iconColor = theme.colors.primary;
 
-  if (isPending) {
-    return (
-      <Screen>
-        <Skeleton height={36} width="50%" />
-        <Skeleton height={160} />
-      </Screen>
-    );
-  }
+  if (isPending) return <LoadingScreen />;
 
   if (!family) {
     return (
       <Screen>
         <Text variant="title">Familia</Text>
         <Card>
-          <EmptyState
-            icon={Users}
+          <BroteEmptyState
             title="Creá el espacio de tu familia"
             description="Si otra persona ya lo creó, pedile que te invite."
             action={

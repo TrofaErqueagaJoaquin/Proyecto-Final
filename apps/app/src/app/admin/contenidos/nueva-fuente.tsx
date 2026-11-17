@@ -28,10 +28,7 @@ export default function NewSourceScreen() {
   return (
     <Screen maxWidth={720}>
       <Text variant="title">Nueva fuente</Text>
-      <Text tone="muted">
-        Queda disponible para citar al cargar actividades y fichas. Se marca «sin verificar» hasta
-        que alguien la revise.
-      </Text>
+      <Text tone="muted">Para citar al cargar actividades y fichas.</Text>
       <SourceForm
         onCreated={() => {
           setCreated(true);

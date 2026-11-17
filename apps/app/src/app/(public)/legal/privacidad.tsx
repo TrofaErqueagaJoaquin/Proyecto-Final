@@ -11,7 +11,7 @@ export default function PrivacyScreen() {
         },
         {
           heading: 'Vos decidís qué compartir',
-          body: 'Cada uso de los datos requiere un consentimiento que podés revocar en cualquier momento desde la sección Privacidad. Los profesionales ven solo lo que autorizás, integrante por integrante.',
+          body: 'Cada uso de los datos necesita tu permiso, y lo podés quitar cuando quieras desde la sección Privacidad. Los profesionales ven solo lo que autorizás, integrante por integrante.',
         },
         {
           heading: 'Sin publicidad ni venta de datos',

@@ -1,17 +1,17 @@
 import { ASSISTANT_QUESTION_MAX } from '@crecer/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { Redirect, router } from 'expo-router';
-import { MessageCircle, Send, Sparkles } from 'lucide-react-native';
+import { MessageCircle, Send } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import { Platform, View, type TextInputKeyPressEvent } from 'react-native';
 
-import { friendlyError } from '@/copy/errors';
 import {
   useAiContextConsent,
   useConversations,
   useCreateConversation,
   useGrantAiContext,
 } from '@/features/assistant/queries';
+import { BroteEmptyState } from '@/features/brote/Brote';
 import { canManage, useActiveFamily, useMembers } from '@/features/families/queries';
 import { LinkCard } from '@/features/library/LinkCard';
 import {
@@ -21,8 +21,9 @@ import {
   Checkbox,
   ChipGroup,
   Disclosure,
-  EmptyState,
+  ErrorBanner,
   ErrorState,
+  LoadingScreen,
   Screen,
   Skeleton,
   Text,
@@ -122,9 +123,7 @@ function Ask({ familyId }: { familyId: string }) {
           Para que conozca a tu familia, dalo una vez. Lo podés quitar en Privacidad.
         </Banner>
       ) : null}
-      {(create.error ?? grant.error) ? (
-        <Banner tone="danger">{friendlyError(create.error ?? grant.error)}</Banner>
-      ) : null}
+      <ErrorBanner error={create.error ?? grant.error} />
       <Button
         label={needsConsent ? 'Dar permiso y preguntar' : 'Preguntar'}
         icon={Send}
@@ -155,13 +154,12 @@ export default function AssistantScreen() {
   const conversations = useConversations(family?.id);
   const { colors } = useTheme();
 
-  if (isPending) return <Skeleton height={300} />;
+  if (isPending) return <LoadingScreen />;
   if (!family) return <Redirect href="/bienvenida" />;
   if (!canManage(family.role)) {
     return (
       <Screen>
-        <EmptyState
-          icon={Sparkles}
+        <BroteEmptyState
           title="El asistente es para los responsables de la familia"
           description="Mientras tanto, la biblioteca y las actividades están disponibles."
         />
@@ -178,7 +176,7 @@ export default function AssistantScreen() {
       {conversations.isPending ? (
         <Skeleton height={120} />
       ) : conversations.isError ? (
-        <ErrorState onRetry={() => void conversations.refetch()} />
+        <ErrorState error={conversations.error} onRetry={() => void conversations.refetch()} />
       ) : conversations.data.length > 0 ? (
         <View style={{ gap: 12 }}>
           <Text variant="heading">Conversaciones</Text>

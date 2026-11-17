@@ -1,8 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
-import { Eye, HeartHandshake } from 'lucide-react-native';
+import { Eye, Lock, LogOut } from 'lucide-react-native';
 import { View } from 'react-native';
 
-import { friendlyError } from '@/copy/errors';
+import { BroteEmptyState } from '@/features/brote/Brote';
 import { useActiveFamily, useMembers } from '@/features/families/queries';
 import { ProfessionalAvatar, VerificationBadge } from '@/features/professionals/components';
 import {
@@ -18,10 +18,10 @@ import {
   Banner,
   Card,
   ConfirmAction,
-  EmptyState,
-  ErrorState,
+  ErrorBanner,
+  ErrorScreen,
+  LoadingScreen,
   Screen,
-  Skeleton,
   Text,
   useTheme,
 } from '@/ui';
@@ -34,7 +34,7 @@ const DATE_TIME = new Intl.DateTimeFormat('es-AR', {
 });
 const DATE = new Intl.DateTimeFormat('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
 
-/** Accesos otorgados, revocar, observaciones compartidas y actividad de acceso (§5.4). */
+/** Qué puede ver, quitar permisos, observaciones compartidas y cuándo miró (§5.4). */
 export default function AssignmentScreen() {
   const { assignmentId } = useLocalSearchParams<{ assignmentId: string }>();
   const { family } = useActiveFamily();
@@ -44,12 +44,14 @@ export default function AssignmentScreen() {
   const end = useEndCare();
   const { colors } = useTheme();
 
-  if (assignment.isPending) return <Skeleton height={300} />;
-  if (assignment.isError) return <ErrorState onRetry={() => void assignment.refetch()} />;
+  if (assignment.isPending) return <LoadingScreen />;
+  if (assignment.isError) {
+    return <ErrorScreen error={assignment.error} onRetry={() => void assignment.refetch()} />;
+  }
   if (!assignment.data) {
     return (
       <Screen>
-        <EmptyState icon={HeartHandshake} title="No encontramos este acompañamiento" />
+        <BroteEmptyState title="No encontramos este acompañamiento" />
       </Screen>
     );
   }
@@ -84,9 +86,7 @@ export default function AssignmentScreen() {
         {CARE_STATUS_LABELS[a.status]}
       </Badge>
       {a.status === 'requested' ? (
-        <Banner tone="info">
-          {`Esperando que ${name} acepte. Hasta entonces no ve nada de la familia.`}
-        </Banner>
+        <Banner tone="info">{`Esperando que ${name} acepte. Hasta entonces, no ve nada.`}</Banner>
       ) : null}
       {a.professional_profiles?.public_contact && open ? (
         <Text tone="muted">{`Contacto: ${a.professional_profiles.public_contact}`}</Text>
@@ -95,7 +95,7 @@ export default function AssignmentScreen() {
       <Card>
         <Text variant="subheading">Qué puede ver</Text>
         {activeGrants.length === 0 ? (
-          <Text tone="muted">No tiene ningún permiso activo.</Text>
+          <Text tone="muted">Ya no ve nada de la familia.</Text>
         ) : (
           [...byMember.entries()].map(([memberId, grants]) => (
             <View key={memberId ?? 'family'} style={{ gap: 4 }}>
@@ -113,11 +113,13 @@ export default function AssignmentScreen() {
                 >
                   <Text>{SCOPE_LABELS[g.scope as Scope].label}</Text>
                   <ConfirmAction
-                    label="Revocar"
-                    confirmLabel="Sí, revocar"
+                    label="Quitar"
+                    title="¿Quitar el permiso?"
+                    confirmLabel="Sí, quitar"
+                    icon={Lock}
                     description={
                       g.scope === 'member_profile'
-                        ? `Revocar el perfil de ${alias(memberId)} revoca todo lo que compartiste sobre ese integrante.`
+                        ? `${name} deja de ver todo lo de ${alias(memberId)}.`
                         : `${name} deja de ver "${SCOPE_LABELS[g.scope as Scope].label}" al instante.`
                     }
                     loading={revoke.isPending && revoke.variables === g.id}
@@ -130,7 +132,8 @@ export default function AssignmentScreen() {
             </View>
           ))
         )}
-        {revoke.error ? <Banner tone="danger">{friendlyError(revoke.error)}</Banner> : null}
+        <ErrorBanner error={revoke.error} />
+        {revoke.isSuccess ? <Banner tone="success">Listo, ya no lo ve.</Banner> : null}
       </Card>
 
       {a.observations.length > 0 ? (
@@ -171,15 +174,15 @@ export default function AssignmentScreen() {
       ) : null}
 
       <Card>
-        <Text variant="subheading">Actividad de acceso</Text>
+        <Text variant="subheading">Cuándo miró</Text>
         {a.activity.length === 0 ? (
-          <Text tone="muted">Todavía no miró ningún resumen.</Text>
+          <Text tone="muted">Todavía no miró nada.</Text>
         ) : (
           a.activity.map((event) => (
             <View key={event.id} style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
               <Eye size={16} color={colors.inkMuted} aria-hidden />
               <Text style={{ flex: 1 }}>
-                {`${name} vio el resumen de ${alias(event.entity_id)} el ${DATE_TIME.format(
+                {`Vio a ${alias(event.entity_id)} el ${DATE_TIME.format(
                   new Date(event.occurred_at),
                 )}`}
               </Text>
@@ -190,16 +193,20 @@ export default function AssignmentScreen() {
 
       {open ? (
         <ConfirmAction
-          label={a.status === 'requested' ? 'Cancelar la solicitud' : 'Finalizar el acompañamiento'}
-          confirmLabel={a.status === 'requested' ? 'Sí, cancelar' : 'Sí, finalizar'}
-          description={`Se revocan todos los permisos y ${name} deja de ver los datos de la familia. Conserva sus propias notas.`}
+          label={a.status === 'requested' ? 'Cancelar la solicitud' : 'Terminar el acompañamiento'}
+          confirmLabel={a.status === 'requested' ? 'Sí, cancelar' : 'Sí, terminar'}
+          title={
+            a.status === 'requested' ? '¿Cancelar la solicitud?' : '¿Terminar el acompañamiento?'
+          }
+          icon={LogOut}
+          description={`${name} deja de ver todo lo de la familia.`}
           loading={end.isPending}
           onConfirm={() => {
             end.mutate({ assignmentId: a.id });
           }}
         />
       ) : null}
-      {end.error ? <Banner tone="danger">{friendlyError(end.error)}</Banner> : null}
+      <ErrorBanner error={end.error} />
     </Screen>
   );
 }

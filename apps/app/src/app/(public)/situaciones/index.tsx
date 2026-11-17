@@ -20,7 +20,7 @@ export default function SituationsScreen() {
         {situations.isPending ? (
           <Skeleton height={300} />
         ) : situations.isError ? (
-          <ErrorState onRetry={() => void situations.refetch()} />
+          <ErrorState error={situations.error} onRetry={() => void situations.refetch()} />
         ) : (
           <IconGrid>
             {situations.data.map((s) => {

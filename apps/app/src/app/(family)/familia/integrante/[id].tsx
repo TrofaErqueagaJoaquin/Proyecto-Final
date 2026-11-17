@@ -1,9 +1,11 @@
 import { formatBirthMonth, type InterestSchema } from '@crecer/shared';
 import { Link, Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { ClipboardCheck, History, UserMinus, UserRound } from 'lucide-react-native';
+import { ClipboardCheck, History, UserMinus } from 'lucide-react-native';
+import { useState } from 'react';
 import { View } from 'react-native';
 import type { z } from 'zod';
 
+import { BroteEmptyState } from '@/features/brote/Brote';
 import { interestLabel, memberAge } from '@/features/families/labels';
 import { MemberForm } from '@/features/families/MemberForm';
 import {
@@ -20,11 +22,10 @@ import {
   Card,
   ConfirmAction,
   Disclosure,
-  EmptyState,
   ErrorBanner,
-  ErrorState,
+  ErrorScreen,
+  LoadingScreen,
   Screen,
-  Skeleton,
   Text,
 } from '@/ui';
 
@@ -36,17 +37,19 @@ export default function MemberScreen() {
   const update = useUpdateMember(family?.id);
   const archive = useUpdateMember(family?.id);
   const remove = useDeleteMember(family?.id);
+  const [savedKey, setSavedKey] = useState(0);
 
-  if (isPending || members.isPending) return <Skeleton height={300} />;
+  if (isPending || members.isPending) return <LoadingScreen />;
   if (!family) return <Redirect href="/bienvenida" />;
-  if (members.isError) return <ErrorState onRetry={() => void members.refetch()} />;
+  if (members.isError) {
+    return <ErrorScreen error={members.error} onRetry={() => void members.refetch()} />;
+  }
 
   const member = members.data.find((m) => m.id === id);
   if (!member) {
     return (
       <Screen>
-        <EmptyState
-          icon={UserRound}
+        <BroteEmptyState
           title="No encontramos a este integrante"
           description="Puede que lo hayan borrado."
           action={
@@ -93,18 +96,25 @@ export default function MemberScreen() {
             }}
             submitLabel="Guardar cambios"
             loading={update.isPending}
+            savedKey={savedKey}
             onSubmit={(values) => {
-              update.mutate({
-                id: member.id,
-                changes: {
-                  alias: values.alias,
-                  birth_month: values.birthMonth,
-                  interests: values.interests,
+              update.mutate(
+                {
+                  id: member.id,
+                  changes: {
+                    alias: values.alias,
+                    birth_month: values.birthMonth,
+                    interests: values.interests,
+                  },
                 },
-              });
+                {
+                  onSuccess: () => {
+                    setSavedKey((n) => n + 1);
+                  },
+                },
+              );
             }}
           >
-            {update.isSuccess ? <Banner tone="success">Guardamos los cambios.</Banner> : null}
             <ErrorBanner error={update.error} />
           </MemberForm>
         </Disclosure>

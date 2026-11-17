@@ -1,17 +1,16 @@
 import { CircleCheck, CircleOff } from 'lucide-react-native';
 import { View } from 'react-native';
 
-import { friendlyError } from '@/copy/errors';
 import { useKbDocuments, useSetKbStatus } from '@/features/admin/queries';
 import {
   Badge,
-  Banner,
   Button,
   Card,
   ConfirmAction,
-  ErrorState,
+  ErrorBanner,
+  ErrorScreen,
+  LoadingScreen,
   Screen,
-  Skeleton,
   Text,
 } from '@/ui';
 
@@ -22,8 +21,10 @@ export default function KnowledgeScreen() {
   const documents = useKbDocuments();
   const setStatus = useSetKbStatus();
 
-  if (documents.isPending) return <Skeleton height={300} />;
-  if (documents.isError) return <ErrorState onRetry={() => void documents.refetch()} />;
+  if (documents.isPending) return <LoadingScreen />;
+  if (documents.isError) {
+    return <ErrorScreen error={documents.error} onRetry={() => void documents.refetch()} />;
+  }
 
   const inUse = documents.data.filter((d) => d.status === 'indexed').length;
   return (
@@ -32,7 +33,7 @@ export default function KnowledgeScreen() {
       <Text tone="muted">
         {`${String(inUse)} de ${String(documents.data.length)} documentos en uso por el asistente.`}
       </Text>
-      {setStatus.error ? <Banner tone="danger">{friendlyError(setStatus.error)}</Banner> : null}
+      <ErrorBanner error={setStatus.error} />
       {documents.data.map((d) => {
         const used = d.status === 'indexed';
         const busy = setStatus.isPending && setStatus.variables.id === d.id;

@@ -17,10 +17,10 @@ import { feedback } from '@/features/feedback/feedback';
 import {
   Button,
   ErrorBanner,
-  ErrorState,
+  ErrorScreen,
   GrowthLine,
+  LoadingScreen,
   Screen,
-  Skeleton,
   Text,
   useOverlayTurn,
 } from '@/ui';
@@ -51,16 +51,11 @@ export default function AnswerScreen() {
   }, [submit.isSuccess]);
 
   if (attempt.isPending || answers.isPending || (attempt.data && version.isPending)) {
-    return (
-      <Screen>
-        <Skeleton height={24} />
-        <Skeleton height={320} />
-      </Screen>
-    );
+    return <LoadingScreen />;
   }
   if (attempt.isError || answers.isError || version.isError) {
     return (
-      <ErrorState
+      <ErrorScreen
         error={attempt.error ?? answers.error ?? version.error}
         onRetry={() => {
           void attempt.refetch();

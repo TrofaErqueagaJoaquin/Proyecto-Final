@@ -90,6 +90,7 @@ export default function RequestResetScreen() {
         keyboardType="email-address"
         autoCapitalize="none"
         inputMode="email"
+        returnKeyType="send"
         onSubmitEditing={() => void onSubmit()}
       />
       <ErrorBanner error={error} />

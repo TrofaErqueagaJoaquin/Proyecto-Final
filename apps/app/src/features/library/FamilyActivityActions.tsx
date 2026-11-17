@@ -2,13 +2,12 @@ import { Check, CircleCheck, Clock } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { friendlyError } from '@/copy/errors';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { TextLink } from '@/features/auth/components';
 import { feedback } from '@/features/feedback/feedback';
 import { canManage, useActiveFamily, useMembers } from '@/features/families/queries';
 import { useCompleteItem } from '@/features/plans/queries';
-import { Banner, Button, ChipGroup, makeStyles, Text, useTheme } from '@/ui';
+import { Button, ChipGroup, ErrorBanner, makeStyles, Text, useTheme } from '@/ui';
 
 import { useLogActivity, useSavedActivities, useToggleSaved } from './queries';
 
@@ -99,7 +98,7 @@ export function DoneForm({
         }}
       />
       <Button label="Cancelar" variant="ghost" fullWidth onPress={onCancel} />
-      {log.error ? <Banner tone="danger">{friendlyError(log.error)}</Banner> : null}
+      <ErrorBanner error={log.error} />
     </View>
   );
 }
@@ -211,7 +210,7 @@ export function FamilyActivityActions({
           />
         )
       ) : null}
-      {toggle.error ? <Banner tone="danger">{friendlyError(toggle.error)}</Banner> : null}
+      <ErrorBanner error={toggle.error} />
     </View>
   );
 }

@@ -10,7 +10,16 @@ import {
   usePreferences,
   useUpdatePreferences,
 } from '@/features/families/queries';
-import { Button, Card, ChipGroup, ErrorBanner, ErrorState, Screen, Skeleton, Text } from '@/ui';
+import {
+  Button,
+  Card,
+  ChipGroup,
+  ErrorBanner,
+  ErrorScreen,
+  LoadingScreen,
+  Screen,
+  Text,
+} from '@/ui';
 
 const MINUTES = [
   { value: '10', label: '10 minutos' },
@@ -97,10 +106,12 @@ export default function PreferencesScreen() {
   const { isPending, family } = useActiveFamily();
   const preferences = usePreferences(family?.id);
 
-  if (isPending || preferences.isPending) return <Skeleton height={300} />;
+  if (isPending || preferences.isPending) return <LoadingScreen />;
   if (!family) return <Redirect href="/bienvenida" />;
   if (!canManage(family.role)) return <Redirect href="/familia" />;
-  if (preferences.isError) return <ErrorState onRetry={() => void preferences.refetch()} />;
+  if (preferences.isError) {
+    return <ErrorScreen error={preferences.error} onRetry={() => void preferences.refetch()} />;
+  }
 
   const p = preferences.data;
   return (

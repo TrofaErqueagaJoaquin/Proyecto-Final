@@ -32,7 +32,7 @@ export default function SignInScreen() {
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
   const cooldown = useCooldown(60);
-  const { control, handleSubmit, formState } = useForm<SignInInput>({
+  const { control, handleSubmit, formState, setFocus } = useForm<SignInInput>({
     resolver: zodResolver(SignInSchema),
     // Valida cada campo al salir de él y después mientras se corrige.
     mode: 'onTouched',
@@ -109,6 +109,9 @@ export default function SignInScreen() {
         autoCapitalize="none"
         textContentType="emailAddress"
         inputMode="email"
+        onNext={() => {
+          setFocus('password');
+        }}
       />
       <FormTextField
         control={control}
@@ -117,6 +120,7 @@ export default function SignInScreen() {
         autoComplete="current-password"
         textContentType="password"
         secureTextEntry
+        returnKeyType="go"
         onSubmitEditing={() => void onSubmit()}
       />
       {problem?.kind === 'credentials' ? (

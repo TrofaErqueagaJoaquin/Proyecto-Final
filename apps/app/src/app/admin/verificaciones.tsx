@@ -1,13 +1,13 @@
-import { CircleX, ExternalLink, FileBadge } from 'lucide-react-native';
+import { CircleX, ExternalLink } from 'lucide-react-native';
 import { useState } from 'react';
 import { Linking, View } from 'react-native';
 
-import { friendlyError } from '@/copy/errors';
 import {
   openCredentialDocument,
   useCredentialQueue,
   useVerifyCredential,
 } from '@/features/admin/queries';
+import { BroteEmptyState } from '@/features/brote/Brote';
 import { VerificationBadge } from '@/features/professionals/components';
 import {
   CREDENTIAL_KIND_LABELS,
@@ -23,10 +23,10 @@ import {
   Checkbox,
   ChipGroup,
   ConfirmAction,
-  EmptyState,
-  ErrorState,
+  ErrorBanner,
+  ErrorScreen,
+  LoadingScreen,
   Screen,
-  Skeleton,
   Text,
   TextField,
 } from '@/ui';
@@ -133,7 +133,7 @@ function CredentialReview({
           Sin archivo: verificala con el número de matrícula.
         </Text>
       )}
-      {docError ? <Banner tone="danger">{friendlyError(docError)}</Banner> : null}
+      <ErrorBanner error={docError} />
 
       {credential.credential_verifications.map((v) => (
         <Text key={v.checked_at} variant="small" tone="muted">
@@ -180,7 +180,7 @@ function CredentialReview({
             multiline
             maxLength={500}
           />
-          {verify.error ? <Banner tone="danger">{friendlyError(verify.error)}</Banner> : null}
+          <ErrorBanner error={verify.error} />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             <Button
               label="Aprobar"
@@ -237,8 +237,10 @@ function CredentialReview({
 export default function VerificationsScreen() {
   const queue = useCredentialQueue();
   const [done, setDone] = useState<string | null>(null);
-  if (queue.isPending) return <Skeleton height={300} />;
-  if (queue.isError) return <ErrorState onRetry={() => void queue.refetch()} />;
+  if (queue.isPending) return <LoadingScreen />;
+  if (queue.isError) {
+    return <ErrorScreen error={queue.error} onRetry={() => void queue.refetch()} />;
+  }
 
   const pending = queue.data.filter((c) => c.status === 'submitted');
   const reviewed = queue.data.filter((c) => c.status !== 'submitted');
@@ -247,7 +249,7 @@ export default function VerificationsScreen() {
       <Text variant="title">Verificaciones</Text>
       {done ? <Banner tone="success">{done}</Banner> : null}
       {pending.length === 0 ? (
-        <EmptyState icon={FileBadge} title="No hay credenciales por verificar" />
+        <BroteEmptyState mood="feliz" title="No hay credenciales por verificar" />
       ) : (
         pending.map((c) => <CredentialReview key={c.id} credential={c} onDone={setDone} />)
       )}

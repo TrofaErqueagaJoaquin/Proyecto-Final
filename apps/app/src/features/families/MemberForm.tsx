@@ -26,7 +26,8 @@ export interface MemberFormValues {
  * Formulario de integrante. Minimización: apodo, edad (o mes y año) e intereses de un catálogo
  * cerrado. Para el alta se elige la edad con los mismos chips que la bienvenida; quien quiera
  * precisión pasa a "mes y año". Al editar arranca en mes y año para no mover la fecha guardada.
- * `beforeSubmit` permite agregar requisitos (por ejemplo, el consentimiento en el alta).
+ * `beforeSubmit` permite agregar requisitos (por ejemplo, el permiso en el alta). `savedKey` muestra
+ * "✓ Guardado" en el botón (ver `Button`).
  */
 export function MemberForm({
   defaultValues,
@@ -34,6 +35,7 @@ export function MemberForm({
   loading,
   onSubmit,
   beforeSubmit,
+  savedKey,
   children,
 }: {
   defaultValues: MemberInput;
@@ -41,10 +43,11 @@ export function MemberForm({
   loading: boolean;
   onSubmit: (values: MemberFormValues) => void;
   beforeSubmit?: () => boolean;
+  savedKey?: number;
   children?: React.ReactNode;
 }) {
   const now = new Date();
-  const { control, handleSubmit, setValue } = useForm<MemberInput>({
+  const { control, handleSubmit, setValue, setFocus } = useForm<MemberInput>({
     resolver: zodResolver(makeMemberSchema(now)),
     // Valida cada campo al salir de él y después mientras se corrige.
     mode: 'onTouched',
@@ -73,6 +76,14 @@ export function MemberForm({
         hint="Un apodo alcanza."
         autoCapitalize="words"
         maxLength={40}
+        // Con "mes y año", Enter pasa a la fecha; con los chips de edad no hay otro campo.
+        onNext={
+          exact
+            ? () => {
+                setFocus('birthMonth');
+              }
+            : undefined
+        }
       />
       {exact ? (
         <FormTextField
@@ -84,6 +95,8 @@ export function MemberForm({
           inputMode="numeric"
           mask={monthYearMask}
           maxLength={7}
+          returnKeyType="done"
+          onSubmitEditing={() => void submit()}
         />
       ) : (
         <ChipGroup
@@ -120,7 +133,12 @@ export function MemberForm({
         error={interests.fieldState.error?.message}
       />
       {children}
-      <Button label={submitLabel} loading={loading} onPress={() => void submit()} />
+      <Button
+        label={submitLabel}
+        loading={loading}
+        savedKey={savedKey}
+        onPress={() => void submit()}
+      />
     </View>
   );
 }

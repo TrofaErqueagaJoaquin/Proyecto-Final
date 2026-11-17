@@ -29,12 +29,12 @@ import {
   Button,
   Disclosure,
   ErrorBanner,
-  ErrorState,
+  ErrorScreen,
   EvidenceChip,
+  LoadingScreen,
   makeStyles,
   Screen,
   Sheet,
-  Skeleton,
   Text,
   useOverlayTurn,
   useTheme,
@@ -120,16 +120,11 @@ export default function ResultScreen() {
     answers.isPending ||
     (attempt.data && (version.isPending || history.isPending))
   ) {
-    return (
-      <Screen>
-        <Skeleton height={36} width="60%" />
-        <Skeleton height={320} />
-      </Screen>
-    );
+    return <LoadingScreen />;
   }
   if (attempt.isError || result.isError || answers.isError || version.isError || history.isError) {
     return (
-      <ErrorState
+      <ErrorScreen
         error={attempt.error ?? result.error ?? answers.error ?? version.error ?? history.error}
         onRetry={() => {
           void attempt.refetch();

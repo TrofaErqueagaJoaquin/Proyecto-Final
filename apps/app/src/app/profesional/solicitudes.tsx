@@ -1,18 +1,17 @@
 import { router, type Href } from 'expo-router';
-import { Check, Inbox, X } from 'lucide-react-native';
+import { Check, X } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { friendlyError } from '@/copy/errors';
+import { BroteEmptyState } from '@/features/brote/Brote';
 import { GuidePopup } from '@/features/brote/GuidePopup';
 import { ageLabel, SCOPE_LABELS } from '@/features/professionals/labels';
 import { useProCases, useRespondCare } from '@/features/professionals/queries';
 import {
-  Banner,
   Button,
   Card,
   ConfirmAction,
-  EmptyState,
+  ErrorBanner,
   ErrorScreen,
   LoadingScreen,
   Screen,
@@ -38,8 +37,7 @@ export default function RequestsScreen() {
     <Screen>
       <Text variant="title">Solicitudes</Text>
       {requests.length === 0 ? (
-        <EmptyState
-          icon={Inbox}
+        <BroteEmptyState
           title="No tenés solicitudes pendientes"
           description="Cuando una familia te pida acompañamiento, la vas a ver acá."
         />
@@ -108,7 +106,7 @@ export default function RequestsScreen() {
           </Card>
         ))
       )}
-      {respond.error ? <Banner tone="danger">{friendlyError(respond.error)}</Banner> : null}
+      <ErrorBanner error={respond.error} />
       <GuidePopup
         visible={accepted !== null}
         celebrate

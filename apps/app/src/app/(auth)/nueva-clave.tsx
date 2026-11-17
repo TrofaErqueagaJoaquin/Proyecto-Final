@@ -9,7 +9,7 @@ import { AuthScreen } from '@/features/auth/components';
 import { BroteSays } from '@/features/brote/Brote';
 import { feedback } from '@/features/feedback/feedback';
 import { supabase } from '@/lib/supabase';
-import { Button, ErrorBanner, FormTextField, Skeleton } from '@/ui';
+import { Button, ErrorBanner, FormTextField, LoadingScreen } from '@/ui';
 
 /**
  * Llega acá desde el enlace de recuperación (con sesión temporal) o desde Perfil (`?desde=perfil`).
@@ -22,14 +22,14 @@ export default function NewPasswordScreen() {
   const fromProfile = useLocalSearchParams<{ desde?: string }>().desde === 'perfil';
   const [error, setError] = useState<unknown>(null);
   const [saved, setSaved] = useState(false);
-  const { control, handleSubmit, formState } = useForm<NewPasswordInput>({
+  const { control, handleSubmit, formState, setFocus } = useForm<NewPasswordInput>({
     resolver: zodResolver(NewPasswordSchema),
     // Valida cada campo al salir de él y después mientras se corrige.
     mode: 'onTouched',
     defaultValues: { password: '', confirm: '' },
   });
 
-  if (auth.status === 'loading') return <Skeleton height={200} />;
+  if (auth.status === 'loading') return <LoadingScreen lines={0} />;
   if (auth.status === 'signedOut') return <Redirect href="/recuperar" />;
 
   const leave = () => {
@@ -68,6 +68,9 @@ export default function NewPasswordScreen() {
         autoComplete="new-password"
         textContentType="newPassword"
         secureTextEntry
+        onNext={() => {
+          setFocus('confirm');
+        }}
       />
       <FormTextField
         control={control}
@@ -75,6 +78,7 @@ export default function NewPasswordScreen() {
         label="Repetí la contraseña"
         autoComplete="new-password"
         secureTextEntry
+        returnKeyType="go"
         onSubmitEditing={() => void onSubmit()}
       />
       <ErrorBanner error={error} />

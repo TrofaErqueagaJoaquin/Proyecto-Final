@@ -54,10 +54,7 @@ export default function AcceptInvitationScreen() {
     <Screen>
       <Text variant="title">Te invitaron a una familia</Text>
       <Card>
-        <Text>
-          Al aceptar, vas a ver a los integrantes de la familia y lo que tu rol permita. Podés salir
-          cuando quieras.
-        </Text>
+        <Text>Vas a ver a la familia según tu rol. Podés salir cuando quieras.</Text>
         <ChipGroup
           label="¿Cuál es tu vínculo con la familia?"
           options={RELATIONSHIPS}

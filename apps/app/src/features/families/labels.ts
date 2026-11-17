@@ -29,6 +29,6 @@ export const CONSENT_LABELS: Record<string, string> = {
   terms_privacy: 'Términos y política de privacidad',
   chat_history: 'Guardar el historial del asistente',
   child_data: 'Datos del integrante',
-  ai_personal_context: 'Usar el contexto de la familia en el asistente',
-  professional_access: 'Acceso de un profesional',
+  ai_personal_context: 'Que el asistente conozca a mi familia',
+  professional_access: 'Permiso para un profesional',
 };

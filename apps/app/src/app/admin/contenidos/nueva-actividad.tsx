@@ -3,7 +3,6 @@ import { Plus, Save, Trash2 } from 'lucide-react-native';
 import { useState } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 
-import { friendlyError } from '@/copy/errors';
 import {
   AGE_STAGE_OPTIONS,
   agesFromStages,
@@ -28,6 +27,7 @@ import {
   Card,
   ChipGroup,
   Disclosure,
+  ErrorBanner,
   ErrorState,
   Screen,
   Skeleton,
@@ -256,8 +256,7 @@ export default function NewActivityScreen() {
         hint="Corto y claro. Ej.: Rayuela en el pasillo."
         value={title}
         onChangeText={setTitle}
-        onBlur={fields.touch('title')}
-        error={fields.shown('title')}
+        {...fields.field('title')}
         maxLength={MAX_TITLE}
       />
       <TextField
@@ -316,7 +315,7 @@ export default function NewActivityScreen() {
       </View>
 
       {categories.isError ? (
-        <ErrorState onRetry={() => void categories.refetch()} />
+        <ErrorState error={categories.error} onRetry={() => void categories.refetch()} />
       ) : categories.isPending ? (
         <Skeleton height={56} />
       ) : (
@@ -387,7 +386,7 @@ export default function NewActivityScreen() {
   const footer = (
     <>
       <PublishChoice canPublish={canPublish} value={publish} onChange={setPublish} />
-      {create.error ? <Banner tone="danger">{friendlyError(create.error)}</Banner> : null}
+      <ErrorBanner error={create.error} />
       {fields.attempted && fields.hasErrors ? (
         <Banner tone="caution">Revisá lo marcado arriba.</Banner>
       ) : null}

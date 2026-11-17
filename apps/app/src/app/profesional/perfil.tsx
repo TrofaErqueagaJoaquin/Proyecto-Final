@@ -146,7 +146,7 @@ function ProfileForm({
     contact: contactError(contact),
     years: yearsNumber !== null && yearsNumber > 70 ? 'Un número entre 0 y 70.' : undefined,
   };
-  const { touch, shown, attempt, attempted, hasErrors } = useFieldErrors(errors);
+  const { shown, field, attempt, attempted, hasErrors } = useFieldErrors(errors);
 
   const input: ProfileInput = {
     display_name: name.trim(),
@@ -173,8 +173,7 @@ function ProfileForm({
         placeholder="Por ejemplo: Lic. Paula Ríos"
         value={name}
         onChangeText={setName}
-        onBlur={touch('name')}
-        error={shown('name')}
+        {...field('name')}
         maxLength={80}
       />
       {specialties.isPending ? (
@@ -209,8 +208,9 @@ function ProfileForm({
         hint="Con quiénes trabajás y cómo. Las familias lo leen en el directorio."
         value={bio}
         onChangeText={setBio}
-        onBlur={touch('bio')}
-        error={shown('bio')}
+        {...field('bio')}
+        // Varios renglones: Enter escribe un renglón nuevo, no pasa al campo siguiente.
+        returnKeyType="default"
         multiline
         maxLength={1200}
       />
@@ -218,16 +218,14 @@ function ProfileForm({
         label="Ciudad (opcional)"
         value={city}
         onChangeText={setCity}
-        onBlur={touch('city')}
-        error={shown('city')}
+        {...field('city')}
         maxLength={80}
       />
       <TextField
         label="Provincia (opcional)"
         value={province}
         onChangeText={setProvince}
-        onBlur={touch('province')}
-        error={shown('province')}
+        {...field('province')}
         maxLength={80}
       />
       <TextField
@@ -235,8 +233,7 @@ function ProfileForm({
         hint="Un correo o un teléfono de consultorio. Se muestra en el directorio."
         value={contact}
         onChangeText={setContact}
-        onBlur={touch('contact')}
-        error={shown('contact')}
+        {...field('contact')}
         autoCapitalize="none"
         maxLength={160}
       />
@@ -244,10 +241,9 @@ function ProfileForm({
         label="Años de experiencia (opcional)"
         value={years}
         onChangeText={setYears}
-        onBlur={touch('years')}
+        {...field('years')}
         inputMode="numeric"
         mask={digitsMask(2)}
-        error={shown('years')}
         maxLength={2}
       />
       <Checkbox
@@ -399,7 +395,7 @@ function CredentialForm({
     issuer:
       issuer.trim() !== '' && issuer.trim().length < 2 ? 'Escribí quién la emite.' : undefined,
   };
-  const { touch, shown, attempt, reset: resetErrors } = useFieldErrors(errors);
+  const { field, attempt, reset: resetErrors } = useFieldErrors(errors);
   // Con algo cargado (o cambiado, al corregir), salir pregunta antes.
   const guard = useUnsavedGuard(
     file !== null ||
@@ -435,8 +431,7 @@ function CredentialForm({
         placeholder="Por ejemplo: Licenciada en Psicopedagogía"
         value={profession}
         onChangeText={setProfession}
-        onBlur={touch('profession')}
-        error={shown('profession')}
+        {...field('profession')}
         maxLength={80}
       />
       <TextField
@@ -444,16 +439,14 @@ function CredentialForm({
         placeholder="Por ejemplo: Provincia de Buenos Aires"
         value={jurisdiction}
         onChangeText={setJurisdiction}
-        onBlur={touch('jurisdiction')}
-        error={shown('jurisdiction')}
+        {...field('jurisdiction')}
         maxLength={80}
       />
       <TextField
         label="Número de matrícula"
         value={number}
         onChangeText={setNumber}
-        onBlur={touch('number')}
-        error={shown('number')}
+        {...field('number')}
         autoCapitalize="characters"
         maxLength={40}
       />
@@ -462,8 +455,7 @@ function CredentialForm({
         placeholder="Por ejemplo: Colegio de Psicopedagogos"
         value={issuer}
         onChangeText={setIssuer}
-        onBlur={touch('issuer')}
-        error={shown('issuer')}
+        {...field('issuer')}
         maxLength={120}
       />
       <Button
@@ -727,9 +719,12 @@ function startStep(profile: ProfessionalProfile, credentials: Credentials | unde
 function Summary({
   profile,
   onEdit,
+  savedKey,
 }: {
   profile: ProfessionalProfile;
   onEdit: (step: Step) => void;
+  /** Al volver de guardar los datos, "Editar mis datos" muestra "✓ Guardado" un momento. */
+  savedKey: number;
 }) {
   const styles = useStyles();
   const { colors } = useTheme();
@@ -755,6 +750,7 @@ function Summary({
           label="Editar mis datos"
           variant="secondary"
           icon={Pencil}
+          savedKey={savedKey}
           onPress={() => {
             onEdit('datos');
           }}
@@ -809,7 +805,7 @@ export default function ProfessionalProfileScreen() {
   // Sin elegir un paso, se arranca donde corresponde (startStep).
   const [chosen, setChosen] = useState<Step | null>(null);
   const [created, setCreated] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [savedKey, setSavedKey] = useState(0);
 
   if (profile.isPending || (profile.data && credentials.isPending)) return <LoadingScreen />;
   if (profile.isError) {
@@ -822,7 +818,7 @@ export default function ProfessionalProfileScreen() {
   // Cambiar de paso desarma el formulario abierto: si tiene cambios, pregunta antes.
   const goTo = (next: Step) => {
     confirmLeave(() => {
-      setSaved(false);
+      setSavedKey(0);
       setChosen(next);
     });
   };
@@ -837,7 +833,6 @@ export default function ProfessionalProfileScreen() {
       )}
       {/* Ya verificada, la ficha se lee y se edita por partes: sin pasos. */}
       {verified && step === 'listo' ? null : <StepProgress step={step} />}
-      {saved && step === 'listo' ? <Banner tone="success">Guardamos tus datos.</Banner> : null}
 
       {step === 'datos' || !data ? (
         <ProfileForm
@@ -848,7 +843,7 @@ export default function ProfessionalProfileScreen() {
               setCreated(true);
               setChosen('matricula');
             } else {
-              setSaved(true);
+              setSavedKey((n) => n + 1);
               setChosen('listo');
             }
           }}
@@ -878,7 +873,7 @@ export default function ProfessionalProfileScreen() {
           />
         </>
       ) : (
-        <Summary profile={data} onEdit={goTo} />
+        <Summary profile={data} onEdit={goTo} savedKey={savedKey} />
       )}
 
       <GuidePopup

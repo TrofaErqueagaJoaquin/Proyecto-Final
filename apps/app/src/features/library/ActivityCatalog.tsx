@@ -1,17 +1,17 @@
 import { ageInMonths } from '@crecer/domain';
 import { AGE_STAGES, SPACE_LABELS } from '@crecer/shared';
 import { useLocalSearchParams } from 'expo-router';
-import { Puzzle, X } from 'lucide-react-native';
+import { X } from 'lucide-react-native';
 import { useMemo, useState, type ComponentProps } from 'react';
 import { Pressable, View } from 'react-native';
 
+import { BroteEmptyState } from '@/features/brote/Brote';
 import { useActiveFamily, useMembers } from '@/features/families/queries';
 import {
   Button,
   Card,
   Checkbox,
   ChipGroup,
-  EmptyState,
   ErrorState,
   Screen,
   Skeleton,
@@ -242,10 +242,9 @@ export function ActivityCatalog({
       {activities.isPending ? (
         <Skeleton height={300} />
       ) : activities.isError ? (
-        <ErrorState onRetry={() => void activities.refetch()} />
+        <ErrorState error={activities.error} onRetry={() => void activities.refetch()} />
       ) : results.length === 0 ? (
-        <EmptyState
-          icon={Puzzle}
+        <BroteEmptyState
           title="No hay actividades con esos filtros"
           description="Probá sacar algún filtro."
           action={

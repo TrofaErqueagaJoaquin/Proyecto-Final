@@ -1,20 +1,10 @@
-import { HeartHandshake } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 
+import { BroteEmptyState } from '@/features/brote/Brote';
 import { ProfessionalCard } from '@/features/professionals/components';
 import { MODALITY_LABELS, type Modality } from '@/features/professionals/labels';
 import { matchesDirectory, useDirectory, useSpecialties } from '@/features/professionals/queries';
-import {
-  Banner,
-  Button,
-  ChipGroup,
-  EmptyState,
-  ErrorState,
-  Screen,
-  Skeleton,
-  Text,
-  TextField,
-} from '@/ui';
+import { Button, ChipGroup, Disclosure, ErrorState, Screen, Skeleton, Text, TextField } from '@/ui';
 
 const MODALITY_OPTIONS = (Object.keys(MODALITY_LABELS) as Modality[]).map((value) => ({
   value,
@@ -42,14 +32,17 @@ export default function DirectoryScreen() {
   return (
     <Screen edges={['bottom']} maxWidth={960}>
       <Text variant="title">Profesionales</Text>
-      <Text tone="muted">
-        Psicólogas, psicopedagogos, pediatras, terapeutas y más, con sus credenciales verificadas.
-        Desde tu espacio podés pedirles que acompañen a tu familia y elegir qué compartir.
-      </Text>
-      <Banner tone="info">
-        Crecer en Casa revisa la matrícula o el título de cada profesional antes de mostrarlo acá.
-        Aun así, la elección es de ustedes: conversen antes de empezar.
-      </Banner>
+      <Text tone="muted">Todos con la matrícula o el título revisados.</Text>
+      <Disclosure title="¿Cómo funciona?">
+        <Text>
+          Revisamos la matrícula o el título de cada profesional antes de mostrarlo acá. Aun así, la
+          elección es de ustedes: conversen antes de empezar.
+        </Text>
+        <Text>
+          Desde tu espacio podés pedirle a quien elijas que acompañe a tu familia, y decidir qué
+          puede ver.
+        </Text>
+      </Disclosure>
 
       {specialties.data ? (
         <ChipGroup
@@ -80,10 +73,9 @@ export default function DirectoryScreen() {
       {directory.isPending ? (
         <Skeleton height={240} />
       ) : directory.isError ? (
-        <ErrorState onRetry={() => void directory.refetch()} />
+        <ErrorState error={directory.error} onRetry={() => void directory.refetch()} />
       ) : results.length === 0 ? (
-        <EmptyState
-          icon={HeartHandshake}
+        <BroteEmptyState
           title={
             filtered ? 'No hay profesionales con esos filtros' : 'Todavía no hay profesionales'
           }

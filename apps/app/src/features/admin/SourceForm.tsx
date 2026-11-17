@@ -2,10 +2,9 @@ import { BookPlus } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { friendlyError } from '@/copy/errors';
 import { useFieldErrors } from '@/features/forms/useFieldErrors';
 import { useUnsavedGuard } from '@/features/forms/useUnsavedGuard';
-import { Banner, Button, ChipGroup, TextField } from '@/ui';
+import { Button, ChipGroup, ErrorBanner, TextField } from '@/ui';
 
 import { useCreateSource } from './queries';
 import { slugify } from './slug';
@@ -103,8 +102,7 @@ export function SourceForm({
         label="Enlace (opcional)"
         value={url}
         onChangeText={setUrl}
-        onBlur={fields.touch('url')}
-        error={fields.shown('url')}
+        {...fields.field('url')}
         autoCapitalize="none"
         keyboardType="url"
       />
@@ -112,8 +110,7 @@ export function SourceForm({
         label="Año (opcional)"
         value={year}
         onChangeText={setYear}
-        onBlur={fields.touch('year')}
-        error={fields.shown('year')}
+        {...fields.field('year')}
         keyboardType="number-pad"
         maxLength={4}
       />
@@ -124,7 +121,7 @@ export function SourceForm({
         value={confidence}
         onChange={setConfidence}
       />
-      {create.error ? <Banner tone="danger">{friendlyError(create.error)}</Banner> : null}
+      <ErrorBanner error={create.error} />
       <Button label="Guardar fuente" icon={BookPlus} loading={create.isPending} onPress={submit} />
     </View>
   );

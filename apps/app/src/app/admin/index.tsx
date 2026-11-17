@@ -3,7 +3,12 @@ import { View } from 'react-native';
 import { adminNav } from '@/features/admin/nav';
 import { useAdminOverview, usePermissions } from '@/features/admin/queries';
 import { LinkCard } from '@/features/library/LinkCard';
-import { Card, ErrorState, Screen, Skeleton, Text } from '@/ui';
+import { Card, ErrorScreen, LoadingScreen, Screen, Text } from '@/ui';
+
+const MONEY = new Intl.NumberFormat('es-AR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
@@ -21,17 +26,16 @@ export default function AdminHome() {
   const overview = useAdminOverview();
   const permissions = usePermissions();
 
-  if (overview.isPending) return <Skeleton height={200} />;
-  if (overview.isError) return <ErrorState onRetry={() => void overview.refetch()} />;
+  if (overview.isPending) return <LoadingScreen lines={2} />;
+  if (overview.isError) {
+    return <ErrorScreen error={overview.error} onRetry={() => void overview.refetch()} />;
+  }
   const o = overview.data;
 
   return (
     <Screen maxWidth={1100}>
       <Text variant="title">Administración</Text>
-      <Text tone="muted">
-        Desde acá se opera la plataforma sin acceder a datos de las familias: ningún rol
-        administrativo ve evaluaciones, conversaciones ni observaciones.
-      </Text>
+      <Text tone="muted">Desde acá no se ven los datos de las familias.</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
         {o.pending_credentials !== null ? (
           <Stat label="Credenciales por verificar" value={String(o.pending_credentials)} />
@@ -42,7 +46,7 @@ export default function AdminHome() {
         {o.month_cost_usd !== null ? (
           <Stat
             label="Gasto de IA del mes"
-            value={`US$${Number(o.month_cost_usd).toFixed(2)} de ${String(o.month_budget_usd ?? 0)}`}
+            value={`US$${MONEY.format(Number(o.month_cost_usd))} de US$${MONEY.format(Number(o.month_budget_usd ?? 0))}`}
           />
         ) : null}
         {o.users !== null ? <Stat label="Cuentas" value={String(o.users)} /> : null}
